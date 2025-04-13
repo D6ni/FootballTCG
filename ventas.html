@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Ventas EAFC</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <!-- Importar fuente Roboto y Animate.css para animaciones -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    /* Fondo de pantalla */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: url('fondo.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-y: auto; /* Permitir scroll si el contenido es largo */
+      overflow-x: hidden;
+      transition: background-color 1s ease;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.75); /* Un poco más opaco */
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.5em;
+      color: #ffffff;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      text-align: left;
+      font-weight: 500;
+    }
+    select, input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #555;
+      font-size: 1em;
+      background-color: #333;
+      color: #e0e0e0;
+    }
+
+    /* Estilo para el botón de información circular */
+    .cache-info-icon {
+      display: inline-flex; /* Usar flex para centrar contenido */
+      align-items: center;  /* Centrar verticalmente el '?' */
+      justify-content: center; /* Centrar horizontalmente el '?' */
+      width: 28px;         /* Ancho del círculo */
+      height: 28px;        /* Alto del círculo */
+      background-color: #555; /* Color de fondo del círculo */
+      color: #e0e0e0;      /* Color del '?' */
+      border-radius: 50%;  /* Hace que sea un círculo */
+      font-size: 1.1em;    /* Tamaño del '?' */
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      flex-shrink: 0; /* Evita que el icono se encoja */
+      line-height: 1; /* Asegura centrado vertical consistente */
+      user-select: none; /* Evita seleccionar el '?' */
+    }
+    .cache-info-icon:hover {
+      background-color: #0078d7; /* Cambia color al pasar el ratón */
+      color: #fff;
+      transform: scale(1.1); /* Efecto ligero de zoom */
+    }
+
+    button {
+      background-color: #0078d7;
+      color: #fff;
+      border: none;
+      padding: 15px;
+      font-size: 1.2em;
+      border-radius: 5px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 20px; /* Más espacio arriba */
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    /* Spinner overlay */
+    .spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000; /* Alto z-index */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .spinner-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .spinner {
+      border: 8px solid rgba(255, 255, 255, 0.3);
+      border-top: 8px solid #fff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .result {
+      font-size: 2em;
+      margin-top: 20px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 5px;
+       background-color: rgba(0, 0, 0, 0.5);
+    }
+    .result.sell { color: #ffcccc; }
+    .result.keep { color: #ccffcc; }
+
+    /* --- Estilos del Modal --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85); /* Más oscuro */
+      display: none; /* Oculto por defecto */
+      align-items: center;
+      justify-content: center;
+      z-index: 1001; /* Encima del spinner si estuviera activo */
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .modal-overlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-content {
+      background-color: #282828; /* Fondo oscuro para el modal */
+      padding: 25px 35px;
+      border-radius: 8px;
+      max-width: 90%;
+      width: 750px; /* Ancho máximo del modal */
+      max-height: 85vh; /* Altura máxima */
+      overflow-y: auto; /* Scroll si el contenido es muy largo */
+      position: relative;
+      color: #e0e0e0;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s ease-in-out;
+    }
+    .modal-overlay.visible .modal-content {
+        transform: scale(1);
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 2.2em;
+      color: #aaa;
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+    .modal-close:hover {
+      color: #fff;
+    }
+    .modal-content h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #fff;
+        text-align: center;
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+    }
+    /* Estilos de la tabla dentro del modal */
+    .modal-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 0.95em;
+    }
+    .modal-table th,
+    .modal-table td {
+        padding: 12px 15px; /* Más padding */
+        text-align: left;
+        border-bottom: 1px solid #444; /* Líneas separadoras */
+    }
+     .modal-table th {
+        background-color: #3a3a3a; /* Cabecera ligeramente diferente */
+        font-weight: bold;
+        color: #eee;
+    }
+    .modal-table tr:last-child td {
+        border-bottom: none; /* Sin borde en la última fila */
+    }
+    .modal-table td:nth-child(2) { /* Columna de Puntos */
+        text-align: center;
+        font-weight: bold;
+        min-width: 70px; /* Ancho mínimo para puntos */
+    }
+     .modal-table td:nth-child(3) { /* Columna de Comentario */
+       color: #bbb; /* Comentarios un poco más tenues */
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            width: 95%;
+            padding: 20px;
+        }
+         .modal-table {
+            font-size: 0.9em;
+         }
+         .modal-table th,
+         .modal-table td {
+            padding: 10px 8px;
+        }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 2em; }
+      .result { font-size: 1.6em; }
+      .container { padding: 20px; }
+      label { margin-top: 10px; }
+      button { margin-top: 15px; }
+      /* Ajuste del contenedor flex en móvil si fuera necesario, aunque gap debe funcionar bien */
+    }
+  </style>
+</head>
+<body>
+  <!-- Spinner -->
+  <div class="spinner-overlay" id="spinner">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <div class="container">
+    <h1>Ventas EAFC</h1>
+
+    <form id="salesForm">
+      <!-- Selector de Clubes -->
+      <div>
+        <label for="clubSelect">Elige Club Comprador:</label>
+        <select id="clubSelect">
+            <!-- LaLiga -->
+            <optgroup label="LaLiga">
+                <option value="Barcelona" data-cache="10">Barcelona</option>
+                <option value="Real Madrid" data-cache="10">Real Madrid</option>
+                <option value="Atlético de Madrid" data-cache="8.5">Atlético de Madrid</option>
+                <option value="Sevilla" data-cache="7.5">Sevilla</option>
+                <option value="Real Sociedad" data-cache="7.0">Real Sociedad</option>
+                <option value="Villarreal" data-cache="7.0">Villarreal</option>
+                <option value="Athletic Club" data-cache="7.0">Athletic Club</option>
+                <option value="Real Betis" data-cache="7.0">Real Betis</option>
+                <option value="Valencia" data-cache="6.5">Valencia</option>
+                <option value="Osasuna" data-cache="6.0">Osasuna</option>
+                <option value="Rayo Vallecano" data-cache="6.0">Rayo Vallecano</option>
+                <option value="Granada" data-cache="6.0">Granada</option>
+                <option value="Getafe" data-cache="6.0">Getafe</option>
+                <option value="Celta de Vigo" data-cache="6.0">Celta de Vigo</option>
+                <option value="Cádiz" data-cache="5.5">Cádiz</option>
+                <option value="Levante" data-cache="5.5">Levante</option>
+                <option value="Mallorca" data-cache="5.5">Mallorca</option>
+                <option value="Elche" data-cache="5.0">Elche</option>
+                <option value="Almería" data-cache="6.0">Almería</option>
+                <option value="Espanyol" data-cache="5.5">Espanyol</option>
+            </optgroup>
+            <!-- Premier League -->
+            <optgroup label="Premier League">
+                <option value="Manchester City" data-cache="10">Manchester City</option>
+                <option value="Liverpool" data-cache="10">Liverpool</option>
+                <option value="Manchester United" data-cache="10">Manchester United</option>
+                <option value="Chelsea" data-cache="9.5">Chelsea</option>
+                <option value="Arsenal" data-cache="9">Arsenal</option>
+                <option value="Tottenham Hotspur" data-cache="8.5">Tottenham Hotspur</option>
+                <option value="Leicester City" data-cache="8">Leicester City</option>
+                <option value="Everton" data-cache="7.0">Everton</option>
+                <option value="West Ham United" data-cache="7.0">West Ham United</option>
+                <option value="Aston Villa" data-cache="7.0">Aston Villa</option>
+                <option value="Leeds United" data-cache="7.0">Leeds United</option>
+                <option value="Newcastle United" data-cache="8">Newcastle United</option>
+                <option value="Wolverhampton Wanderers" data-cache="7.5">Wolverhampton</option>
+                <option value="Southampton" data-cache="6.5">Southampton</option>
+                <option value="Crystal Palace" data-cache="6.0">Crystal Palace</option>
+                <option value="Brighton & Hove Albion" data-cache="6.0">Brighton</option>
+                <option value="Burnley" data-cache="6.0">Burnley</option>
+                <option value="Brentford" data-cache="7.0">Brentford</option>
+                <option value="Norwich City" data-cache="5.0">Norwich City</option>
+                <option value="Watford" data-cache="5.5">Watford</option>
+            </optgroup>
+            <!-- Serie A -->
+            <optgroup label="Serie A">
+                <option value="Juventus" data-cache="9.5">Juventus</option>
+                <option value="Inter de Milán" data-cache="9">Inter de Milán</option>
+                <option value="AC Milan" data-cache="8.5">AC Milan</option>
+                <option value="Napoli" data-cache="8.5">Napoli</option>
+                <option value="AS Roma" data-cache="8">AS Roma</option>
+                <option value="Lazio" data-cache="8">Lazio</option>
+                <option value="Atalanta" data-cache="8">Atalanta</option>
+                <option value="Fiorentina" data-cache="7">Fiorentina</option>
+                <option value="Torino" data-cache="7">Torino</option>
+                <option value="Sampdoria" data-cache="6.5">Sampdoria</option>
+                <option value="Bologna" data-cache="6.5">Bologna</option>
+                <option value="Udinese" data-cache="6">Udinese</option>
+                <option value="Verona" data-cache="6">Verona</option>
+                <option value="Spezia" data-cache="5.5">Spezia</option>
+                <option value="Genoa" data-cache="5.5">Genoa</option>
+                <option value="Sassuolo" data-cache="6.5">Sassuolo</option>
+                <option value="Empoli" data-cache="5.5">Empoli</option>
+                <option value="Salernitana" data-cache="5.5">Salernitana</option>
+                <option value="Frosinone" data-cache="5.0">Frosinone</option>
+                <option value="Lecce" data-cache="5.5">Lecce</option>
+            </optgroup>
+            <!-- Bundesliga -->
+            <optgroup label="Bundesliga">
+                <option value="Bayern Munich" data-cache="10">Bayern Munich</option>
+                <option value="Borussia Dortmund" data-cache="9">Borussia Dortmund</option>
+                <option value="RB Leipzig" data-cache="8">RB Leipzig</option>
+                <option value="Bayer Leverkusen" data-cache="8">Bayer Leverkusen</option>
+                <option value="Union Berlin" data-cache="7">Union Berlin</option>
+                <option value="SC Freiburg" data-cache="7">SC Freiburg</option>
+                <option value="TSG Hoffenheim" data-cache="7">TSG Hoffenheim</option>
+                <option value="VfL Wolfsburg" data-cache="7">VfL Wolfsburg</option>
+                <option value="Eintracht Frankfurt" data-cache="7">Eintracht Frankfurt</option>
+                <option value="Borussia Mönchengladbach" data-cache="7">Bor. Mönchengladbach</option>
+                <option value="1. FC Köln" data-cache="6.5">1. FC Köln</option>
+                <option value="FC Augsburg" data-cache="6">FC Augsburg</option>
+                <option value="VfB Stuttgart" data-cache="6.5">VfB Stuttgart</option>
+                <option value="Mainz 05" data-cache="6">Mainz 05</option>
+                <option value="VfL Bochum" data-cache="6">VfL Bochum</option>
+                <option value="Werder Bremen" data-cache="6">Werder Bremen</option>
+                <option value="Hertha BSC" data-cache="6">Hertha BSC</option>
+                <option value="Arminia Bielefeld" data-cache="5.5">Arminia Bielefeld</option>
+            </optgroup>
+            <!-- Ligue 1 -->
+            <optgroup label="Ligue 1">
+                <option value="Paris Saint-Germain" data-cache="10">Paris Saint-Germain</option>
+                <option value="Olympique de Marseille" data-cache="8">Olympique de Marseille</option>
+                <option value="Lyon" data-cache="7.5">Lyon</option>
+                <option value="AS Monaco" data-cache="8">AS Monaco</option>
+                <option value="Lille OSC" data-cache="8">Lille OSC</option>
+                <option value="OGC Nice" data-cache="7">OGC Nice</option>
+                <option value="Stade Rennais" data-cache="7">Stade Rennais</option>
+                <option value="Montpellier HSC" data-cache="6.5">Montpellier HSC</option>
+                <option value="RC Lens" data-cache="7">RC Lens</option>
+                <option value="Reims" data-cache="6">Reims</option>
+                <option value="FC Nantes" data-cache="6">FC Nantes</option>
+                <option value="Angers" data-cache="5.5">Angers</option>
+                <option value="Dijon" data-cache="5.5">Dijon</option>
+                <option value="Metz" data-cache="5.5">Metz</option>
+                <option value="Brest" data-cache="6">Brest</option>
+                <option value="Lorient" data-cache="6">Lorient</option>
+                <option value="Nîmes" data-cache="5.5">Nîmes</option>
+                <option value="Saint-Étienne" data-cache="7">Saint-Étienne</option>
+                <option value="Troyes" data-cache="5.5">Troyes</option>
+                <option value="Auxerre" data-cache="6">Auxerre</option>
+            </optgroup>
+        </select>
+      </div>
+
+      <!-- Entradas de datos -->
+      <div>
+        <label for="playerAverage">Media del Jugador:</label>
+        <input type="number" id="playerAverage" min="0" max="100" step="1" placeholder="Ej. 84" required>
+      </div>
+
+      <div>
+        <label for="offerPrice">Precio Ofrecido (M):</label>
+        <input type="number" id="offerPrice" min="0" step="0.1" placeholder="Ej. 70" required>
+      </div>
+
+      <!-- *** Selector de Caché (Desplegable) con botón de info *** -->
+      <div>
+        <label for="ownCache">Caché de tu Club:</label>
+        <div style="display: flex; align-items: center; gap: 10px;"> <!-- Contenedor Flex con espacio -->
+            <select id="ownCache" required style="flex-grow: 1;"> <!-- Select ocupa espacio disponible -->
+                <option value="" disabled selected>-- Selecciona --</option>
+                <!-- Las opciones (0-10) se generarán con JS -->
+            </select>
+            <!-- *** BOTÓN CIRCULAR para mostrar info de caché *** -->
+            <span id="showCacheInfoIcon" class="cache-info-icon" title="¿Cómo calcular el caché de mi club?">?</span>
+        </div>
+      </div>
+      <!-- *** Fin Selector de Caché *** -->
+
+      <button type="submit" id="checkBtn">¿SERÁ VENTA?</button>
+
+      <div class="result" id="resultText"></div>
+    </form> <!-- Fin del form -->
+  </div> <!-- Fin .container -->
+
+  <!-- === Modal para Información de Caché === -->
+  <div id="cacheInfoModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="modal-close" title="Cerrar">×</span>
+      <h2>Cálculo de Caché del Club</h2>
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>Acción</th>
+            <th>Puntos</th>
+            <th>Comentario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Permanecer en 1ra división (sin sufrir)</td>
+            <td>+1</td>
+            <td>Cada año suma consistencia.</td>
+          </tr>
+          <tr>
+            <td>Terminar top 10</td>
+            <td>+2</td>
+            <td>Demuestra competitividad.</td>
+          </tr>
+          <tr>
+            <td>Terminar top 6 (competición europea)</td>
+            <td>+3</td>
+            <td>Salto de calidad.</td>
+          </tr>
+          <tr>
+            <td>Ganar Copa nacional</td>
+            <td>+4</td>
+            <td>Gran impacto mediático.</td>
+          </tr>
+          <tr>
+            <td>Semifinal Europa League</td>
+            <td>+4</td>
+            <td>Presencia europea fuerte.</td>
+          </tr>
+          <tr>
+            <td>Ganar Europa League</td>
+            <td>+5</td>
+            <td>Reputación internacional clara.</td>
+          </tr>
+          <tr>
+            <td>Final Champions</td>
+            <td>+6</td>
+            <td>Eres top europeo.</td>
+          </tr>
+          <tr>
+            <td>Ganar Champions</td>
+            <td>+7</td>
+            <td>Nivel leyenda.</td>
+          </tr>
+          <tr>
+            <td>Ganar la liga nacional</td>
+            <td>+5</td>
+            <td>Demuestra dominio local.</td>
+          </tr>
+          <tr>
+            <td>Descender</td>
+            <td>-2 a -4</td>
+            <td>Pierdes prestigio.</td>
+          </tr>
+          <tr>
+            <td>Temporada desastrosa (colista)</td>
+            <td>-1</td>
+            <td>Pierdes confianza e imagen.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- === Fin Modal === -->
+
+
+  <script>
+    // --- Generar opciones para el selector "Caché de tu Club" (0 a 10 enteros) ---
+    (function() {
+      const ownCacheSelect = document.getElementById('ownCache');
+      // La opción "Selecciona" ya está en el HTML
+      for (let i = 0; i <= 10; i++) { // Incremento de 1 en 1
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        ownCacheSelect.appendChild(option);
+      }
+    })();
+
+    // --- Lógica del Modal de Información de Caché ---
+    const cacheModal = document.getElementById('cacheInfoModal');
+    const showCacheIcon = document.getElementById('showCacheInfoIcon'); // Cambiado ID
+    const closeCacheModalBtn = cacheModal.querySelector('.modal-close');
+
+    // Mostrar modal al hacer clic en el icono "?"
+    showCacheIcon.addEventListener('click', (event) => { // Cambiado nombre de variable
+      event.preventDefault(); // Prevenir comportamiento por defecto (aunque span no tiene)
+      cacheModal.classList.add('visible');
+    });
+
+    // Ocultar modal al hacer clic en el botón de cerrar (X)
+    closeCacheModalBtn.addEventListener('click', () => {
+      cacheModal.classList.remove('visible');
+    });
+
+    // Ocultar modal al hacer clic fuera del contenido del modal
+    cacheModal.addEventListener('click', (event) => {
+      // Si el clic fue directamente sobre el overlay (fondo oscuro)
+      if (event.target === cacheModal) {
+        cacheModal.classList.remove('visible');
+      }
+    });
+
+    // --- Lógica Principal del Formulario ---
+
+    // Función para calcular el multiplicador efectivo
+    function calcularMultiplicadorEfectivo(buyerCache) {
+      const multiplier = 1.0 - (0.03 * buyerCache);
+      return Math.max(0.1, multiplier); // Mínimo 0.1
+    }
+
+    // Función para validar la oferta
+    function validarOferta(playerAverage, offerPrice, buyerCache, ownCache) {
+      const effectiveMultiplier = calcularMultiplicadorEfectivo(buyerCache);
+      const minPrice = playerAverage * effectiveMultiplier;
+      const esVenta = (offerPrice >= minPrice && buyerCache > ownCache);
+      return { minPrice, esVenta };
+    }
+
+    // Función para mostrar/ocultar spinner
+    function showSpinner(show = true) {
+      const spinnerOverlay = document.getElementById('spinner');
+      spinnerOverlay.classList.toggle('visible', show);
+    }
+
+    // Event listener para el envío del formulario
+    document.getElementById('salesForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevenir envío real del formulario
+
+      const btn = document.getElementById('checkBtn');
+      btn.disabled = true;
+
+      // Limpiar resultado anterior y fondo
+      const resultText = document.getElementById('resultText');
+      resultText.textContent = '';
+      resultText.style.opacity = 0;
+      resultText.className = 'result'; // Reset class list
+      document.body.style.backgroundColor = ""; // Reset background
+
+      // Obtener valores (asegurándose de que sean números)
+      const clubSelect = document.getElementById('clubSelect');
+      const selectedOption = clubSelect.options[clubSelect.selectedIndex];
+      const buyerCache = parseFloat(selectedOption.getAttribute('data-cache')) || 0; // Default a 0 si falla
+
+      const playerAverage = parseFloat(document.getElementById('playerAverage').value) || 0;
+      const offerPrice = parseFloat(document.getElementById('offerPrice').value) || 0;
+      const ownCacheSelect = document.getElementById('ownCache');
+      const ownCache = parseFloat(ownCacheSelect.value); // Ya es numérico por el value del option
+
+      // Simple validación (HTML5 'required' ya ayuda)
+       if (isNaN(playerAverage) || isNaN(offerPrice) || isNaN(ownCache) || ownCacheSelect.value === "") {
+         alert('Por favor, completa todos los campos correctamente.');
+         btn.disabled = false;
+         // Enfocar el primer campo vacío o inválido
+         if(isNaN(playerAverage) || playerAverage <= 0) document.getElementById('playerAverage').focus();
+         else if(isNaN(offerPrice) || offerPrice < 0) document.getElementById('offerPrice').focus();
+         else if(ownCacheSelect.value === "") ownCacheSelect.focus();
+         return;
+       }
+
+
+      // Mostrar spinner
+      showSpinner(true);
+
+      // Calcular resultado
+      const { minPrice, esVenta } = validarOferta(playerAverage, offerPrice, buyerCache, ownCache);
+
+      // Retraso simulado
+      setTimeout(function() {
+        showSpinner(false);
+
+        resultText.classList.remove("animate__animated", "animate__fadeInUp");
+        void resultText.offsetWidth; // Reflow
+
+        if (esVenta) {
+          document.body.style.backgroundColor = "rgba(150, 0, 0, 0.5)";
+          resultText.textContent = `🚨 TOCA VENDER 🚨 | Mínimo: ${minPrice.toFixed(1)}M`;
+          resultText.classList.add('sell');
+        } else {
+          document.body.style.backgroundColor = "rgba(0, 100, 0, 0.5)";
+          resultText.textContent = `✅ SE QUEDA ✅ | Mínimo: ${minPrice.toFixed(1)}M`;
+          resultText.classList.add('keep');
+        }
+
+        resultText.classList.add("animate__animated", "animate__fadeInUp");
+        resultText.style.opacity = 1;
+
+        btn.disabled = false; // Reactivar botón
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
