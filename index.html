@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>EAFC24 - Sistema de Ventas</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <!-- Importar fuente Roboto y Animate.css para animaciones -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0; font-family: 'Roboto', sans-serif;
+      background: url('fondo.jpg') no-repeat center center fixed; background-size: cover;
+      color: #e0e0e0; display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; overflow-y: auto; overflow-x: hidden;
+      transition: background-color 1s ease;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.75); padding: 30px; border-radius: 10px;
+      width: 90%; max-width: 600px; text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin: 20px 0;
+    }
+    h1 { font-size: 2.5em; margin-bottom: 0.5em; color: #ffffff; }
+    label { display: block; margin: 15px 0 5px; text-align: left; font-weight: 500; }
+    select, input[type="number"] {
+      width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px;
+      border: 1px solid #555; font-size: 1em; background-color: #333; color: #e0e0e0;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .cache-info-icon {
+      display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+      background-color: #555; color: #e0e0e0; border-radius: 50%; font-size: 1.1em; font-weight: bold;
+      cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease;
+      flex-shrink: 0; line-height: 1; user-select: none;
+    }
+    .cache-info-icon:hover { background-color: #0078d7; color: #fff; transform: scale(1.1); }
+
+    button[type="submit"] {
+      background-color: #0078d7; color: #fff; border: none; padding: 15px;
+      font-size: 1.2em; border-radius: 5px; width: 100%; cursor: pointer;
+      transition: background-color 0.3s ease; margin-top: 20px;
+    }
+    button[type="submit"]:hover { background-color: #005fa3; }
+    button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .spinner-overlay.visible { opacity: 1; pointer-events: all; }
+    .spinner {
+      border: 8px solid rgba(255, 255, 255, 0.3); border-top: 8px solid #fff;
+      border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Estilos del POPUP DE RESULTADO --- */
+    .result-popup-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.8); /* Fondo más oscuro */
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .result-popup-overlay.visible { display: flex; opacity: 1; pointer-events: all; }
+    .result-popup-content {
+      background-color: #282828; padding: 30px; border-radius: 10px;
+      max-width: 90%;
+      width: auto; /* Permitir que crezca */
+      min-width: 400px; /* Ancho mínimo */
+      max-width: 560px; /* Ancho máximo aumentado */
+      text-align: center; position: relative;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.6); transform: scale(0.9);
+      transition: transform 0.3s ease-in-out;
+    }
+    .result-popup-overlay.visible .result-popup-content { transform: scale(1); }
+    .popup-close {
+      position: absolute; top: 10px; right: 15px; font-size: 2.2em; color: #aaa;
+      cursor: pointer; line-height: 1; transition: color 0.2s ease;
+    }
+    .popup-close:hover { color: #fff; }
+
+    #popupStatusText {
+        font-size: 1.8em; font-weight: bold; margin-bottom: 15px; color: #fff;
+        white-space: nowrap;
+    }
+    #popupStatusText.sell { color: #ffcccc; }
+    #popupStatusText.keep { color: #ccffcc; }
+
+    #popupImage {
+        display: block; max-width: 80%; height: auto; margin: 0 auto 20px auto;
+        border-radius: 5px; border: 3px solid transparent;
+        transition: border-color 0.3s ease;
+    }
+    #popupImage.sell-border { border-color: #dc3545; } /* Rojo carmesí */
+    #popupImage.keep-border { border-color: #28a745; } /* Verde oscuro */
+
+    #popupPriceText {
+      font-size: 1.1em; font-weight: 500; padding: 8px; border-radius: 5px;
+      background-color: rgba(0, 0, 0, 0.4); color: #ccc;
+    }
+     /* Se elimina el estilo #popupReasonText ya que no se usará */
+    /* --- Fin Estilos del POPUP --- */
+
+    /* Estilos del Modal de Info Caché (sin cambios estructurales) */
+    /* ... (igual que antes) ... */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 1001; opacity: 0; transition: opacity 0.3s ease-in-out; }
+    .modal-overlay.visible { display: flex; opacity: 1; }
+    .modal-content { background-color: #282828; padding: 25px 35px; border-radius: 8px; max-width: 90%; width: 750px; max-height: 85vh; overflow-y: auto; position: relative; color: #e0e0e0; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+    .modal-overlay.visible .modal-content { transform: scale(1); }
+    .modal-close { position: absolute; top: 10px; right: 15px; font-size: 2.2em; color: #aaa; cursor: pointer; line-height: 1; transition: color 0.2s ease; }
+    .modal-close:hover { color: #fff; }
+    .modal-content h2 { margin-top: 0; margin-bottom: 20px; color: #fff; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    .modal-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; }
+    .modal-table th, .modal-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: top; }
+    .modal-table th { background-color: #3a3a3a; font-weight: bold; color: #eee; text-align: center; }
+    .modal-table tr:last-child td { border-bottom: none; }
+    .modal-table td:nth-child(1) { font-weight: 500; min-width: 160px; }
+    .modal-table td:nth-child(2) { text-align: center; font-weight: bold; min-width: 130px; }
+    .modal-table td:nth-child(3) { color: #bbb; font-size: 0.9em; }
+    .modal-table tr.division-header td { background-color: #333; font-weight: bold; color: #eee; padding-top: 12px; padding-bottom: 12px; }
+    .modal-table tr.division-header td:nth-child(3) { font-style: italic; font-weight: normal; font-size: 0.9em; }
+    .modal-table td.sub-level { padding-left: 25px; }
+
+
+    /* Media Queries */
+    @media (max-width: 768px) {
+        .modal-content { width: 95%; padding: 20px; } /* Info caché */
+        .modal-table { font-size: 0.9em; }
+        .modal-table th, .modal-table td { padding: 8px 10px; }
+        .modal-table td.sub-level { padding-left: 15px; }
+        .result-popup-content { width: 90%; padding: 20px; max-width: 90%; } /* Popup resultado más adaptable */
+        #popupStatusText { font-size: 1.6em; white-space: normal; } /* Permitir salto en móvil */
+        #popupPriceText { font-size: 1.0em; }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 2em; } .container { padding: 20px; } label { margin-top: 10px; }
+      button { margin-top: 15px; }
+      #popupStatusText { font-size: 1.4em; }
+      #popupPriceText { font-size: 0.9em; }
+      #popupImage { max-width: 90%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Spinner -->
+  <div class="spinner-overlay" id="spinner"> <div class="spinner"></div> </div>
+
+  <!-- Contenedor Principal -->
+  <div class="container">
+    <h1>Sistema de Ventas EAFC24</h1>
+    <form id="salesForm">
+        <!-- Selectores y Inputs -->
+        <div><label for="clubSelect">Elige Club Comprador:</label><select id="clubSelect"><optgroup label="LaLiga"><option value="Barcelona" data-cache="10">Barcelona</option><option value="Real Madrid" data-cache="10">Real Madrid</option><option value="Atlético de Madrid" data-cache="8.5">Atlético de Madrid</option><option value="Sevilla" data-cache="7.5">Sevilla</option><option value="Real Sociedad" data-cache="7.0">Real Sociedad</option><option value="Villarreal" data-cache="7.0">Villarreal</option><option value="Athletic Club" data-cache="7.0">Athletic Club</option><option value="Real Betis" data-cache="7.0">Real Betis</option><option value="Valencia" data-cache="6.5">Valencia</option><option value="Osasuna" data-cache="6.0">Osasuna</option><option value="Rayo Vallecano" data-cache="6.0">Rayo Vallecano</option><option value="Granada" data-cache="6.0">Granada</option><option value="Getafe" data-cache="6.0">Getafe</option><option value="Celta de Vigo" data-cache="6.0">Celta de Vigo</option><option value="Cádiz" data-cache="5.5">Cádiz</option><option value="Levante" data-cache="5.5">Levante</option><option value="Mallorca" data-cache="5.5">Mallorca</option><option value="Elche" data-cache="5.0">Elche</option><option value="Almería" data-cache="6.0">Almería</option><option value="Espanyol" data-cache="5.5">Espanyol</option></optgroup><optgroup label="Premier League"><option value="Manchester City" data-cache="10">Manchester City</option><option value="Liverpool" data-cache="10">Liverpool</option><option value="Manchester United" data-cache="10">Manchester United</option><option value="Chelsea" data-cache="9.5">Chelsea</option><option value="Arsenal" data-cache="9">Arsenal</option><option value="Tottenham Hotspur" data-cache="8.5">Tottenham Hotspur</option><option value="Leicester City" data-cache="8">Leicester City</option><option value="Everton" data-cache="7.0">Everton</option><option value="West Ham United" data-cache="7.0">West Ham United</option><option value="Aston Villa" data-cache="7.0">Aston Villa</option><option value="Leeds United" data-cache="7.0">Leeds United</option><option value="Newcastle United" data-cache="8">Newcastle United</option><option value="Wolverhampton Wanderers" data-cache="7.5">Wolverhampton</option><option value="Southampton" data-cache="6.5">Southampton</option><option value="Crystal Palace" data-cache="6.0">Crystal Palace</option><option value="Brighton & Hove Albion" data-cache="6.0">Brighton</option><option value="Burnley" data-cache="6.0">Burnley</option><option value="Brentford" data-cache="7.0">Brentford</option><option value="Norwich City" data-cache="5.0">Norwich City</option><option value="Watford" data-cache="5.5">Watford</option></optgroup><optgroup label="Serie A"><option value="Juventus" data-cache="9.5">Juventus</option><option value="Inter de Milán" data-cache="9">Inter de Milán</option><option value="AC Milan" data-cache="8.5">AC Milan</option><option value="Napoli" data-cache="8.5">Napoli</option><option value="AS Roma" data-cache="8">AS Roma</option><option value="Lazio" data-cache="8">Lazio</option><option value="Atalanta" data-cache="8">Atalanta</option><option value="Fiorentina" data-cache="7">Fiorentina</option><option value="Torino" data-cache="7">Torino</option><option value="Sampdoria" data-cache="6.5">Sampdoria</option><option value="Bologna" data-cache="6.5">Bologna</option><option value="Udinese" data-cache="6">Udinese</option><option value="Verona" data-cache="6">Verona</option><option value="Spezia" data-cache="5.5">Spezia</option><option value="Genoa" data-cache="5.5">Genoa</option><option value="Sassuolo" data-cache="6.5">Sassuolo</option><option value="Empoli" data-cache="5.5">Empoli</option><option value="Salernitana" data-cache="5.5">Salernitana</option><option value="Frosinone" data-cache="5.0">Frosinone</option><option value="Lecce" data-cache="5.5">Lecce</option></optgroup><optgroup label="Bundesliga"><option value="Bayern Munich" data-cache="10">Bayern Munich</option><option value="Borussia Dortmund" data-cache="9">Borussia Dortmund</option><option value="RB Leipzig" data-cache="8">RB Leipzig</option><option value="Bayer Leverkusen" data-cache="8">Bayer Leverkusen</option><option value="Union Berlin" data-cache="7">Union Berlin</option><option value="SC Freiburg" data-cache="7">SC Freiburg</option><option value="TSG Hoffenheim" data-cache="7">TSG Hoffenheim</option><option value="VfL Wolfsburg" data-cache="7">VfL Wolfsburg</option><option value="Eintracht Frankfurt" data-cache="7">Eintracht Frankfurt</option><option value="Borussia Mönchengladbach" data-cache="7">Bor. Mönchengladbach</option><option value="1. FC Köln" data-cache="6.5">1. FC Köln</option><option value="FC Augsburg" data-cache="6">FC Augsburg</option><option value="VfB Stuttgart" data-cache="6.5">VfB Stuttgart</option><option value="Mainz 05" data-cache="6">Mainz 05</option><option value="VfL Bochum" data-cache="6">VfL Bochum</option><option value="Werder Bremen" data-cache="6">Werder Bremen</option><option value="Hertha BSC" data-cache="6">Hertha BSC</option><option value="Arminia Bielefeld" data-cache="5.5">Arminia Bielefeld</option></optgroup><optgroup label="Ligue 1"><option value="Paris Saint-Germain" data-cache="10">Paris Saint-Germain</option><option value="Olympique de Marseille" data-cache="8">Olympique de Marseille</option><option value="Lyon" data-cache="7.5">Lyon</option><option value="AS Monaco" data-cache="8">AS Monaco</option><option value="Lille OSC" data-cache="8">Lille OSC</option><option value="OGC Nice" data-cache="7">OGC Nice</option><option value="Stade Rennais" data-cache="7">Stade Rennais</option><option value="Montpellier HSC" data-cache="6.5">Montpellier HSC</option><option value="RC Lens" data-cache="7">RC Lens</option><option value="Reims" data-cache="6">Reims</option><option value="FC Nantes" data-cache="6">FC Nantes</option><option value="Angers" data-cache="5.5">Angers</option><option value="Dijon" data-cache="5.5">Dijon</option><option value="Metz" data-cache="5.5">Metz</option><option value="Brest" data-cache="6">Brest</option><option value="Lorient" data-cache="6">Lorient</option><option value="Nîmes" data-cache="5.5">Nîmes</option><option value="Saint-Étienne" data-cache="7">Saint-Étienne</option><option value="Troyes" data-cache="5.5">Troyes</option><option value="Auxerre" data-cache="6">Auxerre</option></optgroup></select></div>
+        <div><label for="playerAverage">Media del Jugador:</label><input type="number" id="playerAverage" min="40" max="99" step="1" placeholder="Ej. 84" required></div>
+        <div><label for="playerAge">Edad del Jugador:</label><input type="number" id="playerAge" min="15" max="50" placeholder="Ej. 21" required></div>
+        <div><label for="offerPrice">Precio Ofrecido (M):</label><input type="number" id="offerPrice" min="0" step="0.1" placeholder="Ej. 70" required></div>
+        <div>
+            <label for="ownCache">Caché de tu Club:</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <select id="ownCache" required style="flex-grow: 1;"><option value="" disabled selected>-- Selecciona (1-10) --</option></select>
+                <span id="showCacheInfoIcon" class="cache-info-icon" title="¿Cómo calcular el caché de mi club?">?</span>
+            </div>
+        </div>
+        <button type="submit" id="checkBtn">¿SERÁ VENTA?</button>
+    </form>
+  </div>
+
+  <!-- Modal Info Caché -->
+  <div id="cacheInfoModal" class="modal-overlay"> <div class="modal-content"> <span class="modal-close" title="Cerrar">×</span> <h2>Tabla de Caché Estimado por División</h2> <table class="modal-table"> <thead><tr><th>División / Nivel</th><th>Rango de Caché</th><th>Descripción / Tipo de Equipo Ejemplo</th></tr></thead> <tbody> <tr class="division-header"><td>Primera División</td><td>10.0 - 5.0</td><td><i>Élite mundial a lucha por permanencia</i></td></tr><tr><td class="sub-level">Top</td><td>10.0 - 9.0</td><td>Gigantes / Ganadores Liga / Aspirantes Champions</td></tr><tr><td class="sub-level">Alta</td><td>8.5 - 7.0</td><td>Equipos Europa League/Conference / Parte alta tabla</td></tr><tr><td class="sub-level">Media</td><td>6.5 - 5.5</td><td>Mitad de tabla estable / Consolidados en 1ª</td></tr><tr><td class="sub-level">Baja</td><td>5.0</td><td>Lucha descenso / Recién ascendidos débiles</td></tr><tr class="division-header"><td>Segunda División</td><td>5.5 - 2.5</td><td><i>Favoritos ascenso a lucha por no descender</i></td></tr><tr><td class="sub-level">Alta</td><td>5.5 - 4.5</td><td>Favoritos ascenso / Descendidos potentes / Top 2ª</td></tr><tr><td class="sub-level">Media</td><td>4.0 - 3.5</td><td>Aspirantes Playoff / Media tabla cómoda / Estables 2ª</td></tr><tr><td class="sub-level">Baja</td><td>3.0 - 2.5</td><td>Lucha por no descender a 3ª / Ascendidos débiles</td></tr><tr class="division-header"><td>Tercera División</td><td>2.5 - 1.0</td><td><i>Semi-pro / Amateur avanzado</i></td></tr><tr><td class="sub-level">Alta</td><td>2.5 - 2.0</td><td>Favoritos ascenso a 2ª / Filiales potentes / Dominantes 3ª</td></tr><tr><td class="sub-level">Media</td><td>1.5</td><td>Media tabla 3ª / Sin aspiraciones/peligro claro</td></tr><tr><td class="sub-level">Baja</td><td>1.0</td><td>Lucha permanencia 3ª / Nivel más bajo</td></tr></tbody> </table> </div> </div>
+
+  <!-- POPUP DE RESULTADO -->
+  <div id="resultPopupOverlay" class="result-popup-overlay">
+      <div class="result-popup-content">
+          <span id="popupCloseBtn" class="popup-close" title="Cerrar">×</span>
+          <p id="popupStatusText"></p>
+          <img id="popupImage" src="" alt="Resultado">
+          <p id="popupPriceText"></p>
+          <!-- Eliminado el small para la razón -->
+      </div>
+  </div>
+
+  <script>
+    // --- Generar opciones caché (1-10) ---
+    (function() {
+        const ownCacheSelect = document.getElementById('ownCache');
+        for (let i = 1; i <= 10; i++) { // Empieza en 1
+            const option = document.createElement('option');
+            option.value = i; option.textContent = i;
+            ownCacheSelect.appendChild(option);
+        }
+    })();
+
+    // --- Lógica Modal Info Caché ---
+    const cacheInfoModal = document.getElementById('cacheInfoModal');
+    const showCacheIcon = document.getElementById('showCacheInfoIcon');
+    const closeInfoModalBtn = cacheInfoModal.querySelector('.modal-close');
+    showCacheIcon.addEventListener('click', (event) => { event.preventDefault(); cacheInfoModal.classList.add('visible'); });
+    closeInfoModalBtn.addEventListener('click', () => { cacheInfoModal.classList.remove('visible'); });
+    cacheInfoModal.addEventListener('click', (event) => { if (event.target === cacheInfoModal) { cacheInfoModal.classList.remove('visible'); } });
+
+    // --- Lógica POPUP RESULTADO ---
+    const resultPopupOverlay = document.getElementById('resultPopupOverlay');
+    const popupCloseBtn = document.getElementById('popupCloseBtn');
+    const popupStatusText = document.getElementById('popupStatusText');
+    const popupImage = document.getElementById('popupImage');
+    const popupPriceText = document.getElementById('popupPriceText');
+    // Eliminada la referencia a popupReasonText
+    function showResultPopup() { resultPopupOverlay.classList.add('visible'); }
+    function hideResultPopup() { resultPopupOverlay.classList.remove('visible'); }
+    popupCloseBtn.addEventListener('click', hideResultPopup);
+    resultPopupOverlay.addEventListener('click', (event) => { if (event.target === resultPopupOverlay) { hideResultPopup(); } });
+
+    // --- Lógica Principal del Formulario ---
+    function getAgeMult(age) { if (age < 18) return 1.6; if (age <= 21) return 1.4; if (age <= 24) return 1.2; if (age <= 28) return 1.0; if (age <= 31) return 0.85; if (age <= 34) return 0.7; return 0.5; }
+    function calcBaseVal(average, age) { const ageMultiplier = getAgeMult(age); const baseCoefficient = 0.5; const growthFactor = 1.16; const referenceAverage = 60; let value = baseCoefficient * Math.pow(growthFactor, average - referenceAverage) * ageMultiplier; const roundedValue = Math.round(value * 10) / 10; return Math.max(0.1, roundedValue); }
+    function getCachePercentageAdjustment(cache) { const percentageMap = { 1: 0.05, 2: 0.039, 3: 0.028, 4: 0.017, 5: 0.006, 6: -0.006, 7: -0.017, 8: -0.028, 9: -0.039, 10: -0.05 }; return percentageMap[cache] || 0; }
+
+    // *** FUNCIÓN VALIDATEOFFER (CORREGIDA Y SIMPLIFICADA) ***
+    function validateOffer(playerAverage, playerAge, offerPrice, buyerCache, ownCache) {
+        const valorBase = calcBaseVal(playerAverage, playerAge);
+        const buyerAdjustmentPerc = getCachePercentageAdjustment(buyerCache);
+        const sellerAdjustmentPerc = getCachePercentageAdjustment(ownCache);
+
+        // Calcular la diferencia de porcentajes absoluta
+        const percentageDifferenceAbs = Math.abs(sellerAdjustmentPerc - buyerAdjustmentPerc);
+        // Calcular el monto base del ajuste
+        const adjustmentAmountBase = valorBase * percentageDifferenceAbs;
+
+        let minPriceFinal;
+        // Aplicar ajuste según quién tiene más caché
+        if (ownCache > buyerCache) {
+            // Tú tienes más caché: Precio sube (Sumar ajuste)
+            minPriceFinal = valorBase + adjustmentAmountBase;
+        } else if (buyerCache > ownCache) {
+            // Comprador tiene más caché: Precio baja (Restar ajuste)
+            minPriceFinal = valorBase - adjustmentAmountBase;
+        } else {
+            // Cachés iguales: Precio = Valor Base
+            minPriceFinal = valorBase;
+        }
+
+        minPriceFinal = Math.max(0.1, Math.round(minPriceFinal * 10) / 10); // Redondear y asegurar mínimo
+
+        // Condición de venta SIMPLIFICADA: solo depende del precio
+        const esVenta = (offerPrice >= minPriceFinal);
+
+        return { minPriceAdjusted: minPriceFinal, esVenta: esVenta }; // Devolver si es venta o no
+    }
+    // **********************************************************
+
+    function showSpin(show = true) { document.getElementById('spinner').classList.toggle('visible', show); }
+
+    document.getElementById('salesForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const btn = document.getElementById('checkBtn'); btn.disabled = true;
+        hideResultPopup(); // Ocultar popup anterior
+
+        // Obtener valores y validar
+        const clubSelect = document.getElementById('clubSelect');
+        const selectedOption = clubSelect.options[clubSelect.selectedIndex];
+        const buyerCache = parseFloat(selectedOption.getAttribute('data-cache')) || 0;
+        const buyerClubName = selectedOption.textContent;
+        const playerAverageInput = document.getElementById('playerAverage');
+        const playerAgeInput = document.getElementById('playerAge');
+        const offerPriceInput = document.getElementById('offerPrice');
+        const ownCacheSelect = document.getElementById('ownCache');
+        const playerAverage = parseFloat(playerAverageInput.value) || 0;
+        const playerAge = parseInt(playerAgeInput.value, 10);
+        const offerPrice = parseFloat(offerPriceInput.value) || 0;
+        const ownCache = parseFloat(ownCacheSelect.value);
+
+        let isValid = true; let alertMsg = '';
+        if (isNaN(playerAverage) || playerAverage < 40 || playerAverage > 99) { alertMsg = 'Media inválida (40-99).'; playerAverageInput.focus(); isValid = false; }
+        else if (isNaN(playerAge) || playerAge < 15 || playerAge > 50) { alertMsg = 'Edad inválida (15-50).'; playerAgeInput.focus(); isValid = false; }
+        else if (isNaN(offerPrice) || offerPrice < 0) { alertMsg = 'Precio ofrecido inválido (≥ 0).'; offerPriceInput.focus(); isValid = false; }
+        else if (isNaN(ownCache) || ownCacheSelect.value === "") { alertMsg = 'Selecciona Caché (1-10).'; ownCacheSelect.focus(); isValid = false; }
+        if (!isValid) { alert('Error: ' + alertMsg); btn.disabled = false; return; }
+
+        showSpin(true);
+        // *** Usar la función corregida y el nuevo nombre de variable esVenta ***
+        const { minPriceAdjusted, esVenta } = validateOffer(playerAverage, playerAge, offerPrice, buyerCache, ownCache);
+
+        setTimeout(function() {
+            showSpin(false);
+            // Eliminada limpieza/muestra del texto de razón
+            popupPriceText.textContent = `Oferta mínima necesaria = ${minPriceAdjusted.toFixed(1)}M`;
+            popupImage.className = ''; // Reset borde
+
+            // *** Lógica de resultado basada SÓLO en esVenta (precio) ***
+            if (esVenta) {
+                document.body.style.backgroundColor = "rgba(150, 0, 0, 0.5)";
+                popupStatusText.textContent = `🚨 TOCA VENDER a ${buyerClubName} 🚨`; // Mantenemos nombre comprador
+                popupStatusText.className = 'result-status sell';
+                popupImage.src = 'seva.gif'; popupImage.alt = 'Jugador se va';
+                popupImage.classList.add('sell-border');
+            } else {
+                document.body.style.backgroundColor = "rgba(0, 100, 0, 0.5)";
+                popupStatusText.textContent = `✅ SE QUEDA ✅`;
+                popupStatusText.className = 'result-status keep';
+                popupImage.src = 'sequeda.jpg'; popupImage.alt = 'Jugador se queda';
+                popupImage.classList.add('keep-border');
+                // Ya no mostramos la razón del caché o precio bajo aquí
+            }
+            showResultPopup();
+            btn.disabled = false;
+        }, 1500);
+    });
+  </script>
+</body>
+</html>
