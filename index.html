@@ -496,7 +496,7 @@
   </div>
 
   <script>
-    const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
+    const TEST_MODE_FILL_ALBUM = true; /*PRUEBA ALBUM LLENO*/
     const playersDB = [
       /*ID NUM COUNT 35*/
       /*RELIC*/
@@ -639,33 +639,34 @@ for (const rarityKey in CONFIG.rarities) {
     flipSound.play();
   }
 
-  const cardObj = card.cardData; //datos de la carta
+  const cardObj = card.cardData;
   const playerId = cardObj.playerData.id;
   const variantKey = `${cardObj.golden}_${cardObj.variant}`;
 
-  //primera vez que obtenemos a jugador
   if (!collection[playerId]) {
     collection[playerId] = {};
   }
-  //primera vez que obtenemos ESTA VARIANTE de jugador
   if (!collection[playerId][variantKey]) {
     collection[playerId][variantKey] = { count: 1, cardData: cardObj };
   } else {
-    //contador
     collection[playerId][variantKey].count++;
   }
 
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
-  card.classList.add("flipped");
+
+  card.classList.add("flipped", "is-animating"); 
+  
+  setTimeout(() => {
+    card.classList.remove("is-animating");
+  }, 700);
 
   if (isGolden) {
     counters[rarity][variant].golden++;
   } else {
     counters[rarity][variant].normal++;
   }
-  updateCounter();
 
   const cardSpacing = 140; 
   const spread = (CONFIG.packSize - 1) * cardSpacing / 2;
@@ -798,6 +799,10 @@ for (const rarityKey in CONFIG.rarities) {
 
     function addInteractiveTilt(cardElement) {
   cardElement.addEventListener("mousemove", (e) => {
+    if (cardElement.classList.contains('is-animating')) {
+      return;
+    }
+
     const rect = cardElement.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -807,14 +812,12 @@ for (const rarityKey in CONFIG.rarities) {
 
     cardElement.classList.add('tilting');
     cardElement.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.25)`;
-    
     cardElement.style.zIndex = '999'; 
   });
 
   cardElement.addEventListener("mouseleave", () => {
     cardElement.classList.remove('tilting');
     cardElement.style.transform = "rotateY(180deg)";
-
     cardElement.style.zIndex = '';
   });
 }
