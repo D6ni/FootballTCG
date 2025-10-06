@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Showcase - Efectos Reactivos Definitivos</title>
+  <style>
+    :root { --card-w: 260px; --card-h: 370px; }
+    @property --x { syntax: '<number>'; initial-value: 0; inherits: true; }
+    @property --y { syntax: '<number>'; initial-value: 0; inherits: true; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif; color: white; background: #111217;
+      display: grid; place-content: center; min-height: 100vh; text-align: center;
+      gap: 20px; padding: 40px;
+    }
+    
+    main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 40px;
+        justify-content: center;
+    }
+
+    h2 {
+        width: 100%;
+    }
+    
+    .card {
+      width: var(--card-w); height: var(--card-h);
+      perspective: 1200px; transform-style: preserve-3d;
+      cursor: pointer; user-select: none;
+      transition: --x 400ms ease, --y 400ms ease; 
+    }
+    .card:hover { transition-duration: 0ms; }
+
+    .card .front {
+      width: 100%; height: 100%; border-radius: 16px;
+      overflow: hidden; transform-style: preserve-3d;
+      transform: rotateX(calc(var(--x) * 1deg)) rotateY(calc(var(--y) * 1deg));
+      will-change: transform;
+    }
+    .player-image { width: 100%; height: 100%; object-fit: cover; }
+    .player-info { position: absolute; inset: 0; padding: 10px; text-shadow: 0 1px 3px #000; }
+    .player-rating { font-size: 24px; font-weight: 700; position: absolute; top: 10px; right: 15px; }
+    .player-position { font-size: 14px; background: #0004; padding: 3px 8px; border-radius: 6px; position: absolute; top: 40px, right: 15px; }
+
+
+    /* --- EFECTO FOIL PERFECCIONADO --- */
+    .variant-foil .front::before {
+      content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+      background-image: radial-gradient(ellipse at center, rgba(220, 230, 255, 0.6) 0%, rgba(220, 230, 255, 0.3) 20%, transparent 60%);
+      background-size: 200% 200%;
+      background-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%);
+      mix-blend-mode: color-dodge;
+      will-change: background-position;
+    }
+
+
+    /* --- NUEVO EFECTO HOLO (TÉCNICA DE MÁSCARA) --- */
+    .variant-holo .front::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 5; pointer-events: none;
+      
+      /* La capa es la propia textura holográfica */
+      background-image: url('images/holoeffect.png');
+      background-size: cover;
+      
+      /* Usamos una MÁSCARA para crear el "foco de luz" reactivo */
+      mask-image: radial-gradient(ellipse at center, white 25%, transparent 60%);
+      mask-size: 200% 200%;
+      mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%);
+      
+      mix-blend-mode: overlay;
+      
+      /* El efecto aparece al hacer hover */
+      opacity: 1;
+      transition: opacity 0.2s ease;
+      will-change: mask-position, opacity;
+    }
+    .card:hover .variant-holo .front::before {
+      opacity: 1;
+    }
+
+
+    /* --- EFECTO POLI REACTIVO --- */
+    .variant-poli .front {
+      filter: 
+        hue-rotate(calc(var(--y) * 10deg))
+        saturate(calc(1.5 + var(--x) * 0.1))
+        brightness(1.1);
+    }
+
+    /* --- EFECTO NEGATIVO REACTIVO --- */
+    .variant-negative .front {
+      filter: 
+        invert(1)
+        sepia(1)
+        saturate(calc(2 + abs(var(--y)) * 0.5))
+        brightness(calc(1.2 + var(--x) * 0.05))
+        hue-rotate(calc(var(--y) * 5deg));
+    }
+    
+  </style>
+</head>
+<body>
+
+  <h2>Efectos Especiales Reactivos al Ratón</h2>
+
+  <main>
+    <div class="card variant-foil">
+      <div class="front">
+        <img src="images/erlinghaaland.png" class="player-image" alt="Haaland" />
+        <div class="player-info">
+          <div class="player-rating">93</div>
+          <div class="player-position">DEL</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card variant-holo">
+      <div class="front">
+        <img src="images/judebellingham.png" class="player-image" alt="Bellingham" />
+        <div class="player-info">
+          <div class="player-rating">89</div>
+          <div class="player-position">MED</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card variant-poli">
+      <div class="front">
+        <img src="images/neymarjr.png" class="player-image" alt="Neymar" />
+        <div class="player-info">
+          <div class="player-rating">91</div>
+          <div class="player-position">DEL</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card variant-negative">
+      <div class="front">
+        <img src="images/carlespuyol.png" class="player-image" alt="Puyol" />
+        <div class="player-info">
+          <div class="player-rating">92</div>
+          <div class="player-position">DEF</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const cards = document.querySelectorAll('.card');
+
+    function handleMouseMove(e) {
+      const targetCard = e.currentTarget;
+      const bounds = targetCard.getBoundingClientRect();
+      const mouseX = e.clientX - bounds.left;
+      const mouseY = e.clientY - bounds.top;
+      const centerX = bounds.width / 2;
+      const centerY = bounds.height / 2;
+      
+      const posX = (mouseY - centerY) * -0.12; 
+      const posY = (mouseX - centerX) * 0.12;
+      
+      targetCard.style.setProperty('--x', posX);
+      targetCard.style.setProperty('--y', posY);
+    }
+
+    function handleMouseLeave(e) {
+      const targetCard = e.currentTarget;
+      targetCard.style.setProperty('--x', 0);
+      targetCard.style.setProperty('--y', 0);
+    }
+
+    cards.forEach(card => {
+      card.addEventListener('mousemove', handleMouseMove);
+      card.addEventListener('mouseleave', handleMouseLeave);
+    });
+  </script>
+
+</body>
+</html>
