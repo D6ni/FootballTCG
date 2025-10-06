@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Football TCG</title>
+  <link rel="icon" type="image/png" href="images/Logo.png">
+  <style>
+    :root{
+      --card-w: 130px;
+      --card-h: 185px;
+    }
+
+    @property --rotate {
+      syntax: "<angle>";
+      initial-value: 132deg;
+      inherits: false;
+    }
+
+    @keyframes spin {
+      0% {
+        --rotate: 0deg;
+      }
+      100% {
+        --rotate: 360deg;
+      }
+    }
+
+
+    body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  color: white;
+  padding: 20px;
+
+  /* --- Propiedades para la imagen de fondo --- */
+  background-color: #111217; /* Color de respaldo si la imagen no carga */
+  background-image: url('images/fondo.jpg'); /* Ruta a tu imagen */
+  background-size: cover; /* Asegura que la imagen cubra todo el espacio sin deformarse */
+  background-position: center center; /* Centra la imagen horizontal y verticalmente */
+  background-repeat: no-repeat; /* Evita que la imagen se repita si es pequeña */
+  background-attachment: fixed; /* Fija la imagen para que no se mueva al hacer scroll */
+}
+
+    .card.tilting {
+  transition: transform 0.05s ease-out; /* Transición rápida SÓLO al mover el ratón */
+}
+
+    h1 {
+      color: #eee;
+      text-shadow: 0 0 10px rgba(31, 255, 7, 0.3);
+    }
+    #cards {
+      position: relative;
+      width: calc(var(--card-w) + 20px);
+      height: var(--card-h);
+      margin: 50px auto calc(var(--card-h) + 60px) auto;
+      perspective: 1200px;
+    }
+    .card {
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 1000px;
+      border-radius: 12px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.7s ease, left 0.7s ease, top 0.7s ease, box-shadow 0.5s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .card .side {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      overflow: hidden;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .card .back {
+      background-image: url('images/card-back.png');
+      background-size: cover;
+      background-position: center;
+      background-color: #035700;
+      transform: rotateY(0deg);
+      font-size: 0; 
+    }
+    .card .front{ transform: rotateY(180deg); transition: filter 0.5s ease; }
+    .card.flipped{ transform: rotateY(180deg); }
+
+    .card.common { --rarity-color: #8a8a8a; }
+    .card.rare { --rarity-color: #4a7dff; }
+    .card.epic { --rarity-color: #a053de; }
+    .card.legendary { --rarity-color: #ffc84a; }
+    .card.relic { --rarity-color: #4af0e0; }
+
+    .card.common.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
+    .card.rare.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
+    .card.epic.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
+    .card.legendary.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
+    .card.relic.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
+
+    .card.common:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
+    .card.rare:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
+    .card.epic:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
+    .card.legendary:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
+    .card.relic:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
+    
+    .common .front { background: linear-gradient(170deg, #8a8a8a, #505050); }
+    .rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); }
+    .epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
+    .legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
+    .relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
+
+    .card.flipped:not(.golden) {
+      border: 2px solid var(--rarity-color);
+      box-sizing: border-box;
+    }
+
+    .card.golden.flipped {
+      position: relative;
+      padding: 2px;
+      border: none;
+    }
+
+    .card.golden.flipped::before {
+      content: "";
+      width: 104%;
+      height: 102%;
+      border-radius: 12px;
+      background-image: linear-gradient(
+        var(--rotate), #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C
+      );
+      position: absolute;
+      z-index: -1;
+      top: -1%;
+      left: -2%;
+      animation: spin 10s linear infinite;
+    }
+
+    /* Reduce la opacidad de la sombra oscura SOLO en cartas doradas para que el brillo se vea */
+.card.golden .front::after {
+  opacity: 0.5;
+}
+
+/* Aplica el efecto de brillo dorado usando el pseudo-elemento ::before del .front */
+.card.golden .front::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  z-index: 3; /* Se coloca sobre la imagen/sombra, pero bajo el texto y otras variantes */
+  pointer-events: none;
+
+  background-image: linear-gradient(
+    115deg,
+    transparent 0%,
+    #9F7D28 25%,
+    transparent 47%,
+    transparent 53%,
+    #D1B464 75%,
+    transparent 100%
+  );
+  background-size: 300% 300%;
+  
+  mix-blend-mode: color-dodge;
+  animation: smooth-gold-shine 10s ease-in-out infinite;
+}
+
+    @keyframes foil-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+    @keyframes smooth-gold-shine {
+  0% {
+    opacity: 0.6;
+    background-position: 0% 0%;
+    filter: brightness(0.6) contrast(1.2);
+  }
+  50% {
+    opacity: 0.75;
+    background-position: 100% 100%;
+    filter: brightness(0.75) contrast(1.5);
+  }
+  100% {
+    opacity: 0.6;
+    background-position: 0% 0%;
+    filter: brightness(0.6) contrast(1.2);
+  }
+}
+
+    @keyframes holo-shine {
+  0% { background-position: 100% 0%; }
+  50% { background-position: 0% 100%; }
+  100% { background-position: 100% 0%; }
+}
+
+    @keyframes hue-cycle {
+      from { filter: hue-rotate(0deg); }
+      to { filter: hue-rotate(360deg); }
+    }
+
+    @keyframes breathe-negative {
+      0%, 100% {
+        filter: sepia(100%) brightness(125%) contrast(150%) saturate(105%) invert(100%);
+      }
+      50% {
+        filter: sepia(100%) brightness(150%) contrast(180%) saturate(105%) invert(100%);
+      }
+    }
+
+    .variant-foil .front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 5;
+
+  background-image: linear-gradient(
+    80deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  
+  mix-blend-mode: overlay;
+  animation: foil-sweep 6s linear infinite;
+}
+
+.variant-foil .front::after {
+  background-image: 
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.03),
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    linear-gradient(
+      to top, 
+      rgba(0,0,0,0.8) 0%, 
+      transparent 40%, 
+      transparent 60%, 
+      rgba(0,0,0,0.8) 100%
+    );
+}
+
+    .variant-holo .front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 0, 150, 0.6),
+    rgba(0, 255, 255, 0.6),
+    rgba(255, 255, 0, 0.6),
+    rgba(255, 0, 150, 0.6)
+  );
+  background-size: 400% 400%;
+  mix-blend-mode: overlay;
+  animation: holo-shine 6s ease-in-out infinite;
+}
+
+    .variant-poli .front {
+      animation: hue-cycle 6s linear infinite;
+    }
+
+    .variant-negative .front {
+      animation: breathe-negative 4s ease-in-out infinite;
+    }
+    
+    .player-image {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
+      border-radius: 10px; z-index: 1; opacity: 0.7;
+    }
+    .front::after {
+      content: ''; position: absolute; inset: 0; border-radius: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.8) 100%);
+      z-index: 2;
+    }
+    
+    .card .front .player-info { z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex; flex-direction: column; position: relative; width: 100%; height: 100%; }
+    
+    .player-rating {
+      font-size: 18px; font-weight: 700; position: absolute;
+      top: 4px; right: 8px; text-align: right;
+    }
+    .player-position {
+      font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 4px; position: absolute;
+      top: 24px; right: 8px; text-align: right;
+    }
+    
+    .card-indicators { position: absolute; top: 8px; left: 8px; z-index: 4; display: flex; gap: 4px; font-size: 12px; text-shadow: 0 1px 1px #000; }
+    .indicator { background: rgba(0,0,0,0.5); padding: 1px 5px; border-radius: 4px; }
+
+    #counter {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espacio entre filas de rareza */
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.counter-row {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 cajas por fila */
+  gap: 8px;
+}
+    .count-box{ background:#1d1f24; border-radius:8px; padding:8px; font-size:14px; text-align:center; box-shadow:0 0 8px rgba(0,0,0,0.5); }
+    .count-box span { font-weight: bold; }
+    
+    button{ margin-top:20px; padding:12px 24px; border-radius:8px; border:none; background:#1f7; color:#022; font-weight:700; cursor:pointer; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
+    button:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(31, 255, 7, 0.4); }
+
+    .button-container { 
+      display: flex; 
+      justify-content: center; 
+      gap: 10px; 
+      margin-top:20px; 
+    }
+    #showcaseBtn { 
+      background-color: #3b68d1; 
+      color: #fff; 
+    }
+    #showcaseBtn:hover { 
+      box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
+    }
+
+    #showcase-overlay {
+      position: fixed; 
+      inset: 0; 
+      background: rgba(10, 12, 20, 0.95); 
+      z-index: 100;
+      display: none; 
+      align-items: center; 
+      justify-content: flex-start; 
+      flex-direction: column;
+      padding: 40px 20px; 
+      overflow-y: auto;
+    }
+    #showcase-overlay.visible { 
+      display: flex; 
+    }
+    #showcase-content {
+      width: 100%; 
+      max-width: 1600px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 20px;
+    }
+    .showcase-row {
+      background: rgba(255,255,255,0.03); 
+      border-radius: 12px; 
+      padding: 15px;
+    }
+    .showcase-row h2 {
+      margin: 0 0 15px 0; 
+      text-align: left; 
+      text-transform: capitalize;
+    }
+    .showcase-grid {
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 10px;
+    }
+    .showcase-card {
+      width: var(--card-w); 
+      height: var(--card-h);
+      position: relative; 
+      top: auto; 
+      left: auto;
+      cursor: default;
+    }
+    #closeShowcaseBtn {
+      position: fixed; 
+      top: 20px; 
+      right: 20px;
+      width: 40px; 
+      height: 40px; 
+      padding: 0; 
+      font-size: 20px;
+      background-color: #ff4d4d; 
+      color: #fff;
+    }
+    #closeShowcaseBtn:hover { 
+      box-shadow: 0 0 15px rgba(255, 77, 77, 0.6); 
+    }
+
+    .placeholder-name {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      font-weight: bold;
+    }
+
+    .showcase-grid {
+      display: flex;
+      flex-direction: column; /* Apilamos las entradas de jugadores verticalmente */
+      gap: 20px;
+    }
+
+    .player-album-entry {
+      background: rgba(0,0,0,0.15);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .player-album-entry h3 {
+      text-align: left;
+      margin: 0 0 10px 5px;
+      font-size: 16px;
+      color: #ccc;
+    }
+
+    .variants-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .album-placeholder {
+      background: rgba(0,0,0,0.2);
+      border: 2px dashed #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    
+   .placeholder-indicator {
+      font-weight: bold;
+      font-size: 14px;
+      width: 75px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .placeholder-indicator.golden-indicator {
+      color: #ffc84a;
+      border-color: #ffc84a;
+    }
+
+    .duplicate-counter {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 5px;
+      z-index: 4;
+      border: 1px solid #fff;
+      text-shadow: 0 0 3px #000;
+    }
+
+    h1 img {
+  height: 300px; 
+  width: auto;
+  filter: drop-shadow(0 0 10px rgba(0, 160, 250, 0.5));
+}
+
+  </style>
+</head>
+<body>
+  <audio id="flipSound" src="sounds/flip-sound.mp3" preload="auto"></audio>
+  <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
+  <div class="button-container">
+    <button onclick="openPack()">Open Pack</button>
+    <button id="showcaseBtn">My Album</button>
+  </div>
+  <div id="cards"></div>
+  <div id="showcase-overlay">
+    <div id="showcase-content"></div>
+    <button id="closeShowcaseBtn">X</button>
+  </div>
+
+  <script>
+    const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
+    const playersDB = [
+      /*ID NUM COUNT 35*/
+      /*RELIC*/
+      { id: 1, name: "Lionel Messi", position: "DEL", rating: 99, rarity: "relic", img: "images/lionelmessi.png" }, 
+      { id: 2, name: "Kylian Mbappé", position: "DEL", rating: 94, rarity: "relic", img: "images/kylianmbappe.png" }, 
+      { id: 3, name: "Erling Haaland", position: "DEL", rating: 93, rarity: "relic", img: "images/erlinghaaland.png" }, 
+      { id: 4, name: "Pelé", position: "DEL", rating: 95, rarity: "relic", img: "images/pele.png" }, 
+      { id: 5, name: "Johan Cruyff", position: "MED", rating: 94, rarity: "relic", img: "images/johancruyff.png" },
+      { id: 29, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png" },
+      { id: 30, name: "Oliver Khan", position: "POR", rating: 91, rarity: "relic", img: "images/oliverkhan.png" },
+      /*LEGENDARY*/
+      { id: 6, name: "Kevin De Bruyne", position: "MED", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png" }, 
+      { id: 7, name: "Neymar Jr.", position: "DEL", rating: 91, rarity: "legendary", img: "images/neymarjr.png" }, 
+      { id: 8, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png" }, 
+      { id: 9, name: "Hristo Stoichkov", position: "MED", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png" }, 
+      { id: 10, name: "Thibaut Courtois", position: "POR", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png" },
+      { id: 31, name: "Zlatan Ibrahimovic", position: "DEL", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png" },
+      { id: 32, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png" },
+      /*EPIC*/
+      { id: 11, name: "Jude Bellingham", position: "MED", rating: 89, rarity: "epic", img: "images/judebellingham.png" }, 
+      { id: 12, name: "Pedri", position: "MED", rating: 88, rarity: "epic", img: "images/pedri.png" }, 
+      { id: 13, name: "Lautaro Martínez", position: "DEL", rating: 88, rarity: "epic", img: "images/lautaromartinez.png" }, 
+      { id: 14, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png" }, 
+      { id: 15, name: "Gavi", position: "MED", rating: 86, rarity: "epic", img: "images/gavi.png" },
+      { id: 28, name: "Joan Garcia", position: "POR", rating: 86, rarity: "epic", img: "images/joangarcia.png" },
+      { id: 33, name: "Viktor Gyokeres", position: "DEL", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png" },
+      /*RARE*/
+      { id: 16, name: "Alexis Mac Allister", position: "MED", rating: 84, rarity: "rare", img: "images/alexismacallister.png" }, 
+      { id: 17, name: "Julián Álvarez", position: "DEL", rating: 84, rarity: "rare", img: "images/julianalvarez.png" }, 
+      { id: 18, name: "Takefusa Kubo", position: "DEL", rating: 83, rarity: "rare", img: "images/takefusakubo.png" }, 
+      { id: 19, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png" }, 
+      { id: 20, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png" },
+      { id: 26, name: "Unai Simón", position: "POR", rating: 81, rarity: "rare", img: "images/unaisimon.png" },
+      { id: 34, name: "Jackson Irvine", position: "MED", rating: 85, rarity: "rare", img: "images/jacksonirvine.png" },
+      /*COMMON*/
+      { id: 21, name: "Enzo Fernández", position: "MED", rating: 82, rarity: "common", img: "images/enzofernandez.png" }, 
+      { id: 22, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png" }, 
+      { id: 23, name: "Lucas Paquetá", position: "MED", rating: 81, rarity: "common", img: "images/lucaspaqueta.png" }, 
+      { id: 24, name: "Nico Williams", position: "DEL", rating: 80, rarity: "common", img: "images/nicowilliams.png" }, 
+      { id: 25, name: "André Onana", position: "POR", rating: 80, rarity: "common", img: "images/andreonana.png" },
+      { id: 27, name: "Ferran Jutgla", position: "DEL", rating: 79, rarity: "common", img: "images/ferranjutgla.png" }, 
+      { id: 35, name: "Josko Gvardiol", position: "DEL", rating: 83, rarity: "common", img: "images/joskogvardiol.png" },
+    ];
+
+    const CONFIG = {
+      packSize: 11,
+      rarities: { common: { p: 69.5, p_golden: 1.5, order: 1 }, rare: { p: 21.2, p_golden: 1.1, order: 2 }, epic: { p: 4.2,  p_golden: 0.6, order: 3 }, legendary: { p: 0.8,  p_golden: 0.3, order: 4 }, relic: { p: 0.5,  p_golden: 0.1, order: 5 }, },
+      variants: { none: {p:0}, foil: { p: 1.1 }, holo: { p: 0.6 }, poli: { p: 0.3 }, negative: { p: 0.1 }, },
+      goldenChance: 3.8,
+    };
+
+    function buildProbLists(config) {
+      const regularProbs = []; const goldenRaw = [];
+      for (const key in config.rarities) { regularProbs.push({ r: key, p: config.rarities[key].p }); goldenRaw.push({ r: key, p: config.rarities[key].p_golden }); }
+        const goldenTotalRaw = goldenRaw.reduce((s, x) => s + x.p, 0); const goldenScale = config.goldenChance / goldenTotalRaw;
+      const goldenProbs = goldenRaw.map(x => ({ r: x.r, p: x.p * goldenScale }));
+      const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
+      return { regularProbs, goldenProbs, variantProbs };
+    }
+    const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
+
+    let collection = {};
+
+    let counters = {};
+for (const rarityKey in CONFIG.rarities) {
+  counters[rarityKey] = {};
+  for (const variantKey in CONFIG.variants) {
+    counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
+  }
+}
+
+      function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function pickByProb(list) {
+      const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
+      let acc = 0;
+      for (const item of list) { acc += item.p; if (roll < acc) return item; }
+        return list[list.length - 1];
+    }
+
+    function generateCard() {
+      const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
+      const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+      const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
+      const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
+      const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+      const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+      return { playerData: player, rarity, golden: isGolden, variant };
+    }
+
+    function openPack() {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      let pack = [];
+      for (let i = 0; i < CONFIG.packSize; i++) { 
+        pack.push(generateCard());
+      }
+
+      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+      }
+      pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+
+      pack.forEach((cardObj, i) => {
+        const div = document.createElement("div");
+        const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+        div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+        div.style.zIndex = pack.length - i;
+        div.dataset.rarity = cardObj.rarity;
+        div.dataset.golden = cardObj.golden;
+        div.dataset.variant = cardObj.variant;
+        div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
+
+        const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+        
+        div.innerHTML = `
+          <div class="side front">
+            <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
+            ${indicatorsHTML}
+            <div class="player-info">
+              <div class="player-rating">${cardObj.playerData.rating}</div>
+              <div class="player-position">${cardObj.playerData.position}</div>
+            </div>
+          </div>
+          <div class="side back">⚽</div>
+        `;
+        div.cardData = cardObj;
+        div.onclick = () => flipCard(div, i);
+        container.appendChild(div);
+      });
+    }
+
+    function flipCard(card, index) {
+  if (card.classList.contains("flipped")) return;
+
+  const flipSound = document.getElementById('flipSound');
+  if (flipSound) {
+    flipSound.currentTime = 0;
+    flipSound.play();
+  }
+
+  const cardObj = card.cardData; //datos de la carta
+  const playerId = cardObj.playerData.id;
+  const variantKey = `${cardObj.golden}_${cardObj.variant}`;
+
+  //primera vez que obtenemos a jugador
+  if (!collection[playerId]) {
+    collection[playerId] = {};
+  }
+  //primera vez que obtenemos ESTA VARIANTE de jugador
+  if (!collection[playerId][variantKey]) {
+    collection[playerId][variantKey] = { count: 1, cardData: cardObj };
+  } else {
+    //contador
+    collection[playerId][variantKey].count++;
+  }
+
+  const rarity = card.dataset.rarity;
+  const isGolden = card.dataset.golden === "true";
+  const variant = card.dataset.variant;
+  card.classList.add("flipped");
+
+  if (isGolden) {
+    counters[rarity][variant].golden++;
+  } else {
+    counters[rarity][variant].normal++;
+  }
+  updateCounter();
+
+  const cardSpacing = 140; 
+  const spread = (CONFIG.packSize - 1) * cardSpacing / 2;
+  card.style.left = `${-spread + index * cardSpacing}px`;
+  card.style.top = `calc(var(--card-h) + 30px)`;
+  card.style.transform = 'rotateY(180deg)';
+
+  addInteractiveTilt(card);
+}
+
+    function updateCounter() {
+  for (const rarityKey in counters) {
+    for (const variantKey in counters[rarityKey]) {
+      const capRarity = capitalize(rarityKey);
+      const capVariant = capitalize(variantKey);
+      
+      const normalId = `c${capRarity}${capVariant}`;
+      const goldenId = `cg${capRarity}${capVariant}`;
+
+      if(document.getElementById(normalId)) {
+        document.getElementById(normalId).textContent = counters[rarityKey][variantKey].normal;
+      }
+      if(document.getElementById(goldenId)) {
+        document.getElementById(goldenId).textContent = counters[rarityKey][variantKey].golden;
+      }
+    }
+  }
+}
+
+    function createShowcase() {
+  const container = document.getElementById('showcase-content');
+  container.innerHTML = '';
+
+  const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
+  const variantKeys = Object.keys(CONFIG.variants);
+
+  // Iteramos por cada rareza para crear una fila en el álbum
+  raritiesInOrder.forEach(rarityKey => {
+    const playersInRarity = playersDB.filter(p => p.rarity === rarityKey);
+    if (playersInRarity.length === 0) return;
+
+    const row = document.createElement('div');
+    row.className = 'showcase-row';
+    row.innerHTML = `<h2>${rarityKey}</h2><div class="showcase-grid"></div>`;
+    const grid = row.querySelector('.showcase-grid');
+
+    // Para cada jugador en la DB, creamos una entrada completa en el álbum
+    playersInRarity.forEach(player => {
+      const playerEntry = document.createElement('div');
+      playerEntry.className = 'player-album-entry';
+      
+      const variantsGrid = document.createElement('div');
+      variantsGrid.className = 'variants-grid';
+
+      //hueco para CADA VARIANTE POSIBLE
+      for (const isGolden of [false, true]) {
+        for (const variantKey of variantKeys) {
+          const lookupKey = `${isGolden}_${variantKey}`;
+          const collectedVersion = collection[player.id]?.[lookupKey];
+
+          if (TEST_MODE_FILL_ALBUM || collectedVersion) {
+            // VARIANTE OBTENIDA
+            const cardData = collectedVersion 
+              ? collectedVersion.cardData 
+              : { playerData: player, rarity: player.rarity, golden: isGolden, variant: variantKey };
+            
+            const count = collectedVersion ? collectedVersion.count : 1;
+            const div = document.createElement("div");
+            const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
+            div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
+            
+            const indicatorsHTML = `<div class="card-indicators">${cardData.variant !== 'none' ? `<div class="indicator">${cardData.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+            
+            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+            // Usamos la variable 'count' que es segura, en lugar de 'collectedVersion.count'
+            const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
+
+            div.innerHTML = `
+              <div class="side front">
+                <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
+                ${indicatorsHTML}
+                ${duplicateCounterHTML}
+                <div class="player-info">
+                  <div class="player-rating">${cardData.playerData.rating}</div>
+                  <div class="player-position">${cardData.playerData.position}</div>
+                </div>
+              </div>`;
+            variantsGrid.appendChild(div);
+            addInteractiveTilt(div);
+          } else {
+            //HUECO VACÍO (sin cambios aquí)
+            const placeholder = document.createElement('div');
+            placeholder.className = 'card showcase-card album-placeholder';
+            
+            const phIndicators = `
+              <div class="placeholder-indicators">
+                ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
+                ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
+              </div>
+            `;
+            placeholder.innerHTML = phIndicators;
+            variantsGrid.appendChild(placeholder);
+          }
+        }
+      }
+      playerEntry.innerHTML = `<h3>${player.name}</h3>`;
+      playerEntry.appendChild(variantsGrid);
+      grid.appendChild(playerEntry);
+    });
+    container.appendChild(row);
+  });
+}
+
+    const showcaseOverlay = document.getElementById('showcase-overlay');
+    const showcaseBtn = document.getElementById('showcaseBtn');
+    const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
+
+    showcaseBtn.addEventListener('click', () => {
+      createShowcase();
+      showcaseOverlay.classList.add('visible');
+    });
+    closeShowcaseBtn.addEventListener('click', () => {
+      showcaseOverlay.classList.remove('visible');
+    });
+    showcaseOverlay.addEventListener('click', (e) => {
+      if (e.target === showcaseOverlay) {
+        showcaseOverlay.classList.remove('visible');
+      }
+    });
+
+    function addInteractiveTilt(cardElement) {
+  cardElement.addEventListener("mousemove", (e) => {
+    const rect = cardElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const rotateX = ((y / rect.height) - 0.5) * 40; 
+    const rotateY = ((x / rect.width) - 0.5) * 40; 
+
+    cardElement.classList.add('tilting');
+    cardElement.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.25)`;
+    
+    cardElement.style.zIndex = '999'; 
+  });
+
+  cardElement.addEventListener("mouseleave", () => {
+    cardElement.classList.remove('tilting');
+    cardElement.style.transform = "rotateY(180deg)";
+
+    cardElement.style.zIndex = '';
+  });
+}
+    
+    openPack();
+
+  </script>
+</body>
+</html>
