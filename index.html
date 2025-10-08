@@ -730,6 +730,7 @@ function flipCard(card, index) {
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
     flipSound.currentTime = 0;
+    flipSound.volume = 0.25;
     flipSound.play();
   }
 
@@ -971,3 +972,4 @@ openPack();
 </script>
 </body>
 </html>
+
