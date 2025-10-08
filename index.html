@@ -497,6 +497,7 @@ h1 img {
 </head>
 <body>
   <audio id="flipSound" src="sounds/flip-sound.mp3" preload="auto"></audio>
+  <audio id="buttonClickSound" src="sounds/button-click.mp3" preload="auto"></audio>
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
   <div class="button-container">
     <button onclick="openPack()">Open Pack</button>
@@ -583,12 +584,12 @@ h1 img {
     { id: 61, name: "Ollie Watkins", position: "DEL", rating: 81, rarity: "rare", img: "images/olliewatkins.png" },/*DONE*/
     { id: 62, name: "Mikel Merino", position: "MED", rating: 81, rarity: "rare", img: "images/mikelmerino.png" },/*DONE*/
     { id: 63, name: "Federico Chiesa", position: "DEL", rating: 81, rarity: "rare", img: "images/federicochiesa.png" },/*DONE*/
-    
+      
     /* COMMON (25 Jugadores) */
     { id: 64, name: "Enzo Fernández", position: "MED", rating: 82, rarity: "common", img: "images/enzofernandez.png" },/*DONE*/
     { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png" },/*DONE*/
     { id: 66, name: "Bruno Guimarães", position: "MED", rating: 82, rarity: "common", img: "images/brunoguimaraes.png" },/*DONE*/
-    { id: 67, name: "Dominik Szoboszlai", position: "MED", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png" },
+      { id: 67, name: "Dominik Szoboszlai", position: "MED", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png" },
     { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png" },/*DONE*/
     { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png" },/*DONE*/
     { id: 70, name: "Lucas Paquetá", position: "MED", rating: 81, rarity: "common", img: "images/lucaspaqueta.png" },/*DONE*/
@@ -951,6 +952,19 @@ function resetCollection() {
     location.reload();
   }
 }
+
+// Sonido botones
+const buttonSound = document.getElementById('buttonClickSound');
+const allButtons = document.querySelectorAll('button');
+
+allButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    if (buttonSound) {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+    }
+  });
+});
 
 openPack();
 
