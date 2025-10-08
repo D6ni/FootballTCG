@@ -744,6 +744,7 @@ h1 img {
     div.dataset.rarity = cardObj.rarity;
     div.dataset.golden = cardObj.golden;
     div.dataset.variant = cardObj.variant;
+    div.dataset.index = i;
     div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
 
     const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
@@ -1026,6 +1027,28 @@ allButtons.forEach(button => {
       buttonSound.play();
     }
   });
+});
+
+// --- NUEVO CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA ---
+document.addEventListener('keydown', (event) => {
+  // Solo reaccionamos si la tecla presionada es la barra espaciadora
+  // y si el álbum no está abierto.
+  if (event.code === 'Space' && !showcaseOverlay.classList.contains('visible')) {
+    // Prevenimos la acción por defecto de la barra espaciadora (hacer scroll)
+    event.preventDefault();
+
+    // Buscamos la primera carta en el mazo que todavía no haya sido girada
+    const nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
+
+    // Si encontramos una carta sin girar...
+    if (nextCardToFlip) {
+      // Obtenemos su índice, que guardamos previamente en el 'data-attribute'
+      const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
+      
+      // Llamamos a la misma función que usa el clic para girarla
+      flipCard(nextCardToFlip, cardIndex);
+    }
+  }
 });
 
 openPack();
