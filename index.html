@@ -10,6 +10,10 @@
       --card-h: 185px;
     }
 
+    @property --x { syntax: '<number>'; initial-value: 0; inherits: true; }
+    @property --y { syntax: '<number>'; initial-value: 0; inherits: true; }
+
+
     @property --rotate {
       syntax: "<angle>";
       initial-value: 132deg;
@@ -27,23 +31,23 @@
 
 
     body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-align: center;
-  color: white;
-  padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      color: white;
+      padding: 20px;
 
-  /* --- Propiedades para la imagen de fondo --- */
-  background-color: #111217; /* Color de respaldo si la imagen no carga */
-  background-image: url('images/fondo.jpg'); /* Ruta a tu imagen */
-  background-size: cover; /* Asegura que la imagen cubra todo el espacio sin deformarse */
-  background-position: center center; /* Centra la imagen horizontal y verticalmente */
-  background-repeat: no-repeat; /* Evita que la imagen se repita si es pequeña */
-  background-attachment: fixed; /* Fija la imagen para que no se mueva al hacer scroll */
-}
+      /* --- Propiedades para la imagen de fondo --- */
+      background-color: #111217; /* Color de respaldo si la imagen no carga */
+      background-image: url('images/fondo.jpg'); /* Ruta a tu imagen */
+      background-size: cover; /* Asegura que la imagen cubra todo el espacio sin deformarse */
+      background-position: center center; /* Centra la imagen horizontal y verticalmente */
+      background-repeat: no-repeat; /* Evita que la imagen se repita si es pequeña */
+      background-attachment: fixed; /* Fija la imagen para que no se mueva al hacer scroll */
+    }
 
     .card.tilting {
-  transition: transform 0.05s ease-out; /* Transición rápida SÓLO al mover el ratón */
-}
+      transition: transform 0.05s ease-out; /* Transición rápida SÓLO al mover el ratón */
+    }
 
     h1 {
       color: #eee;
@@ -92,7 +96,15 @@
       transform: rotateY(0deg);
       font-size: 0; 
     }
-    .card .front{ transform: rotateY(180deg); transition: filter 0.5s ease; }
+    .card .front {
+      transform:
+      rotateY(180deg)
+      rotateX(calc(var(--x) * 1deg))
+      rotateY(calc(var(--y) * 1deg));
+      transition: transform 0.2s ease;
+      will-change: transform;
+    }
+
     .card.flipped{ transform: rotateY(180deg); }
 
     .card.common { --rarity-color: #8a8a8a; }
@@ -101,85 +113,86 @@
     .card.legendary { --rarity-color: #ffc84a; }
     .card.relic { --rarity-color: #4af0e0; }
 
-    .card.common.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
-    .card.rare.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
-    .card.epic.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
-    .card.legendary.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
-    .card.relic.flipped { box-shadow: 0 0 7px 3px var(--rarity-color); }
-
-    .card.common:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
-    .card.rare:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
-    .card.epic:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
-    .card.legendary:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
-    .card.relic:not(.flipped) { box-shadow: 0 0 20px 5px var(--rarity-color); }
-    
-    .common .front { background: linear-gradient(170deg, #8a8a8a, #505050); }
-    .rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); }
-    .epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
-    .legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
-    .relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
-
-    .card.flipped:not(.golden) {
-      border: 2px solid var(--rarity-color);
-      box-sizing: border-box;
+    /* 1. Sombra para la carta VOLTEADA (en la cara frontal) */
+    .card.flipped .front {
+      box-shadow: 0 0 7px 3px var(--rarity-color);
     }
 
-    .card.golden.flipped {
-      position: relative;
-      padding: 2px;
-      border: none;
-    }
-
-    .card.golden.flipped::before {
-      content: "";
-      width: 104%;
-      height: 102%;
-      border-radius: 12px;
-      background-image: linear-gradient(
-        var(--rotate), #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C
-      );
-      position: absolute;
-      z-index: -1;
-      top: -1%;
-      left: -2%;
-      animation: spin 10s linear infinite;
-    }
-
-    /* Reduce la opacidad de la sombra oscura SOLO en cartas doradas para que el brillo se vea */
-.card.golden .front::after {
-  opacity: 0.5;
+/* 2. Sombra para la carta SIN VOLTEAR (en el contenedor) */
+.card:not(.flipped) {
+  box-shadow: 0 0 20px 5px var(--rarity-color);
 }
 
-/* Aplica el efecto de brillo dorado usando el pseudo-elemento ::before del .front */
+.common .front { background: linear-gradient(170deg, #8a8a8a, #505050); }
+.rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); }
+.epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
+.legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
+.relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
+
+/* --- EFECTO DORADO METÁLICO REACTIVO --- */
+.card.golden.flipped {
+  position: relative;
+  border: none;
+  overflow: hidden;
+  box-shadow: 0 0 15px 4px rgba(255, 215, 100, 0.4);
+  transition: transform 0.05s ease-out, box-shadow 0.3s ease;
+}
+
+/* Capa metálica base */
+.card.golden.flipped::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 14px;
+  background-image:
+  radial-gradient(
+    circle at calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%),
+    rgba(255, 250, 220, 0.9) 0%,
+    rgba(255, 220, 130, 0.7) 25%,
+    rgba(180, 120, 20, 0.5) 60%,
+    rgba(80, 50, 10, 0.25) 100%
+  ),
+  url('images/gold-texture.png');
+  background-size: 100% 100%, cover;
+  background-position: calc(50% + var(--y) * 1%) calc(50% + var(--x) * 1%);
+  mix-blend-mode: color-dodge;
+  filter: brightness(1.1) contrast(1.3);
+  animation: gold-metal-shift 12s ease-in-out infinite alternate;
+  will-change: background-position, filter;
+}
+
+/* Luz especular interior reactiva */
 .card.golden .front::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 12px;
-  z-index: 3; /* Se coloca sobre la imagen/sombra, pero bajo el texto y otras variantes */
+  z-index: 3;
   pointer-events: none;
-
-  background-image: linear-gradient(
-    115deg,
-    transparent 0%,
-    #9F7D28 25%,
-    transparent 47%,
-    transparent 53%,
-    #D1B464 75%,
-    transparent 100%
+  background: radial-gradient(
+    circle at calc(50% + var(--y) * 15%) calc(50% + var(--x) * 15%),
+    rgba(255, 250, 210, 0.35),
+    rgba(255, 210, 100, 0.15) 30%,
+    transparent 80%
   );
-  background-size: 300% 300%;
-  
-  mix-blend-mode: color-dodge;
-  animation: smooth-gold-shine 10s ease-in-out infinite;
+  mix-blend-mode: screen;
+  will-change: background-position;
 }
 
-    @keyframes foil-sweep {
+@keyframes gold-metal-shift {
+  0% { filter: brightness(1.05) contrast(1.1); }
+  50% { filter: brightness(1.25) contrast(1.3); }
+  100% { filter: brightness(1.05) contrast(1.1); }
+}
+
+
+@keyframes foil-sweep {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-    @keyframes smooth-gold-shine {
+@keyframes smooth-gold-shine {
   0% {
     opacity: 0.6;
     background-position: 0% 0%;
@@ -197,116 +210,108 @@
   }
 }
 
-    @keyframes holo-shine {
+@keyframes holo-shine {
   0% { background-position: 100% 0%; }
   50% { background-position: 0% 100%; }
   100% { background-position: 100% 0%; }
 }
 
-    @keyframes hue-cycle {
-      from { filter: hue-rotate(0deg); }
-      to { filter: hue-rotate(360deg); }
-    }
+@keyframes hue-cycle {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(360deg); }
+}
 
-    @keyframes breathe-negative {
-      0%, 100% {
-        filter: sepia(100%) brightness(125%) contrast(150%) saturate(105%) invert(100%);
-      }
-      50% {
-        filter: sepia(100%) brightness(150%) contrast(180%) saturate(105%) invert(100%);
-      }
-    }
+@keyframes breathe-negative {
+  0%, 100% {
+    filter: sepia(100%) brightness(125%) contrast(150%) saturate(105%) invert(100%);
+  }
+  50% {
+    filter: sepia(100%) brightness(150%) contrast(180%) saturate(105%) invert(100%);
+  }
+}
 
-    .variant-foil .front::before {
+/* --- EFECTO FOIL REACTIVO (CORREGIDO) --- */
+.variant-foil .front::before {
+  content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  background-image: radial-gradient(ellipse at center,
+    rgba(220, 230, 255, 0.33) 0%,
+    rgba(220, 230, 255, 0.15) 20%,
+    transparent 60%);
+  background-size: 200% 200%;
+  background-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%);
+  mix-blend-mode: color-dodge;
+  opacity: 0; /* Por defecto invisible */
+  transition: opacity 0.4s ease-out;
+  will-change: background-position, opacity;
+}
+.card.variant-foil.tilting .front::before {
+  opacity: 1; /* Hacemos visible el efecto al interactuar */
+}
+
+/* --- EFECTO HOLO REACTIVO --- */
+.variant-holo .front::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 5;
-
-  background-image: linear-gradient(
-    80deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 60%
-  );
-  background-size: 200% 100%;
-  
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  background-image: url('images/holoeffect.png');
+  background-size: cover;
+  mask-image: radial-gradient(ellipse at center, white 25%, transparent 60%);
+  mask-size: 200% 200%;
+  mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%);
   mix-blend-mode: overlay;
-  animation: foil-sweep 6s linear infinite;
+  opacity: 1;
+  will-change: mask-position, opacity;
 }
 
-.variant-foil .front::after {
-  background-image: 
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.03),
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    linear-gradient(
-      to top, 
-      rgba(0,0,0,0.8) 0%, 
-      transparent 40%, 
-      transparent 60%, 
-      rgba(0,0,0,0.8) 100%
-    );
+/* --- EFECTO POLI REACTIVO --- */
+.variant-poli .front {
+  filter: hue-rotate(calc(var(--y) * 10deg))
+  saturate(calc(1.5 + var(--x) * 0.1))
+  brightness(1.1);
 }
 
-    .variant-holo .front::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
-  z-index: 5;
-  background: linear-gradient(
-    115deg,
-    rgba(255, 0, 150, 0.6),
-    rgba(0, 255, 255, 0.6),
-    rgba(255, 255, 0, 0.6),
-    rgba(255, 0, 150, 0.6)
-  );
-  background-size: 400% 400%;
-  mix-blend-mode: overlay;
-  animation: holo-shine 6s ease-in-out infinite;
+/* --- EFECTO NEGATIVO REACTIVO (CORREGIDO Y SUTIL) --- */
+
+/* 1. Define el estado BASE (estático) de la carta negativa */
+.variant-negative .front {
+  filter: invert(1) saturate(2) brightness(1);
+  transition: filter 0.4s ease-out;
+  will-change: filter;
 }
 
-    .variant-poli .front {
-      animation: hue-cycle 6s linear infinite;
-    }
+/* 2. Define el estado ACTIVO (cuando el ratón está encima) */
+.card.variant-negative.tilting .front {
+  filter: invert(1)
+  saturate(calc(2 + abs(var(--y)) * 0.5))
+  /* AQUÍ ESTÁ EL CAMBIO: El brillo ahora es mucho más sutil */
+  brightness(calc(1 + var(--x) * 0.02)) 
+  hue-rotate(calc(var(--y) * 5deg));
+}
 
-    .variant-negative .front {
-      animation: breathe-negative 4s ease-in-out infinite;
-    }
-    
-    .player-image {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
-      border-radius: 10px; z-index: 1; opacity: 0.7;
-    }
-    .front::after {
-      content: ''; position: absolute; inset: 0; border-radius: 10px;
-      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.8) 100%);
-      z-index: 2;
-    }
-    
-    .card .front .player-info { z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex; flex-direction: column; position: relative; width: 100%; height: 100%; }
-    
-    .player-rating {
-      font-size: 18px; font-weight: 700; position: absolute;
-      top: 4px; right: 8px; text-align: right;
-    }
-    .player-position {
-      font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 4px; position: absolute;
-      top: 24px; right: 8px; text-align: right;
-    }
-    
-    .card-indicators { position: absolute; top: 8px; left: 8px; z-index: 4; display: flex; gap: 4px; font-size: 12px; text-shadow: 0 1px 1px #000; }
-    .indicator { background: rgba(0,0,0,0.5); padding: 1px 5px; border-radius: 4px; }
+.player-image {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
+  border-radius: 10px; z-index: 1; opacity: 0.85;
+}
+.front::after {
+  content: ''; position: absolute; inset: 0; border-radius: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.15) 100%);
+  z-index: 2;
+}
 
-    #counter {
+.card .front .player-info { z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex; flex-direction: column; position: relative; width: 100%; height: 100%; }
+
+.player-rating {
+  font-size: 18px; font-weight: 700; position: absolute;
+  top: 4px; right: 8px; text-align: right;
+}
+.player-position {
+  font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 4px; position: absolute;
+  top: 24px; right: 8px; text-align: right;
+}
+
+.card-indicators { position: absolute; top: 8px; left: 8px; z-index: 4; display: flex; gap: 4px; font-size: 12px; text-shadow: 0 1px 1px #000; }
+.indicator { background: rgba(0,0,0,0.5); padding: 1px 5px; border-radius: 4px; }
+
+#counter {
   margin-top: 40px;
   display: flex;
   flex-direction: column;
@@ -320,167 +325,175 @@
   grid-template-columns: repeat(10, 1fr); /* 10 cajas por fila */
   gap: 8px;
 }
-    .count-box{ background:#1d1f24; border-radius:8px; padding:8px; font-size:14px; text-align:center; box-shadow:0 0 8px rgba(0,0,0,0.5); }
-    .count-box span { font-weight: bold; }
-    
-    button{ margin-top:20px; padding:12px 24px; border-radius:8px; border:none; background:#1f7; color:#022; font-weight:700; cursor:pointer; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
-    button:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(31, 255, 7, 0.4); }
+.count-box{ background:#1d1f24; border-radius:8px; padding:8px; font-size:14px; text-align:center; box-shadow:0 0 8px rgba(0,0,0,0.5); }
+.count-box span { font-weight: bold; }
 
-    .button-container { 
-      display: flex; 
-      justify-content: center; 
-      gap: 10px; 
-      margin-top:20px; 
-    }
-    #showcaseBtn { 
-      background-color: #3b68d1; 
-      color: #fff; 
-    }
-    #showcaseBtn:hover { 
-      box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
-    }
+button{ margin-top:20px; padding:12px 24px; border-radius:8px; border:none; background:#1f7; color:#022; font-weight:700; cursor:pointer; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
+button:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(31, 255, 7, 0.4); }
 
-    #showcase-overlay {
-      position: fixed; 
-      inset: 0; 
-      background: rgba(10, 12, 20, 0.95); 
-      z-index: 100;
-      display: none; 
-      align-items: center; 
-      justify-content: flex-start; 
-      flex-direction: column;
-      padding: 40px 20px; 
-      overflow-y: auto;
-    }
-    #showcase-overlay.visible { 
-      display: flex; 
-    }
-    #showcase-content {
-      width: 100%; 
-      max-width: 1600px; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 20px;
-    }
-    .showcase-row {
-      background: rgba(255,255,255,0.03); 
-      border-radius: 12px; 
-      padding: 15px;
-    }
-    .showcase-row h2 {
-      margin: 0 0 15px 0; 
-      text-align: left; 
-      text-transform: capitalize;
-    }
-    .showcase-grid {
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 10px;
-    }
-    .showcase-card {
-      width: var(--card-w); 
-      height: var(--card-h);
-      position: relative; 
-      top: auto; 
-      left: auto;
-      cursor: default;
-    }
-    #closeShowcaseBtn {
-      position: fixed; 
-      top: 20px; 
-      right: 20px;
-      width: 40px; 
-      height: 40px; 
-      padding: 0; 
-      font-size: 20px;
-      background-color: #ff4d4d; 
-      color: #fff;
-    }
-    #closeShowcaseBtn:hover { 
-      box-shadow: 0 0 15px rgba(255, 77, 77, 0.6); 
-    }
+.button-container { 
+  display: flex; 
+  justify-content: center; 
+  gap: 10px; 
+  margin-top:20px; 
+}
+#showcaseBtn { 
+  background-color: #3b68d1; 
+  color: #fff; 
+}
+#showcaseBtn:hover { 
+  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
+}
 
-    .placeholder-name {
-      position: absolute;
-      bottom: 10px;
-      left: 0;
-      right: 0;
-      font-weight: bold;
-    }
+#showcase-overlay {
+  position: fixed; 
+  inset: 0; 
+  background: rgba(10, 12, 20, 0.95); 
+  z-index: 100;
+  display: none; 
+  align-items: center; 
+  justify-content: flex-start; 
+  flex-direction: column;
+  padding: 40px 20px; 
+  overflow-y: auto;
+}
+#showcase-overlay.visible { 
+  display: flex; 
+}
+#showcase-content {
+  width: 100%; 
+  max-width: 1600px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px;
+}
+.showcase-row {
+  background: rgba(255,255,255,0.03); 
+  border-radius: 12px; 
+  padding: 15px;
+}
+.showcase-row h2 {
+  margin: 0 0 15px 0; 
+  text-align: left; 
+  text-transform: capitalize;
+}
+.showcase-grid {
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px;
+}
+.showcase-card {
+  width: var(--card-w); 
+  height: var(--card-h);
+  position: relative; 
+  top: auto; 
+  left: auto;
+  cursor: default;
+}
+#closeShowcaseBtn {
+  position: fixed; 
+  top: 20px; 
+  right: 20px;
+  width: 40px; 
+  height: 40px; 
+  padding: 0; 
+  font-size: 20px;
+  background-color: #ff4d4d; 
+  color: #fff;
+}
+#closeShowcaseBtn:hover { 
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6); 
+}
 
-    .showcase-grid {
-      display: flex;
-      flex-direction: column; /* Apilamos las entradas de jugadores verticalmente */
-      gap: 20px;
-    }
+.placeholder-name {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  font-weight: bold;
+}
 
-    .player-album-entry {
-      background: rgba(0,0,0,0.15);
-      border-radius: 8px;
-      padding: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .player-album-entry h3 {
-      text-align: left;
-      margin: 0 0 10px 5px;
-      font-size: 16px;
-      color: #ccc;
-    }
+.showcase-grid {
+  display: flex;
+  flex-direction: column; /* Apilamos las entradas de jugadores verticalmente */
+  gap: 20px;
+}
 
-    .variants-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
+.player-album-entry {
+  background: rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.player-album-entry h3 {
+  text-align: left;
+  margin: 0 0 10px 5px;
+  font-size: 16px;
+  color: #ccc;
+}
 
-    .album-placeholder {
-      background: rgba(0,0,0,0.2);
-      border: 2px dashed #444;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #777;
-      box-sizing: border-box;
-      position: relative;
-    }
+.variants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-    
-   .placeholder-indicator {
-      font-weight: bold;
-      font-size: 14px;
-      width: 75px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .placeholder-indicator.golden-indicator {
-      color: #ffc84a;
-      border-color: #ffc84a;
-    }
+.album-placeholder {
+  background: rgba(0,0,0,0.2);
+  border: 2px dashed #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  box-sizing: border-box;
+  position: relative;
+}
 
-    .duplicate-counter {
-      position: absolute;
-      bottom: 5px;
-      right: 5px;
-      background: rgba(0, 0, 0, 0.8);
-      color: #fff;
-      font-weight: bold;
-      font-size: 14px;
-      padding: 2px 6px;
-      border-radius: 5px;
-      z-index: 4;
-      border: 1px solid #fff;
-      text-shadow: 0 0 3px #000;
-    }
 
-    h1 img {
+.placeholder-indicator {
+  font-weight: bold;
+  font-size: 14px;
+  width: 75px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.placeholder-indicator.golden-indicator {
+  color: #ffc84a;
+  border-color: #ffc84a;
+}
+
+.duplicate-counter {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  z-index: 4;
+  border: 1px solid #fff;
+  text-shadow: 0 0 3px #000;
+}
+
+button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+h1 img {
   height: 300px; 
   width: auto;
   filter: drop-shadow(0 0 10px rgba(0, 160, 250, 0.5));
 }
 
-  </style>
+</style>
 </head>
 <body>
   <audio id="flipSound" src="sounds/flip-sound.mp3" preload="auto"></audio>
@@ -488,6 +501,7 @@
   <div class="button-container">
     <button onclick="openPack()">Open Pack</button>
     <button id="showcaseBtn">My Album</button>
+    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">Reset Progress</button>
   </div>
   <div id="cards"></div>
   <div id="showcase-overlay">
@@ -497,48 +511,105 @@
 
   <script>
     const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
+    const ALLOW_GOLDEN_CARDS = false; /*DESHABILITAR DORADAS*/
     const playersDB = [
-      /*ID NUM COUNT 35*/
-      /*RELIC*/
-      { id: 1, name: "Lionel Messi", position: "DEL", rating: 99, rarity: "relic", img: "images/lionelmessi.png" }, 
-      { id: 2, name: "Kylian Mbappé", position: "DEL", rating: 94, rarity: "relic", img: "images/kylianmbappe.png" }, 
-      { id: 3, name: "Erling Haaland", position: "DEL", rating: 93, rarity: "relic", img: "images/erlinghaaland.png" }, 
-      { id: 4, name: "Pelé", position: "DEL", rating: 95, rarity: "relic", img: "images/pele.png" }, 
-      { id: 5, name: "Johan Cruyff", position: "MED", rating: 94, rarity: "relic", img: "images/johancruyff.png" },
-      { id: 29, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png" },
-      { id: 30, name: "Oliver Khan", position: "POR", rating: 91, rarity: "relic", img: "images/oliverkhan.png" },
-      /*LEGENDARY*/
-      { id: 6, name: "Kevin De Bruyne", position: "MED", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png" }, 
-      { id: 7, name: "Neymar Jr.", position: "DEL", rating: 91, rarity: "legendary", img: "images/neymarjr.png" }, 
-      { id: 8, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png" }, 
-      { id: 9, name: "Hristo Stoichkov", position: "MED", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png" }, 
-      { id: 10, name: "Thibaut Courtois", position: "POR", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png" },
-      { id: 31, name: "Zlatan Ibrahimovic", position: "DEL", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png" },
-      { id: 32, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png" },
-      /*EPIC*/
-      { id: 11, name: "Jude Bellingham", position: "MED", rating: 89, rarity: "epic", img: "images/judebellingham.png" }, 
-      { id: 12, name: "Pedri", position: "MED", rating: 88, rarity: "epic", img: "images/pedri.png" }, 
-      { id: 13, name: "Lautaro Martínez", position: "DEL", rating: 88, rarity: "epic", img: "images/lautaromartinez.png" }, 
-      { id: 14, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png" }, 
-      { id: 15, name: "Gavi", position: "MED", rating: 86, rarity: "epic", img: "images/gavi.png" },
-      { id: 28, name: "Joan Garcia", position: "POR", rating: 86, rarity: "epic", img: "images/joangarcia.png" },
-      { id: 33, name: "Viktor Gyokeres", position: "DEL", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png" },
-      /*RARE*/
-      { id: 16, name: "Alexis Mac Allister", position: "MED", rating: 84, rarity: "rare", img: "images/alexismacallister.png" }, 
-      { id: 17, name: "Julián Álvarez", position: "DEL", rating: 84, rarity: "rare", img: "images/julianalvarez.png" }, 
-      { id: 18, name: "Takefusa Kubo", position: "DEL", rating: 83, rarity: "rare", img: "images/takefusakubo.png" }, 
-      { id: 19, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png" }, 
-      { id: 20, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png" },
-      { id: 26, name: "Unai Simón", position: "POR", rating: 81, rarity: "rare", img: "images/unaisimon.png" },
-      { id: 34, name: "Jackson Irvine", position: "MED", rating: 85, rarity: "rare", img: "images/jacksonirvine.png" },
-      /*COMMON*/
-      { id: 21, name: "Enzo Fernández", position: "MED", rating: 82, rarity: "common", img: "images/enzofernandez.png" }, 
-      { id: 22, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png" }, 
-      { id: 23, name: "Lucas Paquetá", position: "MED", rating: 81, rarity: "common", img: "images/lucaspaqueta.png" }, 
-      { id: 24, name: "Nico Williams", position: "DEL", rating: 80, rarity: "common", img: "images/nicowilliams.png" }, 
-      { id: 25, name: "André Onana", position: "POR", rating: 80, rarity: "common", img: "images/andreonana.png" },
-      { id: 27, name: "Ferran Jutgla", position: "DEL", rating: 79, rarity: "common", img: "images/ferranjutgla.png" }, 
-      { id: 35, name: "Josko Gvardiol", position: "DEL", rating: 83, rarity: "common", img: "images/joskogvardiol.png" },
+    /* RELIC (12 Jugadores) */
+    { id: 1, name: "Lionel Messi", position: "DEL", rating: 99, rarity: "relic", img: "images/lionelmessi.png" },/*DONE*/
+    { id: 2, name: "Pelé", position: "DEL", rating: 98, rarity: "relic", img: "images/pele.png" },/*DONE*/
+    { id: 3, name: "Diego Maradona", position: "MED", rating: 97, rarity: "relic", img: "images/diegomaradona.png" },/*DONE*/
+    { id: 4, name: "Cristiano Ronaldo", position: "DEL", rating: 95, rarity: "relic", img: "images/cristianoronaldo.png" },/*DONE*/
+    { id: 5, name: "Johan Cruyff", position: "MED", rating: 97, rarity: "relic", img: "images/johancruyff.png" },/*DONE*/
+    { id: 6, name: "Zinedine Zidane", position: "MED", rating: 95, rarity: "relic", img: "images/zinedinezidane.png" },/*DONE*/
+    { id: 7, name: "Ronaldo Nazário", position: "DEL", rating: 95, rarity: "relic", img: "images/ronaldonazario.png" },/*DONE*/
+    { id: 8, name: "Ronaldinho", position: "MED", rating: 96, rarity: "relic", img: "images/ronaldinho.png" },/*DONE*/
+    { id: 9, name: "Andrés Iniesta", position: "MED", rating: 95, rarity: "relic", img: "images/andresiniesta.png" },/*DONE*/
+    { id: 10, name: "Xavi Hernández", position: "MED", rating: 96, rarity: "relic", img: "images/xavihernandez.png" },/*DONE*/
+    { id: 11, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png" },/*DONE*/
+    { id: 12, name: "Oliver Khan", position: "POR", rating: 92, rarity: "relic", img: "images/oliverkhan.png" },/*DONE*/
+
+    /* LEGENDARY (16 Jugadores) */
+    { id: 13, name: "Kylian Mbappé", position: "DEL", rating: 94, rarity: "legendary", img: "images/kylianmbappe.png" },/*DONE*/
+    { id: 14, name: "Erling Haaland", position: "DEL", rating: 93, rarity: "legendary", img: "images/erlinghaaland.png" },/*DONE*/
+    { id: 15, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png" },/*DONE*/
+    { id: 16, name: "Thierry Henry", position: "DEL", rating: 94, rarity: "legendary", img: "images/thierryhenry.png" },/*DONE*/
+    { id: 17, name: "Kevin De Bruyne", position: "MED", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png" },/*DONE*/
+    { id: 18, name: "Hristo Stoichkov", position: "DEL", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png" },/*DONE*/
+    { id: 19, name: "Sergio Busquets", position: "MED", rating: 93, rarity: "legendary", img: "images/sergiobusquets.png" },/*DONE*/
+    { id: 20, name: "Zlatan Ibrahimovic", position: "DEL", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png" },/*DONE*/
+    { id: 21, name: "Neymar Jr.", position: "DEL", rating: 93, rarity: "legendary", img: "images/neymarjr.png" },/*DONE*/
+    { id: 22, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png" },/*DONE*/
+    { id: 23, name: "Gennaro Gattuso", position: "MED", rating: 91, rarity: "legendary", img: "images/gennarogattuso.png" },/*DONE*/
+    { id: 24, name: "Robert Lewandowski", position: "DEL", rating: 91, rarity: "legendary", img: "images/robertlewandowski.png" },/*DONE*/
+    { id: 25, name: "Sergio Ramos", position: "DEF", rating: 90, rarity: "legendary", img: "images/sergioramos.png" },/*DONE*/
+    { id: 26, name: "Thibaut Courtois", position: "POR", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png" },/*DONE*/
+    { id: 27, name: "Mohamed Salah", position: "DEL", rating: 91, rarity: "legendary", img: "images/mohamedsalah.png" },/*DONE*/
+    { id: 28, name: "Paolo Maldini", position: "DEF", rating: 94, rarity: "legendary", img: "images/paolomaldini.png" },/*DONE*/
+    { id: 54, name: "Lamine Yamal", position: "DEL", rating: 83, rarity: "legendary", img: "images/lamineyamal.png" },/*DONE*/
+
+    /* EPIC (17 Jugadores) */
+    { id: 29, name: "Jude Bellingham", position: "MED", rating: 88, rarity: "epic", img: "images/judebellingham.png" },/*DONE*/
+    { id: 30, name: "Harry Kane", position: "DEL", rating: 90, rarity: "epic", img: "images/harrykane.png" },/*DONE*/
+    { id: 31, name: "Rodri", position: "MED", rating: 89, rarity: "epic", img: "images/rodri.png" },/*DONE*/
+    { id: 32, name: "Alisson Becker", position: "POR", rating: 89, rarity: "epic", img: "images/alissonbecker.png" },/*DONE*/
+    { id: 33, name: "Pedri", position: "MED", rating: 90, rarity: "epic", img: "images/pedri.png" },/*DONE*/
+    { id: 34, name: "Lautaro Martínez", position: "DEL", rating: 88, rarity: "epic", img: "images/lautaromartinez.png" },/*DONE*/
+    { id: 35, name: "Bukayo Saka", position: "DEL", rating: 88, rarity: "epic", img: "images/bukayosaka.png" },/*DONE*/
+    { id: 36, name: "Jamal Musiala", position: "MED", rating: 88, rarity: "epic", img: "images/jamalmusiala.png" },/*DONE*/
+    { id: 37, name: "Julián Álvarez", position: "DEL", rating: 87, rarity: "epic", img: "images/julianalvarez.png" },/*DONE*/
+    { id: 38, name: "Frenkie de Jong", position: "MED", rating: 89, rarity: "epic", img: "images/frenkiedejong.png" },/*DONE*/
+    { id: 39, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png" },/*DONE*/
+    { id: 40, name: "Viktor Gyokeres", position: "DEL", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png" },/*DONE*/
+    { id: 41, name: "Rúben Dias", position: "DEF", rating: 87, rarity: "epic", img: "images/rubendias.png" },/*DONE*/
+    { id: 42, name: "Son Heung-min", position: "DEL", rating: 87, rarity: "epic", img: "images/sonheungmin.png" },/*DONE*/
+    { id: 43, name: "Gavi", position: "MED", rating: 86, rarity: "epic", img: "images/gavi.png" },/*DONE*/
+    { id: 44, name: "Marc-André ter Stegen", position: "POR", rating: 86, rarity: "epic", img: "images/terstegen.png" },/*DONE*/
+    { id: 45, name: "Joan Garcia", position: "POR", rating: 86, rarity: "epic", img: "images/joangarcia.png" },/*DONE*/
+
+    /* RARE (18 Jugadores) */
+    { id: 46, name: "Martin Ødegaard", position: "MED", rating: 85, rarity: "rare", img: "images/martinodegaard.png" },/*DONE*/
+    { id: 47, name: "Declan Rice", position: "MED", rating: 85, rarity: "rare", img: "images/declanrice.png" },/*DONE*/
+    { id: 48, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png" },/*DONE*/
+    { id: 49, name: "Jackson Irvine", position: "MED", rating: 85, rarity: "rare", img: "images/jacksonirvine.png" },/*DONE*/
+    { id: 50, name: "Alexis Mac Allister", position: "MED", rating: 84, rarity: "rare", img: "images/alexismacallister.png" },/*DONE*/
+    { id: 51, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png" },/*DONE*/
+    { id: 52, name: "Theo Hernández", position: "DEF", rating: 84, rarity: "rare", img: "images/theohernandez.png" },/*DONE*/
+    { id: 53, name: "Takefusa Kubo", position: "DEL", rating: 83, rarity: "rare", img: "images/takefusakubo.png" },/*DONE*/
+    { id: 55, name: "Darwin Núñez", position: "DEL", rating: 81, rarity: "rare", img: "images/darwinnunez.png" },/*DONE*/
+    { id: 56, name: "Christopher Nkunku", position: "MED", rating: 82, rarity: "rare", img: "images/christophernkunku.png" },/*DONE*/
+    { id: 57, name: "Unai Simón", position: "POR", rating: 81, rarity: "rare", img: "images/unaisimon.png" },/*DONE*/
+    { id: 58, name: "Nicolò Barella", position: "MED", rating: 81, rarity: "rare", img: "images/nicolobarella.png" },/*DONE*/
+    { id: 59, name: "Alexander Isak", position: "DEL", rating: 84, rarity: "rare", img: "images/alexanderisak.png" },/*DONE*/
+    { id: 60, name: "Alphonso Davies", position: "DEF", rating: 81, rarity: "rare", img: "images/alphonsodavies.png" },/*DONE*/
+    { id: 61, name: "Ollie Watkins", position: "DEL", rating: 81, rarity: "rare", img: "images/olliewatkins.png" },/*DONE*/
+    { id: 62, name: "Mikel Merino", position: "MED", rating: 81, rarity: "rare", img: "images/mikelmerino.png" },/*DONE*/
+    { id: 63, name: "Federico Chiesa", position: "DEL", rating: 81, rarity: "rare", img: "images/federicochiesa.png" },/*DONE*/
+    
+    /* COMMON (25 Jugadores) */
+    { id: 64, name: "Enzo Fernández", position: "MED", rating: 82, rarity: "common", img: "images/enzofernandez.png" },/*DONE*/
+    { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png" },/*DONE*/
+    { id: 66, name: "Bruno Guimarães", position: "MED", rating: 82, rarity: "common", img: "images/brunoguimaraes.png" },/*DONE*/
+    { id: 67, name: "Dominik Szoboszlai", position: "MED", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png" },
+    { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png" },/*DONE*/
+    { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png" },/*DONE*/
+    { id: 70, name: "Lucas Paquetá", position: "MED", rating: 81, rarity: "common", img: "images/lucaspaqueta.png" },/*DONE*/
+    { id: 71, name: "Nico Williams", position: "DEL", rating: 80, rarity: "common", img: "images/nicowilliams.png" },/*DONE*/
+    { id: 72, name: "André Onana", position: "POR", rating: 78, rarity: "common", img: "images/andreonana.png" },/*DONE*/
+    { id: 73, name: "Iñaki Williams", position: "DEL", rating: 78, rarity: "common", img: "images/inakiwilliams.png" },/*DONE*/
+    { id: 74, name: "João Palhinha", position: "MED", rating: 80, rarity: "common", img: "images/joaopalhinha.png" },/*DONE*/
+    { id: 75, name: "Jeremie Frimpong", position: "DEF", rating: 80, rarity: "common", img: "images/jeremiefrimpong.png" },/*DONE*/
+    { id: 76, name: "Sandro Tonali", position: "MED", rating: 80, rarity: "common", img: "images/sandrotonali.png" },/*DONE*/
+    { id: 77, name: "Ferran Jutgla", position: "DEL", rating: 79, rarity: "common", img: "images/ferranjutgla.png" },/*DONE*/
+    { id: 78, name: "Moisés Caicedo", position: "MED", rating: 79, rarity: "common", img: "images/moisescaicedo.png" },/*DONE*/
+    { id: 79, name: "Pau Cubarsí", position: "DEF", rating: 81, rarity: "common", img: "images/paucubarsi.png" },/*DONE*/
+    { id: 80, name: "Kaoru Mitoma", position: "DEL", rating: 79, rarity: "common", img: "images/kaorumitoma.png" },/*DONE*/
+    { id: 81, name: "Guido Rodríguez", position: "MED", rating: 79, rarity: "common", img: "images/guidorodriguez.png" },/*DONE*/
+    { id: 82, name: "Álex Baena", position: "MED", rating: 78, rarity: "common", img: "images/alexbaena.png" },/*DONE*/
+    { id: 83, name: "Conor Gallagher", position: "MED", rating: 78, rarity: "common", img: "images/conorgallagher.png" },/*DONE*/
+    { id: 84, name: "Manuel Ugarte", position: "MED", rating: 78, rarity: "common", img: "images/manuelugarte.png" },/*DONE*/
+    { id: 85, name: "Giorgi Mamardashvili", position: "POR", rating: 78, rarity: "common", img: "images/mamardashvili.png" },/*DONE*/
+    { id: 86, name: "Santiago Giménez", position: "DEL", rating: 78, rarity: "common", img: "images/santiagogimenez.png" },/*DONE*/
+    { id: 87, name: "Alejandro Balde", position: "DEF", rating: 80, rarity: "common", img: "images/alejandrobalde.png" },/*DONE*/
+    { id: 88, name: "Anthony Gordon", position: "DEL", rating: 77, rarity: "common", img: "images/anthonygordon.png" }/*DONE*/
     ];
 
     const CONFIG = {
@@ -556,19 +627,28 @@
       const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
       return { regularProbs, goldenProbs, variantProbs };
     }
+
     const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
-    let collection = {};
+    // 1. Intentamos cargar la colección guardada desde localStorage.
+    const savedCollection = localStorage.getItem('myFootballCollection');
+    
+    // 2. Si había algo guardado, lo convertimos de texto a objeto.
+    //    Si no había nada (la primera vez que se visita), empezamos con una colección vacía.
+    let collection = savedCollection ? JSON.parse(savedCollection) : {};
+
+    let flippedCardsInPack = 0;
+    const openPackBtn = document.querySelector('button[onclick="openPack()"]');
 
     let counters = {};
-for (const rarityKey in CONFIG.rarities) {
-  counters[rarityKey] = {};
-  for (const variantKey in CONFIG.variants) {
-    counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
-  }
-}
+    for (const rarityKey in CONFIG.rarities) {
+      counters[rarityKey] = {};
+      for (const variantKey in CONFIG.variants) {
+        counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
+      }
+    }
 
-      function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
     function pickByProb(list) {
       const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
@@ -578,7 +658,7 @@ for (const rarityKey in CONFIG.rarities) {
     }
 
     function generateCard() {
-      const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
+      const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
       const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
       const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
       const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
@@ -588,50 +668,63 @@ for (const rarityKey in CONFIG.rarities) {
     }
 
     function openPack() {
-      const container = document.getElementById("cards");
-      container.innerHTML = "";
-      let pack = [];
-      for (let i = 0; i < CONFIG.packSize; i++) { 
-        pack.push(generateCard());
-      }
+      openPackBtn.disabled = true; // Desactiva el botón
+  flippedCardsInPack = 0;      // Reinicia el contador
+  const container = document.getElementById("cards");
+  container.innerHTML = "";
+  let pack = [];
+  for (let i = 0; i < CONFIG.packSize; i++) { 
+    pack.push(generateCard());
+  }
 
-      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
-        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
-      }
-      pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+  if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+    const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+    pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+  }
+  pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
 
-      pack.forEach((cardObj, i) => {
-        const div = document.createElement("div");
-        const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-        div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
-        div.style.zIndex = pack.length - i;
-        div.dataset.rarity = cardObj.rarity;
-        div.dataset.golden = cardObj.golden;
-        div.dataset.variant = cardObj.variant;
-        div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
+  pack.forEach((cardObj, i) => {
+    const div = document.createElement("div");
+    const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+    div.style.zIndex = pack.length - i;
+    div.dataset.rarity = cardObj.rarity;
+    div.dataset.golden = cardObj.golden;
+    div.dataset.variant = cardObj.variant;
+    div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
 
-        const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
-        
-        div.innerHTML = `
+    const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+
+    div.innerHTML = `
           <div class="side front">
             <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
             ${indicatorsHTML}
             <div class="player-info">
-              <div class="player-rating">${cardObj.playerData.rating}</div>
-              <div class="player-position">${cardObj.playerData.position}</div>
             </div>
           </div>
           <div class="side back">⚽</div>
-        `;
-        div.cardData = cardObj;
-        div.onclick = () => flipCard(div, i);
-        container.appendChild(div);
-      });
-    }
+    `;
+    div.cardData = cardObj;
+    div.onclick = () => flipCard(div, i);
+    container.appendChild(div);
+  });
+}
 
-    function flipCard(card, index) {
+/*esto va en player-info por si acaso el de arriba ye en createShowcase (album)
+
+
+              <div class="player-rating">${cardObj.playerData.rating}</div>
+              <div class="player-position">${cardObj.playerData.position}</div>
+
+*/
+
+function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
+
+      flippedCardsInPack++; // Incrementa el contador
+      if (flippedCardsInPack === CONFIG.packSize) {
+    openPackBtn.disabled = false; // Reactiva el botón si es la última carta
+  }
 
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
@@ -652,14 +745,17 @@ for (const rarityKey in CONFIG.rarities) {
     collection[playerId][variantKey].count++;
   }
 
+  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
 
   card.classList.add("flipped", "is-animating"); 
-  
+
   setTimeout(() => {
     card.classList.remove("is-animating");
+    addInteractiveTilt(card);
   }, 700);
 
   if (isGolden) {
@@ -674,15 +770,17 @@ for (const rarityKey in CONFIG.rarities) {
   card.style.top = `calc(var(--card-h) + 30px)`;
   card.style.transform = 'rotateY(180deg)';
 
-  addInteractiveTilt(card);
+
+  addReactiveEffects(card);
+
 }
 
-    function updateCounter() {
+function updateCounter() {
   for (const rarityKey in counters) {
     for (const variantKey in counters[rarityKey]) {
       const capRarity = capitalize(rarityKey);
       const capVariant = capitalize(variantKey);
-      
+
       const normalId = `c${capRarity}${capVariant}`;
       const goldenId = `cg${capRarity}${capVariant}`;
 
@@ -696,7 +794,7 @@ for (const rarityKey in CONFIG.rarities) {
   }
 }
 
-    function createShowcase() {
+function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
 
@@ -717,7 +815,7 @@ for (const rarityKey in CONFIG.rarities) {
     playersInRarity.forEach(player => {
       const playerEntry = document.createElement('div');
       playerEntry.className = 'player-album-entry';
-      
+
       const variantsGrid = document.createElement('div');
       variantsGrid.className = 'variants-grid';
 
@@ -730,16 +828,16 @@ for (const rarityKey in CONFIG.rarities) {
           if (TEST_MODE_FILL_ALBUM || collectedVersion) {
             // VARIANTE OBTENIDA
             const cardData = collectedVersion 
-              ? collectedVersion.cardData 
-              : { playerData: player, rarity: player.rarity, golden: isGolden, variant: variantKey };
-            
+            ? collectedVersion.cardData 
+            : { playerData: player, rarity: player.rarity, golden: isGolden, variant: variantKey };
+
             const count = collectedVersion ? collectedVersion.count : 1;
             const div = document.createElement("div");
             const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
             div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
-            
+
             const indicatorsHTML = `<div class="card-indicators">${cardData.variant !== 'none' ? `<div class="indicator">${cardData.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
-            
+
             // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
             // Usamos la variable 'count' que es segura, en lugar de 'collectedVersion.count'
             const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
@@ -750,21 +848,20 @@ for (const rarityKey in CONFIG.rarities) {
                 ${indicatorsHTML}
                 ${duplicateCounterHTML}
                 <div class="player-info">
-                  <div class="player-rating">${cardData.playerData.rating}</div>
-                  <div class="player-position">${cardData.playerData.position}</div>
                 </div>
-              </div>`;
+            </div>`;
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
+            addReactiveEffects(div);
           } else {
             //HUECO VACÍO (sin cambios aquí)
             const placeholder = document.createElement('div');
             placeholder.className = 'card showcase-card album-placeholder';
-            
+
             const phIndicators = `
               <div class="placeholder-indicators">
                 ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
-                ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
+              ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
               </div>
             `;
             placeholder.innerHTML = phIndicators;
@@ -780,24 +877,24 @@ for (const rarityKey in CONFIG.rarities) {
   });
 }
 
-    const showcaseOverlay = document.getElementById('showcase-overlay');
-    const showcaseBtn = document.getElementById('showcaseBtn');
-    const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
+const showcaseOverlay = document.getElementById('showcase-overlay');
+const showcaseBtn = document.getElementById('showcaseBtn');
+const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
 
-    showcaseBtn.addEventListener('click', () => {
-      createShowcase();
-      showcaseOverlay.classList.add('visible');
-    });
-    closeShowcaseBtn.addEventListener('click', () => {
-      showcaseOverlay.classList.remove('visible');
-    });
-    showcaseOverlay.addEventListener('click', (e) => {
-      if (e.target === showcaseOverlay) {
-        showcaseOverlay.classList.remove('visible');
-      }
-    });
+showcaseBtn.addEventListener('click', () => {
+  createShowcase();
+  showcaseOverlay.classList.add('visible');
+});
+closeShowcaseBtn.addEventListener('click', () => {
+  showcaseOverlay.classList.remove('visible');
+});
+showcaseOverlay.addEventListener('click', (e) => {
+  if (e.target === showcaseOverlay) {
+    showcaseOverlay.classList.remove('visible');
+  }
+});
 
-    function addInteractiveTilt(cardElement) {
+function addInteractiveTilt(cardElement) {
   cardElement.addEventListener("mousemove", (e) => {
     if (cardElement.classList.contains('is-animating')) {
       return;
@@ -806,7 +903,7 @@ for (const rarityKey in CONFIG.rarities) {
     const rect = cardElement.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     const rotateX = ((y / rect.height) - 0.5) * 40; 
     const rotateY = ((x / rect.width) - 0.5) * 40; 
 
@@ -821,10 +918,42 @@ for (const rarityKey in CONFIG.rarities) {
     cardElement.style.zIndex = '';
   });
 }
-    
-    openPack();
 
-  </script>
+function addReactiveEffects(cardElement) {
+  if (!cardElement.classList.contains('flipped')) return;
+
+  cardElement.addEventListener('mousemove', (e) => {
+    const bounds = cardElement.getBoundingClientRect();
+    const mouseX = e.clientX - bounds.left;
+    const mouseY = e.clientY - bounds.top;
+    const centerX = bounds.width / 2;
+    const centerY = bounds.height / 2;
+    
+    const posX = (mouseY - centerY) * -0.12;
+    const posY = (mouseX - centerX) * 0.12;
+
+    cardElement.style.setProperty('--x', posX);
+    cardElement.style.setProperty('--y', posY);
+  });
+
+  cardElement.addEventListener('mouseleave', () => {
+    cardElement.style.setProperty('--x', 0);
+    cardElement.style.setProperty('--y', 0);
+  });
+}
+
+function resetCollection() {
+  // Preguntamos para evitar clics accidentales
+  if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
+    // Borramos los datos del localStorage
+    localStorage.removeItem('myFootballCollection');
+    // Recargamos la página para que se apliquen los cambios
+    location.reload();
+  }
+}
+
+openPack();
+
+</script>
 </body>
 </html>
-
