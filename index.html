@@ -493,6 +493,58 @@ h1 img {
   filter: drop-shadow(0 0 10px rgba(0, 160, 250, 0.5));
 }
 
+/*MEDIA QUERIES*/
+@media (max-width: 768px) {
+  :root {
+    /* Hacemos las cartas más pequeñas en móviles */
+    --card-w: 100px;
+    --card-h: 142px;
+  }
+
+  body {
+    padding: 10px; /* Menos espacio en los bordes */
+  }
+
+  h1 img {
+    height: 150px; /* Hacemos el logo más pequeño */
+  }
+
+  .button-container {
+    /* Hacemos que los botones se apilen verticalmente si no caben */
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  button {
+    width: 80%; /* Hacemos los botones más grandes para que sean fáciles de tocar */
+    max-width: 300px;
+    padding: 15px;
+  }
+  
+  /* Ajustamos el overlay del álbum para móviles */
+  #showcase-overlay {
+    padding: 20px 10px;
+  }
+  
+  /* Hacemos el zoom de inspección un poco más pequeño en móviles */
+  .zoomed-card {
+    scale: 3;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Ajustes extra para pantallas muy pequeñas */
+  :root {
+    --card-w: 80px;
+    --card-h: 114px;
+  }
+
+  .zoomed-card {
+    scale: 2.5;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -766,8 +818,17 @@ function flipCard(card, index) {
     counters[rarity][variant].normal++;
   }
 
-  const cardSpacing = 140; 
-  const spread = (CONFIG.packSize - 1) * cardSpacing / 2;
+  // 1. Calculamos un ancho máximo para el contenedor de cartas.
+  //    Usará el 95% de la pantalla, pero nunca más de 1540px (11 cartas * 140px).
+  const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
+
+  // 2. Calculamos el espaciado ideal para que quepan todas las cartas en ese ancho.
+  const cardSpacing = containerWidth / CONFIG.packSize;
+
+  // 3. Calculamos el "spread" (la mitad del ancho total que ocuparán las cartas)
+  const spread = (containerWidth - cardSpacing) / 2;
+  
+  // 4. Posicionamos la carta. El cálculo es el mismo, pero ahora usa valores dinámicos.
   card.style.left = `${-spread + index * cardSpacing}px`;
   card.style.top = `calc(var(--card-h) + 30px)`;
   card.style.transform = 'rotateY(180deg)';
@@ -972,4 +1033,3 @@ openPack();
 </script>
 </body>
 </html>
-
