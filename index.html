@@ -224,6 +224,10 @@
   to { filter: hue-rotate(360deg); }
 }
 
+@keyframes hue-cycle-background {
+  to { background-position: -200% center; }
+}
+
 @keyframes breathe-negative {
   0%, 100% {
     filter: sepia(100%) brightness(125%) contrast(150%) saturate(105%) invert(100%);
@@ -721,6 +725,8 @@ h1 img {
 }
 
 .filter-btn {
+  position: relative;
+  overflow: hidden;
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid #555;
@@ -732,8 +738,12 @@ h1 img {
   font-size: 14px;
 }
 
-/* --- LÓGICA DE HOVER Y ACTIVE CORREGIDA --- */
+.filter-btn > * {
+  position: relative;
+  z-index: 2;
+}
 
+/* --- LÓGICA DE HOVER Y ACTIVE CORREGIDA --- */
 /* 1. ESTADO ACTIVO: Reglas directas y específicas para cada botón cuando está seleccionado */
 .filter-btn.active { color: #fff; } /* Texto blanco para todos los activos */
 
@@ -754,6 +764,128 @@ h1 img {
 .filter-btn[data-filter-value="relic"]:not(.active):not(:disabled):hover { background-color: #4af0e0; border-color: #4af0e0; box-shadow: 0 0 15px rgba(74, 240, 224, 0.6); }
 .filter-btn[data-filter-value="golden"]:not(.active):not(:disabled):hover { background-color: #ffd700; border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
 .filter-btn.variant-filter:not(.active):not(:disabled):hover { background-color: #555; border-color: #777; box-shadow: 0 0 15px rgba(200, 200, 200, 0.4); }
+
+/* --- EFECTOS DE VARIANTE PARA BOTONES DE FILTRO (VERSIÓN MEJORADA) --- */
+
+/* Base para los pseudo-elementos de los efectos */
+.filter-btn.variant-filter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none; /* Importante para no bloquear el clic */
+}
+
+/* Efecto FOIL (::before) */
+.filter-btn[data-filter-value="foil"]::before {
+  background-image: radial-gradient(ellipse at center, rgba(200, 215, 255, 0.8) 0%, transparent 80%);
+  mix-blend-mode: color-dodge;
+}
+
+/* Fondo para FOIL (se activa junto con el ::before) */
+.filter-btn[data-filter-value="foil"]:not(:active):not(:disabled):hover,
+.filter-btn[data-filter-value="foil"].active {
+  background-color: #6a7a9c; /* Fondo gris-azulado para que el foil destaque */
+  border-color: #aab8d8;
+  box-shadow: 0 0 15px rgba(170, 184, 216, 0.6);
+}
+
+
+/* Efecto HOLO (::before) */
+.filter-btn[data-filter-value="holo"]::before {
+  background-image: url('images/holoeffect.png');
+  background-size: 150% 150%;
+  mix-blend-mode: overlay;
+  animation: holo-shine 5s ease-in-out infinite alternate;
+}
+
+/* Fondo para HOLO */
+.filter-btn[data-filter-value="holo"]:not(:active):not(:disabled):hover,
+.filter-btn[data-filter-value="holo"].active {
+  background-color: #3b3a5c; /* Fondo oscuro y purpúreo para que el holo destaque */
+  border-color: #7b79a8;
+  box-shadow: 0 0 15px rgba(123, 121, 168, 0.6);
+}
+
+
+/* --- LÓGICA UNIFICADA PARA MOSTRAR EFECTOS (::before) --- */
+
+/* Esta regla activa la opacidad para Foil y Holo tanto en hover como en active */
+.filter-btn[data-filter-value="foil"]:not(:active):not(:disabled):hover::before,
+.filter-btn[data-filter-value="foil"].active::before,
+.filter-btn[data-filter-value="holo"]:not(:active):not(:disabled):hover::before,
+.filter-btn[data-filter-value="holo"].active::before {
+  opacity: 1;
+}
+
+/* --- EFECTOS DIRECTOS EN EL BOTÓN (POLI Y NEGATIVE) --- */
+
+/* Estilo para POLI */
+.filter-btn[data-filter-value="poli"]:not(:active):not(:disabled):hover,
+.filter-btn[data-filter-value="poli"].active {
+  background-image: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+  background-size: 200% 100%;
+  border-color: #fff;
+  animation: hue-cycle-background 8s linear infinite;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+/* Estilo para NEGATIVE (Fondo blanco brillante) */
+.filter-btn[data-filter-value="negative"]:not(:active):not(:disabled):hover,
+.filter-btn[data-filter-value="negative"].active {
+  background-color: #ffffff; /* Fondo blanco puro */
+  border-color: #d0d0d0;
+  color: #000; /* Texto negro para contraste máximo */
+  box-shadow: 0 0 18px 4px rgba(255, 255, 255, 0.8); /* Glow blanco intenso */
+}
+
+/* --- GOLDEN BUTTON: textura foil + transición suave + glow dorado --- */
+.filter-btn[data-filter-value="golden"] {
+  position: relative; /* ya lo tienes, por si acaso */
+  overflow: hidden;
+  transition: box-shadow 0.28s ease, color 0.18s ease, background-color 0.28s ease;
+}
+
+/* pseudo-elemento con la textura (transicionable con opacity/transform) */
+.filter-btn[data-filter-value="golden"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;                    /* por debajo del texto (-> .filter-btn > * tiene z-index:2) */
+  background-image: url('images/foil-gold-texture.png');
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: overlay;       /* mezcla para efecto metálico */
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+  border-radius: 6px;            /* que coincida con el botón */
+}
+
+/* cuando hover (y no activo) o cuando está activo, mostramos la textura y el glow */
+.filter-btn[data-filter-value="golden"]:not(.active):not(:disabled):hover::before,
+.filter-btn[data-filter-value="golden"].active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* fondo base + glow dorado (hover y active) */
+.filter-btn[data-filter-value="golden"]:not(.active):not(:disabled):hover,
+.filter-btn[data-filter-value="golden"].active {
+  background-color: #ffd700;
+  border-color: #ffd700;
+  color: #fff;
+  /* Glow similar al resto pero dorado */
+  box-shadow: 0 0 18px 4px rgba(255,215,0,0.55);
+  /* Si quieres un glow más acusado: box-shadow: 0 0 25px 6px rgba(255,215,0,0.65); */
+}
+
+/* por si el botón tiene texto/íconos, garantizamos que estén por encima */
+.filter-btn[data-filter-value="golden"] > * { position: relative; z-index: 2; }
+
 
 /* Estado DESHABILITADO del botón */
 .filter-btn:disabled {
@@ -788,6 +920,63 @@ h1 img {
  box-shadow: 0 0 15px rgba(192, 57, 43, 0.6);
 }
 
+/* --- ESTILO PARA MENSAJE DE "SIN RESULTADOS" EN EL ÁLBUM --- */
+.no-results-message {
+  width: 100%;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #888;
+  background: rgba(0,0,0,0.1);
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+/* --- ESTILOS PARA EL CHECKBOX 'SHOW MISSING' --- */
+#search-controls {
+  align-items: center; /* Asegura que todo esté alineado verticalmente */
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espacio entre el tick y el texto */
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none; /* Evita que el texto se seleccione al hacer clic */
+}
+
+.checkbox-label:hover {
+  color: #fff;
+}
+
+#show-missing-checkbox {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #1f7; /* Cambia el color del tick para que coincida con el botón "Open Pack" */
+}
+
+/* Estilo para cuando el checkbox está deshabilitado */
+#show-missing-checkbox:disabled {
+  cursor: not-allowed;
+}
+
+#show-missing-checkbox:disabled + label, /* El texto también debe cambiar */
+.checkbox-label[for="show-missing-checkbox-disabled"] { /* Si el label tiene el for correcto*/
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: #888;
+}
+
+/* Pequeño ajuste para que el botón de limpiar no esté tan pegado */
+#clear-filters-btn {
+  margin-left: 10px;
+}
+
 </style>
 </head>
 <body>
@@ -808,6 +997,10 @@ h1 img {
       </div>
       <div id="search-controls">
         <input type="text" id="name-search" placeholder="Search by name or position...">
+        <label for="show-missing-checkbox" class="checkbox-label">
+          <input type="checkbox" id="show-missing-checkbox">
+          Show missing cards
+        </label>
         <button id="clear-filters-btn">Clear All</button>
       </div>
     </div>
@@ -950,7 +1143,8 @@ h1 img {
       rarity: null,
       variant: null,
       golden: null,
-      query: ''
+      query: '',
+      showMissing: false
     };
     let filtersInitialized = false;
 
@@ -1128,13 +1322,18 @@ function updateCounter() {
 function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
-  const query = activeFilters.query.toLowerCase();
+  const query = activeFilters.query.toLowerCase().trim();
+
+  const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '';
+  
+  // --- CAMBIO CLAVE: movemos esta variable aquí arriba ---
+  // Ahora también registrará si se muestra algún HUECO, no solo cartas poseídas.
+  let anyContentWasDisplayed = false; 
 
   const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
   const variantKeys = Object.keys(CONFIG.variants);
 
   raritiesInOrder.forEach(rarityKey => {
-        // Filtro de Rareza: Si hay un filtro de rareza y no es este, saltamos la fila entera.
     if (activeFilters.rarity && activeFilters.rarity !== rarityKey) {
       return;
     }
@@ -1150,7 +1349,6 @@ function createShowcase() {
     let rowHasVisiblePlayers = false;
 
     playersInRarity.forEach(player => {
-            // Filtro de Búsqueda: Si hay una búsqueda y no coincide, saltamos este jugador.
       if (query && !player.name.toLowerCase().includes(query) && !player.position.toLowerCase().includes(query)) {
         return;
       }
@@ -1163,21 +1361,18 @@ function createShowcase() {
       let playerHasVisibleSlots = false;
 
       for (const isGolden of [false, true]) {
-                // Filtro Golden: Si el filtro está activo y no coincide, saltamos este bucle.
         if (activeFilters.golden !== null && isGolden !== activeFilters.golden) continue;
 
         for (const variantKey of variantKeys) {
-                    // Filtro de Variante: Si el filtro está activo y no coincide, saltamos esta variante.
           if (activeFilters.variant && variantKey !== activeFilters.variant) continue;
-          
-                    // Si llegamos aquí, este "hueco" es visible según los filtros.
-          playerHasVisibleSlots = true;
           
           const lookupKey = `${isGolden}_${variantKey}`;
           const collectedVersion = collection[player.id]?.[lookupKey];
 
           if (collectedVersion) {
-                        // --- El usuario TIENE esta carta ---
+            playerHasVisibleSlots = true;
+            anyContentWasDisplayed = true; // Marcamos que se ha mostrado contenido.
+
             const { cardData, count } = collectedVersion;
             const div = document.createElement("div");
             const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
@@ -1186,23 +1381,26 @@ function createShowcase() {
             const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
 
             div.innerHTML = `
-                          <div class="side front">
-                            <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
-                            ${indicatorsHTML}
-                            ${duplicateCounterHTML}
-                            <div class="player-info"></div>
+              <div class="side front">
+                <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
+                ${indicatorsHTML}
+                ${duplicateCounterHTML}
+                <div class="player-info"></div>
             </div>`;
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
             addReactiveEffects(div);
             div.addEventListener('click', () => showInspectView(div));
-          } else {
-                        // --- El usuario NO tiene esta carta, mostramos el HUECO VACÍO ---
+
+          } else if (!isFiltering || (isFiltering && activeFilters.showMissing)) {
+            playerHasVisibleSlots = true;
+            anyContentWasDisplayed = true; // Marcamos que se ha mostrado contenido (un hueco).
+
             const placeholder = document.createElement('div');
             placeholder.className = 'card showcase-card album-placeholder';
             const phIndicators = `
-                          <div class="placeholder-indicators">
-                            ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
+              <div class="placeholder-indicators">
+                ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
               ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
             </div>`;
             placeholder.innerHTML = phIndicators;
@@ -1211,7 +1409,6 @@ function createShowcase() {
         }
       }
       
-            // Solo añadimos la entrada del jugador si tiene algún hueco (lleno o vacío) que mostrar.
       if (playerHasVisibleSlots) {
         rowHasVisiblePlayers = true;
         playerEntry.innerHTML = `<h3>${player.name}</h3>`;
@@ -1220,13 +1417,18 @@ function createShowcase() {
       }
     });
     
-        // Solo añadimos la fila de rareza si contiene algún jugador visible.
     if (rowHasVisiblePlayers) {
-      row.innerHTML = `<h2>${rarityKey}</h2>`;
+      row.innerHTML = `<h2>${capitalize(rarityKey)}</h2>`;
       row.appendChild(grid);
       container.appendChild(row);
     }
   });
+
+  // --- LÓGICA FINAL MODIFICADA ---
+  // Ahora, solo mostramos el mensaje si se estaba filtrando Y no se mostró NINGÚN contenido (ni cartas ni huecos).
+  if (isFiltering && !anyContentWasDisplayed) {
+    container.innerHTML = `<div class="no-results-message">You don't have any cards with that combination.</div>`;
+  }
 }
 
 const showcaseOverlay = document.getElementById('showcase-overlay');
@@ -1251,22 +1453,37 @@ showcaseOverlay.addEventListener('click', (e) => {
 
 // --- NUEVOS LISTENERS PARA LOS FILTROS ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Delegación de eventos para los botones de filtro
+  const showMissingCheckbox = document.getElementById('show-missing-checkbox');
+  const showMissingLabel = document.querySelector('.checkbox-label[for="show-missing-checkbox"]');
+
+  // Delegación de eventos para los botones de filtro
   const filterControls = document.getElementById('filter-controls');
   if(filterControls) {
-    filterControls.addEventListener('click', handleFilterClick);
+    filterControls.addEventListener('click', (e) => {
+      handleFilterClick(e);
+      updateFilterUI(); // Llama a la actualización de UI aquí
+    });
   }
 
-    // Listener para la barra de búsqueda
+  // Listener para la barra de búsqueda
   const searchInput = document.getElementById('name-search');
   if(searchInput) {
     searchInput.addEventListener('input', (e) => {
       activeFilters.query = e.target.value;
+      updateFilterUI(); // Actualiza la UI de filtros
       createShowcase();
     });
   }
 
-    // Listener para el botón de limpiar filtros
+  // Listener para el nuevo checkbox
+  if(showMissingCheckbox) {
+    showMissingCheckbox.addEventListener('change', () => {
+      activeFilters.showMissing = showMissingCheckbox.checked;
+          createShowcase(); // Re-renderiza el álbum
+        });
+  }
+
+  // Listener para el botón de limpiar filtros (MODIFICADO)
   const clearBtn = document.getElementById('clear-filters-btn');
   if(clearBtn) {
     clearBtn.addEventListener('click', () => {
@@ -1275,8 +1492,10 @@ document.addEventListener('DOMContentLoaded', () => {
         buttonSound.currentTime = 0;
         buttonSound.play();
       }
-      activeFilters = { rarity: null, variant: null, golden: null, query: '' };
+      // Resetea todos los filtros, incluyendo el nuevo
+      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false };
       searchInput.value = '';
+      showMissingCheckbox.checked = false; // Asegúrate de desmarcar el checkbox visualmente
       updateFilterUI();
       createShowcase();
     });
@@ -1379,7 +1598,7 @@ function buildFilterUI() {
     const goldenBtn = document.createElement('button');
     goldenBtn.className = 'filter-btn';
     goldenBtn.dataset.filterType = 'golden';
-    goldenBtn.dataset.filterValue = 'true';
+    goldenBtn.dataset.filterValue = 'golden';
     goldenBtn.textContent = 'Golden';
     container.appendChild(goldenBtn);
 
@@ -1410,27 +1629,40 @@ function buildFilterUI() {
   }
 
   function updateFilterUI() {
-    // Actualizar botones de rareza
+    const showMissingCheckbox = document.getElementById('show-missing-checkbox');
+    const isFiltering = 
+    activeFilters.rarity !== null || 
+    activeFilters.variant !== null || 
+    activeFilters.golden === true || 
+    activeFilters.query.trim() !== '';
+
+    if (showMissingCheckbox) {
+      showMissingCheckbox.disabled = !isFiltering;
+
+      if (!isFiltering) {
+        showMissingCheckbox.checked = false;
+        activeFilters.showMissing = false;
+      }
+    }
+
     const rarityBtns = document.querySelectorAll('.rarity-filter');
     rarityBtns.forEach(btn => {
       const value = btn.dataset.filterValue;
       btn.classList.toggle('active', activeFilters.rarity === value);
-        // Si hay una rareza activa, deshabilita las demás
       btn.disabled = activeFilters.rarity !== null && activeFilters.rarity !== value;
     });
 
-    // Actualizar botones de variante
     const variantBtns = document.querySelectorAll('.variant-filter');
     variantBtns.forEach(btn => {
       const value = btn.dataset.filterValue;
       btn.classList.toggle('active', activeFilters.variant === value);
-        // Si hay una variante activa, deshabilita las demás
       btn.disabled = activeFilters.variant !== null && activeFilters.variant !== value;
     });
     
-    // Actualizar botón golden
     const goldenBtn = document.querySelector('.filter-btn[data-filter-type="golden"]');
-    goldenBtn.classList.toggle('active', activeFilters.golden === true);
+    if (goldenBtn) {
+      goldenBtn.classList.toggle('active', activeFilters.golden === true);
+    }
   }
 
 // Sonido botones
