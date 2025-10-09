@@ -345,7 +345,26 @@
 .count-box span { font-weight: bold; }
 
 button{ margin-top:20px; padding:12px 24px; border-radius:8px; border:none; background:#1f7; color:#022; font-weight:700; cursor:pointer; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
-button:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(31, 255, 7, 0.4); }
+
+/* 1. Efecto de escala universal para TODOS los botones al pasar el ratón */
+button:not(:disabled):hover {
+  transform: scale(1.05);
+}
+
+/* 2. Glow VERDE específico para "Open Pack" */
+button[onclick="openPack()"]:hover {
+  box-shadow: 0 0 15px rgba(31, 255, 7, 0.4);
+}
+
+/* 3. Glow AZUL específico para "My Album" (este ya lo tenías, pero lo dejamos aquí para consistencia) */
+#showcaseBtn:hover { 
+  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
+}
+
+/* 4. Glow NARANJA/AMARILLO específico para "Reset Progress" */
+button[onclick="resetCollection()"]:hover {
+  box-shadow: 0 0 15px rgba(230, 161, 21, 0.6);
+}
 
 .button-container { 
   display: flex; 
@@ -684,6 +703,91 @@ h1 img {
   cursor: zoom-out;
 }
 
+/* --- ESTILOS PARA EL NUEVO SISTEMA DE FILTROS (CORREGIDO) --- */
+#showcase-filters-container {
+  width: 100%;
+  max-width: 1600px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: rgba(0,0,0,0.3);
+  color: #ccc;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+/* --- LÓGICA DE HOVER Y ACTIVE CORREGIDA --- */
+
+/* 1. ESTADO ACTIVO: Reglas directas y específicas para cada botón cuando está seleccionado */
+.filter-btn.active { color: #fff; } /* Texto blanco para todos los activos */
+
+.filter-btn[data-filter-value="common"].active { background-color: #8a8a8a; border-color: #8a8a8a; box-shadow: 0 0 10px 2px #8a8a8a; }
+.filter-btn[data-filter-value="rare"].active { background-color: #4a7dff; border-color: #4a7dff; box-shadow: 0 0 10px 2px #4a7dff; }
+.filter-btn[data-filter-value="epic"].active { background-color: #a053de; border-color: #a053de; box-shadow: 0 0 10px 2px #a053de; }
+.filter-btn[data-filter-value="legendary"].active { background-color: #ffc84a; border-color: #ffc84a; box-shadow: 0 0 10px 2px #ffc84a; }
+.filter-btn[data-filter-value="relic"].active { background-color: #4af0e0; border-color: #4af0e0; box-shadow: 0 0 10px 2px #4af0e0; }
+.filter-btn[data-filter-value="golden"].active { background-color: #ffd700; border-color: #ffd700; box-shadow: 0 0 10px 2px #ffd700; }
+
+/* 2. ESTADO HOVER: Se aplica SÓLO si el botón NO está activo */
+.filter-btn:not(.active):not(:disabled):hover { color: #fff; } /* Texto blanco en hover */
+
+.filter-btn[data-filter-value="common"]:not(.active):not(:disabled):hover { background-color: #8a8a8a; border-color: #8a8a8a; box-shadow: 0 0 15px rgba(138, 138, 138, 0.6); }
+.filter-btn[data-filter-value="rare"]:not(.active):not(:disabled):hover { background-color: #4a7dff; border-color: #4a7dff; box-shadow: 0 0 15px rgba(74, 125, 255, 0.6); }
+.filter-btn[data-filter-value="epic"]:not(.active):not(:disabled):hover { background-color: #a053de; border-color: #a053de; box-shadow: 0 0 15px rgba(160, 83, 222, 0.6); }
+.filter-btn[data-filter-value="legendary"]:not(.active):not(:disabled):hover { background-color: #ffc84a; border-color: #ffc84a; box-shadow: 0 0 15px rgba(255, 200, 74, 0.6); }
+.filter-btn[data-filter-value="relic"]:not(.active):not(:disabled):hover { background-color: #4af0e0; border-color: #4af0e0; box-shadow: 0 0 15px rgba(74, 240, 224, 0.6); }
+.filter-btn[data-filter-value="golden"]:not(.active):not(:disabled):hover { background-color: #ffd700; border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+.filter-btn.variant-filter:not(.active):not(:disabled):hover { background-color: #555; border-color: #777; box-shadow: 0 0 15px rgba(200, 200, 200, 0.4); }
+
+/* Estado DESHABILITADO del botón */
+.filter-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: rgba(0,0,0,0.1);
+}
+
+#search-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+#name-search {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #fff;
+  width: 100%;
+  max-width: 300px;
+}
+
+#clear-filters-btn {
+  padding: 8px 16px;
+  background-color: #c0392b; /* Rojo */
+  color: #fff;
+  margin-top: 0;
+}
+#clear-filters-btn:hover {
+ box-shadow: 0 0 15px rgba(192, 57, 43, 0.6);
+}
+
 </style>
 </head>
 <body>
@@ -697,6 +801,16 @@ h1 img {
   </div>
   <div id="cards"></div>
   <div id="showcase-overlay">
+    <!-- FILTROS Album -->
+    <div id="showcase-filters-container">
+      <div id="filter-controls">
+        <!-- Los botones de filtro se generarán aquí con JavaScript -->
+      </div>
+      <div id="search-controls">
+        <input type="text" id="name-search" placeholder="Search by name or position...">
+        <button id="clear-filters-btn">Clear All</button>
+      </div>
+    </div>
     <div id="showcase-content"></div>
     <button id="closeShowcaseBtn">X</button>
   </div>
@@ -830,6 +944,15 @@ h1 img {
     // 2. Si había algo guardado, lo convertimos de texto a objeto.
     //    Si no había nada (la primera vez que se visita), empezamos con una colección vacía.
     let collection = savedCollection ? JSON.parse(savedCollection) : {};
+
+    // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
+    let activeFilters = {
+      rarity: null,
+      variant: null,
+      golden: null,
+      query: ''
+    };
+    let filtersInitialized = false;
 
     let flippedCardsInPack = 0;
     const openPackBtn = document.querySelector('button[onclick="openPack()"]');
@@ -1005,84 +1128,104 @@ function updateCounter() {
 function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
+  const query = activeFilters.query.toLowerCase();
 
   const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
   const variantKeys = Object.keys(CONFIG.variants);
 
-  // Iteramos por cada rareza para crear una fila en el álbum
   raritiesInOrder.forEach(rarityKey => {
+        // Filtro de Rareza: Si hay un filtro de rareza y no es este, saltamos la fila entera.
+    if (activeFilters.rarity && activeFilters.rarity !== rarityKey) {
+      return;
+    }
+
     const playersInRarity = playersDB.filter(p => p.rarity === rarityKey);
     if (playersInRarity.length === 0) return;
 
     const row = document.createElement('div');
     row.className = 'showcase-row';
-    row.innerHTML = `<h2>${rarityKey}</h2><div class="showcase-grid"></div>`;
-    const grid = row.querySelector('.showcase-grid');
+    const grid = document.createElement('div');
+    grid.className = 'showcase-grid';
+    
+    let rowHasVisiblePlayers = false;
 
-    // Para cada jugador en la DB, creamos una entrada completa en el álbum
     playersInRarity.forEach(player => {
+            // Filtro de Búsqueda: Si hay una búsqueda y no coincide, saltamos este jugador.
+      if (query && !player.name.toLowerCase().includes(query) && !player.position.toLowerCase().includes(query)) {
+        return;
+      }
+
       const playerEntry = document.createElement('div');
       playerEntry.className = 'player-album-entry';
-
       const variantsGrid = document.createElement('div');
       variantsGrid.className = 'variants-grid';
+      
+      let playerHasVisibleSlots = false;
 
-      //hueco para CADA VARIANTE POSIBLE
       for (const isGolden of [false, true]) {
+                // Filtro Golden: Si el filtro está activo y no coincide, saltamos este bucle.
+        if (activeFilters.golden !== null && isGolden !== activeFilters.golden) continue;
+
         for (const variantKey of variantKeys) {
+                    // Filtro de Variante: Si el filtro está activo y no coincide, saltamos esta variante.
+          if (activeFilters.variant && variantKey !== activeFilters.variant) continue;
+          
+                    // Si llegamos aquí, este "hueco" es visible según los filtros.
+          playerHasVisibleSlots = true;
+          
           const lookupKey = `${isGolden}_${variantKey}`;
           const collectedVersion = collection[player.id]?.[lookupKey];
 
-          if (TEST_MODE_FILL_ALBUM || collectedVersion) {
-            // VARIANTE OBTENIDA
-            const cardData = collectedVersion 
-            ? collectedVersion.cardData 
-            : { playerData: player, rarity: player.rarity, golden: isGolden, variant: variantKey };
-
-            const count = collectedVersion ? collectedVersion.count : 1;
+          if (collectedVersion) {
+                        // --- El usuario TIENE esta carta ---
+            const { cardData, count } = collectedVersion;
             const div = document.createElement("div");
             const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
             div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
-
             const indicatorsHTML = `<div class="card-indicators">${cardData.variant !== 'none' ? `<div class="indicator">${cardData.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
-
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-            // Usamos la variable 'count' que es segura, en lugar de 'collectedVersion.count'
             const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
 
             div.innerHTML = `
-              <div class="side front">
-                <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
-                ${indicatorsHTML}
-                ${duplicateCounterHTML}
-                <div class="player-info">
-                </div>
+                          <div class="side front">
+                            <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
+                            ${indicatorsHTML}
+                            ${duplicateCounterHTML}
+                            <div class="player-info"></div>
             </div>`;
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
             addReactiveEffects(div);
             div.addEventListener('click', () => showInspectView(div));
           } else {
-            //HUECO VACÍO (sin cambios aquí)
+                        // --- El usuario NO tiene esta carta, mostramos el HUECO VACÍO ---
             const placeholder = document.createElement('div');
             placeholder.className = 'card showcase-card album-placeholder';
-
             const phIndicators = `
-              <div class="placeholder-indicators">
-                ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
+                          <div class="placeholder-indicators">
+                            ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
               ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
-              </div>
-            `;
+            </div>`;
             placeholder.innerHTML = phIndicators;
             variantsGrid.appendChild(placeholder);
           }
         }
       }
-      playerEntry.innerHTML = `<h3>${player.name}</h3>`;
-      playerEntry.appendChild(variantsGrid);
-      grid.appendChild(playerEntry);
+      
+            // Solo añadimos la entrada del jugador si tiene algún hueco (lleno o vacío) que mostrar.
+      if (playerHasVisibleSlots) {
+        rowHasVisiblePlayers = true;
+        playerEntry.innerHTML = `<h3>${player.name}</h3>`;
+        playerEntry.appendChild(variantsGrid);
+        grid.appendChild(playerEntry);
+      }
     });
-    container.appendChild(row);
+    
+        // Solo añadimos la fila de rareza si contiene algún jugador visible.
+    if (rowHasVisiblePlayers) {
+      row.innerHTML = `<h2>${rarityKey}</h2>`;
+      row.appendChild(grid);
+      container.appendChild(row);
+    }
   });
 }
 
@@ -1091,15 +1234,52 @@ const showcaseBtn = document.getElementById('showcaseBtn');
 const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
 
 showcaseBtn.addEventListener('click', () => {
-  createShowcase();
+  buildFilterUI(); // Construye los botones de filtro la primera vez
+  createShowcase(); // Renderiza el álbum (ya filtrado si hay filtros activos)
   showcaseOverlay.classList.add('visible');
 });
+
 closeShowcaseBtn.addEventListener('click', () => {
   showcaseOverlay.classList.remove('visible');
 });
+
 showcaseOverlay.addEventListener('click', (e) => {
   if (e.target === showcaseOverlay) {
     showcaseOverlay.classList.remove('visible');
+  }
+});
+
+// --- NUEVOS LISTENERS PARA LOS FILTROS ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Delegación de eventos para los botones de filtro
+  const filterControls = document.getElementById('filter-controls');
+  if(filterControls) {
+    filterControls.addEventListener('click', handleFilterClick);
+  }
+
+    // Listener para la barra de búsqueda
+  const searchInput = document.getElementById('name-search');
+  if(searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      activeFilters.query = e.target.value;
+      createShowcase();
+    });
+  }
+
+    // Listener para el botón de limpiar filtros
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if(clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const buttonSound = document.getElementById('buttonClickSound');
+      if (buttonSound) {
+        buttonSound.currentTime = 0;
+        buttonSound.play();
+      }
+      activeFilters = { rarity: null, variant: null, golden: null, query: '' };
+      searchInput.value = '';
+      updateFilterUI();
+      createShowcase();
+    });
   }
 });
 
@@ -1169,73 +1349,157 @@ function resetCollection() {
   }
 }
 
-// Sonido botones
-const buttonSound = document.getElementById('buttonClickSound');
-const allButtons = document.querySelectorAll('button');
+function buildFilterUI() {
+    if (filtersInitialized) return; // Evita crear los botones múltiples veces
 
-allButtons.forEach(button => {
-  button.addEventListener('click', () => {
+    const container = document.getElementById('filter-controls');
+    container.innerHTML = ''; // Limpiamos por si acaso
+
+    // Botones de Rareza
+    Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order).forEach(rarity => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn rarity-filter';
+      btn.dataset.filterType = 'rarity';
+      btn.dataset.filterValue = rarity;
+      btn.innerHTML = `${capitalize(rarity)} <span class="diamond">♦</span>`;
+      container.appendChild(btn);
+    });
+
+    // Botones de Variante
+    Object.keys(CONFIG.variants).filter(v => v !== 'none').forEach(variant => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn variant-filter';
+      btn.dataset.filterType = 'variant';
+      btn.dataset.filterValue = variant;
+      btn.textContent = capitalize(variant);
+      container.appendChild(btn);
+    });
+
+    // Botón Golden
+    const goldenBtn = document.createElement('button');
+    goldenBtn.className = 'filter-btn';
+    goldenBtn.dataset.filterType = 'golden';
+    goldenBtn.dataset.filterValue = 'true';
+    goldenBtn.textContent = 'Golden';
+    container.appendChild(goldenBtn);
+
+    filtersInitialized = true;
+  }
+
+  function handleFilterClick(e) {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+
+    const buttonSound = document.getElementById('buttonClickSound');
     if (buttonSound) {
       buttonSound.currentTime = 0;
       buttonSound.play();
     }
+
+    const { filterType, filterValue } = btn.dataset;
+
+    // Si el botón ya está activo, lo desactivamos. Si no, lo activamos.
+    if (btn.classList.contains('active')) {
+      activeFilters[filterType] = null;
+    } else {
+      activeFilters[filterType] = filterType === 'golden' ? true : filterValue;
+    }
+
+    updateFilterUI();
+    createShowcase(); // Volvemos a renderizar el álbum con los filtros aplicados
+  }
+
+  function updateFilterUI() {
+    // Actualizar botones de rareza
+    const rarityBtns = document.querySelectorAll('.rarity-filter');
+    rarityBtns.forEach(btn => {
+      const value = btn.dataset.filterValue;
+      btn.classList.toggle('active', activeFilters.rarity === value);
+        // Si hay una rareza activa, deshabilita las demás
+      btn.disabled = activeFilters.rarity !== null && activeFilters.rarity !== value;
+    });
+
+    // Actualizar botones de variante
+    const variantBtns = document.querySelectorAll('.variant-filter');
+    variantBtns.forEach(btn => {
+      const value = btn.dataset.filterValue;
+      btn.classList.toggle('active', activeFilters.variant === value);
+        // Si hay una variante activa, deshabilita las demás
+      btn.disabled = activeFilters.variant !== null && activeFilters.variant !== value;
+    });
+    
+    // Actualizar botón golden
+    const goldenBtn = document.querySelector('.filter-btn[data-filter-type="golden"]');
+    goldenBtn.classList.toggle('active', activeFilters.golden === true);
+  }
+
+// Sonido botones
+  const buttonSound = document.getElementById('buttonClickSound');
+  const allButtons = document.querySelectorAll('button');
+
+  allButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      if (buttonSound) {
+        buttonSound.currentTime = 0;
+        buttonSound.play();
+      }
+    });
   });
-});
 
 // --- NUEVO CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA ---
-document.addEventListener('keydown', (event) => {
+  document.addEventListener('keydown', (event) => {
   // Solo reaccionamos si la tecla presionada es la barra espaciadora
   // y si el álbum no está abierto.
-  if (event.code === 'Space' && !showcaseOverlay.classList.contains('visible')) {
+    if (event.code === 'Space' && !showcaseOverlay.classList.contains('visible')) {
     // Prevenimos la acción por defecto de la barra espaciadora (hacer scroll)
-    event.preventDefault();
+      event.preventDefault();
 
     // Buscamos la primera carta en el mazo que todavía no haya sido girada
-    const nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
+      const nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
 
     // Si encontramos una carta sin girar...
-    if (nextCardToFlip) {
+      if (nextCardToFlip) {
       // Obtenemos su índice, que guardamos previamente en el 'data-attribute'
-      const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
-      
+        const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
+        
       // Llamamos a la misma función que usa el clic para girarla
-      flipCard(nextCardToFlip, cardIndex);
+        flipCard(nextCardToFlip, cardIndex);
+      }
     }
-  }
-});
+  });
 
 // --- NUEVA LÓGICA PARA INSPECCIONAR CARTAS ---
 
-const inspectOverlay = document.getElementById('inspect-overlay');
+  const inspectOverlay = document.getElementById('inspect-overlay');
 
-function showInspectView(originalCard) {
+  function showInspectView(originalCard) {
   // 1. Limpiamos cualquier contenido previo
-  inspectOverlay.innerHTML = '';
+    inspectOverlay.innerHTML = '';
 
   // 2. Clonamos la carta que se ha clickeado. 'true' copia todos sus hijos.
-  const cardClone = originalCard.cloneNode(true);
+    const cardClone = originalCard.cloneNode(true);
 
   // 3. Es CRUCIAL volver a añadir los listeners interactivos al clon
-  addInteractiveTilt(cardClone);
-  addReactiveEffects(cardClone);
-  
+    addInteractiveTilt(cardClone);
+    addReactiveEffects(cardClone);
+    
   // 4. Añadimos el clon al overlay
-  inspectOverlay.appendChild(cardClone);
+    inspectOverlay.appendChild(cardClone);
 
   // 5. Hacemos visible el overlay con una transición suave
-  inspectOverlay.classList.add('visible');
-}
+    inspectOverlay.classList.add('visible');
+  }
 
 // Listener para cerrar el overlay
-inspectOverlay.addEventListener('click', (event) => {
+  inspectOverlay.addEventListener('click', (event) => {
   // Nos aseguramos de cerrar solo si se hace clic en el fondo (el overlay en sí),
   // y no en la carta que está dentro.
-  if (event.target === inspectOverlay) {
-    inspectOverlay.classList.remove('visible');
-  }
-});
+    if (event.target === inspectOverlay) {
+      inspectOverlay.classList.remove('visible');
+    }
+  });
 
-openPack();
+  openPack();
 
 </script>
 </body>
