@@ -50,9 +50,6 @@
       background-attachment: fixed; /* Fija la imagen para que no se mueva al hacer scroll */
     }
 
-    .card.tilting {
-      transition: transform 0.05s ease-out; /* Transición rápida SÓLO al mover el ratón */
-    }
 
     h1 {
       color: #eee;
@@ -74,7 +71,8 @@
       top: 0;
       left: 0;
       transform-style: preserve-3d;
-      transition: transform 0.7s ease, left 0.7s ease, top 0.7s ease, box-shadow 0.5s ease;
+      /* La transición de transform debe ser RÁPIDA para el hover. El volteo lo controlaremos de otra forma. */
+      transition: transform 0.2s ease-out, left 0.7s ease, top 0.7s ease, box-shadow 0.5s ease;
       cursor: pointer;
       user-select: none;
     }
@@ -110,7 +108,9 @@
       will-change: transform;
     }
 
-    .card.flipped{ transform: rotateY(180deg); }
+    .card.flipped{ 
+      transform: rotateY(180deg); 
+    }
 
     .card.common { --rarity-color: #8a8a8a; }
     .card.rare { --rarity-color: #4a7dff; }
@@ -251,7 +251,7 @@
   opacity: 1; /* Hacemos visible el efecto al interactuar */
 }
 
-/* --- EFECTO HOLO REACTIVO --- */
+/* --- EFECTO HOLO REACTIVO (CON TRANSICIÓN ASIMÉTRICA) --- */
 .variant-holo .front::before {
   content: '';
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
@@ -261,8 +261,21 @@
   mask-size: 200% 200%;
   mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%);
   mix-blend-mode: overlay;
-  opacity: 1;
+  opacity: 0;
+
+  transition: opacity 0.8s ease-out;
+  
   will-change: mask-position, opacity;
+}
+
+.card.variant-holo.tilting .front::before {
+  opacity: 1;
+  
+  transition: opacity 0.3s ease-in; 
+}
+
+.card.variant-holo.tilting .front::before {
+  opacity: 1; 
 }
 
 /* --- EFECTO POLI REACTIVO --- */
@@ -635,6 +648,42 @@ h1 img {
   }
 }
 
+/* --- CSS PARA INSPECCIÓN DE CARTA --- */
+#inspect-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.9); /* Fondo oscuro semitransparente */
+  z-index: 1000; /* Por encima de todo lo demás */
+  display: grid; /* Usamos grid para centrar fácilmente */
+  place-items: center; /* Centra el contenido vertical y horizontalmente */
+  
+  /* Transición para un fade-in/fade-out suave */
+  opacity: 0;
+  pointer-events: none; /* No se puede hacer clic cuando está oculto */
+  transition: opacity 0.3s ease-out;
+}
+
+#inspect-overlay.visible {
+  opacity: 1;
+  pointer-events: auto; /* Se puede hacer clic cuando está visible */
+}
+
+/* LA MAGIA ANTI-PIXELACIÓN: */
+/* Redefinimos el tamaño de la carta SÓLO cuando está dentro del overlay */
+#inspect-overlay .card {
+  /* Usamos un tamaño 3 veces mayor que el original */
+  --card-w: 390px;  /* 130px * 3 */
+  --card-h: 555px;  /* 185px * 3 */
+  
+  /* La hacemos estática, sin posición absoluta, para que el grid la centre */
+  position: relative; 
+  top: auto;
+  left: auto;
+  
+  /* Le damos un cursor para indicar que se puede cerrar */
+  cursor: zoom-out;
+}
+
 </style>
 </head>
 <body>
@@ -651,6 +700,8 @@ h1 img {
     <div id="showcase-content"></div>
     <button id="closeShowcaseBtn">X</button>
   </div>
+
+  <div id="inspect-overlay"></div>
 
   <script>
     const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
@@ -863,81 +914,73 @@ h1 img {
 */
 
 function flipCard(card, index) {
-  if (card.classList.contains("flipped")) return;
+ if (card.classList.contains("flipped")) return;
+ flippedCardsInPack++;
+ if (flippedCardsInPack === CONFIG.packSize) {
+  openPackBtn.disabled = false;
+}
 
-  flippedCardsInPack++; // Incrementa el contador
-  if (flippedCardsInPack === CONFIG.packSize) {
-    openPackBtn.disabled = false; // Reactiva el botón si es la última carta
-  }
+const flipSound = document.getElementById('flipSound');
+if (flipSound) {
+  flipSound.currentTime = 0;
+  flipSound.volume = 0.25;
+  flipSound.play();
+}
 
-  const flipSound = document.getElementById('flipSound');
-  if (flipSound) {
-    flipSound.currentTime = 0;
-    flipSound.volume = 0.25;
-    flipSound.play();
-  }
+const cardObj = card.cardData;
+const playerId = cardObj.playerData.id;
+const variantKey = `${cardObj.golden}_${cardObj.variant}`;
+const isNewVariant = !collection[playerId]?.[variantKey];
 
-  const cardObj = card.cardData;
-  const playerId = cardObj.playerData.id;
-  
-  // 1. Definimos la 'variantKey' ANTES de la comprobación.
-  const variantKey = `${cardObj.golden}_${cardObj.variant}`;
-  
-  // 2. La comprobación ahora busca la VARIANTE ESPECÍFICA usando la 'variantKey'.
-  //    El operador '?.' evita errores si el jugador es completamente nuevo.
-  const isNewVariant = !collection[playerId]?.[variantKey];
-  
-  // 3. Si la variante es nueva, mostramos el indicador "NEW".
-  if (isNewVariant) {
-    const newIndicator = document.createElement('div');
-    newIndicator.className = 'new-indicator';
-    newIndicator.textContent = 'NEW';
-    card.appendChild(newIndicator); // Se añade al contenedor .card para que se vea por fuera
-    
-    // Se elimina después de que la animación haya terminado
-    setTimeout(() => {
-      newIndicator.remove();
-    }, 4200);
-  }
-
-  // El resto de la lógica para añadir a la colección permanece igual
-  if (!collection[playerId]) {
-    collection[playerId] = {};
-  }
-  if (!collection[playerId][variantKey]) {
-    collection[playerId][variantKey] = { count: 1, cardData: cardObj };
-  } else {
-    collection[playerId][variantKey].count++;
-  }
-
-  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
-
-  const rarity = card.dataset.rarity;
-  const isGolden = card.dataset.golden === "true";
-  const variant = card.dataset.variant;
-
-  card.classList.add("flipped", "is-animating"); 
-
+if (isNewVariant) {
+  const newIndicator = document.createElement('div');
+  newIndicator.className = 'new-indicator';
+  newIndicator.textContent = 'NEW';
+  card.appendChild(newIndicator);
   setTimeout(() => {
-    card.classList.remove("is-animating");
-    addInteractiveTilt(card);
-  }, 700);
+    newIndicator.remove();
+  }, 4200);
+}
 
-  if (isGolden) {
-    counters[rarity][variant].golden++;
-  } else {
-    counters[rarity][variant].normal++;
-  }
+if (!collection[playerId]) {
+  collection[playerId] = {};
+}
+if (!collection[playerId][variantKey]) {
+  collection[playerId][variantKey] = { count: 1, cardData: cardObj };
+} else {
+  collection[playerId][variantKey].count++;
+}
 
-  const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
-  const cardSpacing = containerWidth / CONFIG.packSize;
-  const spread = (containerWidth - cardSpacing) / 2;
-  
-  card.style.left = `${-spread + index * cardSpacing}px`;
-  card.style.top = `calc(var(--card-h) + 30px)`;
-  card.style.transform = 'rotateY(180deg)';
+localStorage.setItem('myFootballCollection', JSON.stringify(collection));
 
-  addReactiveEffects(card);
+const rarity = card.dataset.rarity;
+const isGolden = card.dataset.golden === "true";
+const variant = card.dataset.variant;
+
+card.style.transition = 'transform 0.7s ease, left 0.7s ease, top 0.7s ease';
+card.classList.add("flipped", "is-animating"); 
+
+setTimeout(() => {
+  card.classList.remove("is-animating");
+  card.style.transition = '';
+  addInteractiveTilt(card);
+}, 700);
+
+if (isGolden) {
+  counters[rarity][variant].golden++;
+} else {
+  counters[rarity][variant].normal++;
+}
+
+const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
+const cardSpacing = containerWidth / CONFIG.packSize;
+const spread = (containerWidth - cardSpacing) / 2;
+
+card.style.left = `${-spread + index * cardSpacing}px`;
+card.style.top = `calc(var(--card-h) + 30px)`;
+card.style.transform = 'rotateY(180deg)';
+
+addReactiveEffects(card);
 }
 
 function updateCounter() {
@@ -1018,6 +1061,7 @@ function createShowcase() {
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
             addReactiveEffects(div);
+            div.addEventListener('click', () => showInspectView(div));
           } else {
             //HUECO VACÍO (sin cambios aquí)
             const placeholder = document.createElement('div');
@@ -1070,15 +1114,23 @@ function addInteractiveTilt(cardElement) {
     const y = e.clientY - rect.top;
 
     const rotateX = ((y / rect.height) - 0.5) * 40; 
-    const rotateY = ((x / rect.width) - 0.5) * 40; 
+    const rotateY = ((x / rect.width) - 0.5) * 40;
+
+    // --- LÓGICA CORREGIDA ---
+    // Determinamos si la carta está siendo inspeccionada
+    const isInspecting = cardElement.closest('#inspect-overlay');
+    // El escalado depende de dónde está la carta
+    const scale = isInspecting ? 1.1 : 1.25;
 
     cardElement.classList.add('tilting');
-    cardElement.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.25)`;
+    // Aplicamos TODA la transformación junta en una sola línea
+    cardElement.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
     cardElement.style.zIndex = '999'; 
   });
 
   cardElement.addEventListener("mouseleave", () => {
     cardElement.classList.remove('tilting');
+    // Al salir, volvemos a la transformación base (solo volteada)
     cardElement.style.transform = "rotateY(180deg)";
     cardElement.style.zIndex = '';
   });
@@ -1149,6 +1201,37 @@ document.addEventListener('keydown', (event) => {
       // Llamamos a la misma función que usa el clic para girarla
       flipCard(nextCardToFlip, cardIndex);
     }
+  }
+});
+
+// --- NUEVA LÓGICA PARA INSPECCIONAR CARTAS ---
+
+const inspectOverlay = document.getElementById('inspect-overlay');
+
+function showInspectView(originalCard) {
+  // 1. Limpiamos cualquier contenido previo
+  inspectOverlay.innerHTML = '';
+
+  // 2. Clonamos la carta que se ha clickeado. 'true' copia todos sus hijos.
+  const cardClone = originalCard.cloneNode(true);
+
+  // 3. Es CRUCIAL volver a añadir los listeners interactivos al clon
+  addInteractiveTilt(cardClone);
+  addReactiveEffects(cardClone);
+  
+  // 4. Añadimos el clon al overlay
+  inspectOverlay.appendChild(cardClone);
+
+  // 5. Hacemos visible el overlay con una transición suave
+  inspectOverlay.classList.add('visible');
+}
+
+// Listener para cerrar el overlay
+inspectOverlay.addEventListener('click', (event) => {
+  // Nos aseguramos de cerrar solo si se hace clic en el fondo (el overlay en sí),
+  // y no en la carta que está dentro.
+  if (event.target === inspectOverlay) {
+    inspectOverlay.classList.remove('visible');
   }
 });
 
