@@ -1325,6 +1325,34 @@ h1 img {
   transform: scale(1.05);
 }
 
+/* --- ESTILOS PARA LAS ESTADÍSTICAS DEL ÁLBUM --- */
+#album-stats-header {
+  width: 100%;
+  max-width: 1600px; /* Coincide con el ancho máximo del contenido */
+  display: flex;
+  justify-content: space-between; /* ¡La magia! Empuja los elementos a los extremos */
+  align-items: center;
+  padding: 0 10px; /* Un poco de espacio en los bordes */
+  margin-bottom: 25px; /* Espacio antes de los filtros */
+  box-sizing: border-box;
+}
+
+.album-stat {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ccc;
+  background: rgba(0,0,0,0.2);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Estilo para los números, para que destaquen */
+.album-stat .stat-value {
+  color: #fff;
+  font-weight: 700;
+}
+
 </style>
 </head>
 <body>
@@ -1341,6 +1369,11 @@ h1 img {
 
 <!-- ============= VISTA DEL ÁLBUM (SHOWCASE) =============== -->
 <div id="showcase-overlay">
+  <!-- Contenedor para las estadísticas del álbum -->
+  <div id="album-stats-header">
+    <div id="packs-opened-stat" class="album-stat">Packs Opened: 0</div>
+    <div id="collection-progress-stat" class="album-stat">0 / 0 Cards</div>
+  </div>
   <div id="showcase-filters-container">
     <div id="filter-controls">
       <!-- Los botones de filtro se generarán aquí con JavaScript -->
@@ -1536,30 +1569,39 @@ h1 img {
     goldenChance: 3.8,
   };
 
-  function buildProbLists(config) {
-    const regularProbs = []; const goldenRaw = [];
-    for (const key in config.rarities) { regularProbs.push({ r: key, p: config.rarities[key].p }); goldenRaw.push({ r: key, p: config.rarities[key].p_golden }); }
-      const goldenTotalRaw = goldenRaw.reduce((s, x) => s + x.p, 0); const goldenScale = config.goldenChance / goldenTotalRaw;
-    const goldenProbs = goldenRaw.map(x => ({ r: x.r, p: x.p * goldenScale }));
-    const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
-    return { regularProbs, goldenProbs, variantProbs };
-  }
+  // --- Cálculo del total de cartas posibles en el juego ---
+const totalPossibleCards = playersDB.length * Object.keys(CONFIG.variants).length * 2; // x2 para Normal y Golden
 
-  const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
+// --- Objeto para guardar y cargar estadísticas ---
+const savedStats = localStorage.getItem('myGameStats');
+let stats = savedStats ? JSON.parse(savedStats) : {
+  totalPacksOpened: 0
+};
+
+function buildProbLists(config) {
+  const regularProbs = []; const goldenRaw = [];
+  for (const key in config.rarities) { regularProbs.push({ r: key, p: config.rarities[key].p }); goldenRaw.push({ r: key, p: config.rarities[key].p_golden }); }
+    const goldenTotalRaw = goldenRaw.reduce((s, x) => s + x.p, 0); const goldenScale = config.goldenChance / goldenTotalRaw;
+  const goldenProbs = goldenRaw.map(x => ({ r: x.r, p: x.p * goldenScale }));
+  const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
+  return { regularProbs, goldenProbs, variantProbs };
+}
+
+const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
     // 1. Intentamos cargar la colección guardada desde localStorage.
-  const savedCollection = localStorage.getItem('myFootballCollection');
+const savedCollection = localStorage.getItem('myFootballCollection');
 
     // 2. Si había algo guardado, lo convertimos de texto a objeto.
     //    Si no había nada (la primera vez que se visita), empezamos con una colección vacía.
-  let collection = savedCollection ? JSON.parse(savedCollection) : {};
+let collection = savedCollection ? JSON.parse(savedCollection) : {};
 
     // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
-  const savedPacks = localStorage.getItem('myFootballPacks');
-  let packInventory = savedPacks ? JSON.parse(savedPacks) : {};
+const savedPacks = localStorage.getItem('myFootballPacks');
+let packInventory = savedPacks ? JSON.parse(savedPacks) : {};
 
   // --- Lógica para el dinero del jugador ---
-  const savedCurrency = localStorage.getItem('myPlayerCurrency');
+const savedCurrency = localStorage.getItem('myPlayerCurrency');
 // Si no hay dinero guardado (primera vez que juega), empieza con 50.
 let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 100; //DINERO INICIAL
 
@@ -1936,6 +1978,7 @@ const showcaseBtn = document.getElementById('showcaseBtn');
 const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
 
 showcaseBtn.addEventListener('click', () => {
+  updateAlbumStats(); //stats del album
   buildFilterUI(); // Construye los botones de filtro la primera vez
   updateFilterUI(); //muestra y desmuestra owned y missing
   createShowcase(); // Renderiza el álbum (ya filtrado si hay filtros activos)
@@ -2154,6 +2197,7 @@ function resetCollection() {
     localStorage.removeItem('myFootballCollection');
     localStorage.removeItem('myFootballPacks');
     localStorage.removeItem('myPlayerCurrency');
+    localStorage.removeItem('myGameStats');
     location.reload();
   }
 }
@@ -2476,6 +2520,10 @@ function openOwnedPack(packId) {
     // 1. Restamos el pack y guardamos
     packInventory[packId]--; 
     savePackInventory();
+
+    // Incrementamos el contador y guardamos las estadísticas para album ---
+    stats.totalPacksOpened++;
+    saveStats();
     
     // 2. Entramos en "modo apertura" (esto hace que la tienda se desvanezca)
     packsOverlay.classList.add('opening-mode');
@@ -2539,6 +2587,35 @@ purchaseOverlay.addEventListener('click', (event) => {
     closePackPurchaseView();
   }
 });
+
+function saveStats() {
+  localStorage.setItem('myGameStats', JSON.stringify(stats));
+}
+
+function calculateUnlockedCards() {
+  let unlockedCount = 0;
+  for (const playerId in collection) {
+    if (collection.hasOwnProperty(playerId)) {
+      // Contamos cuántas variantes únicas tiene este jugador
+      unlockedCount += Object.keys(collection[playerId]).length;
+    }
+  }
+  return unlockedCount;
+}
+
+function updateAlbumStats() {
+  const packsOpenedEl = document.getElementById('packs-opened-stat');
+  const progressEl = document.getElementById('collection-progress-stat');
+  
+  const unlockedCount = calculateUnlockedCards();
+
+  if (packsOpenedEl) {
+    packsOpenedEl.innerHTML = `Packs Opened: <span class="stat-value">${stats.totalPacksOpened}</span>`;
+  }
+  if (progressEl) {
+    progressEl.innerHTML = `<span class="stat-value">${unlockedCount} / ${totalPossibleCards}</span> Cards Collected`;
+  }
+}
 
 </script>
 </body>
