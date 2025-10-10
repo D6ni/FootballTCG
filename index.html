@@ -370,16 +370,19 @@ button[onclick="resetCollection()"]:hover {
   box-shadow: 0 0 15px rgba(230, 161, 21, 0.6);
 }
 
-.button-container { 
-  display: flex; 
-  justify-content: center; 
-  gap: 10px; 
-  margin-top:20px; 
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
 }
+
 #showcaseBtn { 
   background-color: #3b68d1; 
   color: #fff; 
 }
+
 #showcaseBtn:hover { 
   box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
 }
@@ -977,43 +980,327 @@ h1 img {
   margin-left: 10px;
 }
 
+
+/* --- ESTILOS PARA LA NUEVA TIENDA DE PACKS (ACTUALIZADO) --- */
+#packs-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.98);
+  z-index: 90;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+#packs-overlay.visible {
+  display: flex;
+}
+
+#packs-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.packs-section {
+  width: 100%;
+  padding: 20px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+#pack-store {
+  flex-basis: 65%;
+}
+
+#my-packs-inventory {
+  flex-basis: 35%;
+}
+
+.section-title {
+  text-align: left;
+  margin: 0 0 20px 10px;
+  color: #ddd;
+}
+
+.pack-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  /* Añadimos perspectiva para que funcione el efecto 3D en los hijos */
+  perspective: 1500px;
+}
+
+/* --- ESTILOS PARA LA TIENDA DE PACKS (ACTUALIZADO Y CORREGIDO) --- */
+
+.pack-item {
+  --card-w: 160px;
+  --card-h: 228px;
+  width: var(--card-w);
+  height: var(--card-h);
+  
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s linear;
+  transform-style: preserve-3d;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.pack-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4));
+  transition: filter 0.3s ease-out;
+  pointer-events: auto;
+}
+
+.pack-item:hover img {
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+}
+
+.pack-quantity {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 2px solid #fff;
+}
+
+#closePacksViewBtn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 80px;
+  height: 40px;
+  padding: 0;
+  font-size: 16px;
+  background-color: #ff4d4d;
+  color: #fff;
+}
+
+#closePacksViewBtn:hover {
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+}
+
+/* --- ESTILOS PARA EL ESCENARIO DE APERTURA (VERSIÓN FINAL) --- */
+#pack-opening-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* ¡CAMBIO CLAVE! Alineamos todo desde la parte superior */
+  justify-content: flex-start; 
+  gap: 40px; 
+  /* Aumentamos el padding superior para bajarlo un poco desde el borde */
+  padding-top: 80px; 
+  padding-bottom: 200px;
+  box-sizing: border-box;
+  perspective: 1200px; 
+}
+
+#pack-opening-cards-container {
+  position: relative;
+  width: calc(var(--card-w) + 20px);
+  height: var(--card-h);
+}
+
+/* Contenedor principal de los controles inferiores */
+#pack-opening-controls {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center; /* Centra el botón horizontalmente */
+  align-items: center;
+  z-index: 100;
+}
+
+/* Contenedor para la fila de packs (ahora en la parte superior) */
+#next-pack-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  height: 182px; 
+  align-items: center;
+  /* ¡Quitamos width para que se ajuste al contenido! */
+}
+
+/* Estilo para los packs individuales en esta vista */
+#next-pack-container .pack-item {
+  transform: scale(0.8);
+  transition: transform 0.2s ease-out;
+}
+#next-pack-container .pack-item:hover {
+  transform: scale(0.9);
+}
+
+/* Estilo para el botón "Back to Store" */
+#back-to-store-btn {
+  margin-top: 0;
+}
+#back-to-store-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+}
+
+/* --- CLASE PARA LA TRANSICIÓN SUAVE (Sin cambios) --- */
+#packs-overlay.opening-mode #packs-container,
+#packs-overlay.opening-mode #closePacksViewBtn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#packs-container, #closePacksViewBtn {
+  transition: opacity 0.4s ease-out;
+}
+
+/* --- ESTILOS PARA EL PRECIO DEL PACK EN LA TIENDA --- */
+.pack-price {
+  position: absolute;
+  /* Lo posicionamos un poco por debajo del borde del contenedor del pack */
+  bottom: -28px; 
+  left: 0;
+  right: 0;
+  text-align: center;
+  
+  font-size: 22px; /* Un poco más grande para que destaque */
+  font-weight: bold;
+  color: #FFFFFF; /* Un color dorado brillante */
+  
+  /* La magia del borde negro simple usando text-shadow */
+  text-shadow: 
+  -1.5px -1.5px 0 #000,  
+  1.5px -1.5px 0 #000,
+  -1.5px  1.5px 0 #000,
+  1.5px  1.5px 0 #000,
+  0 0 8px rgba(0,0,0,0.8); /* Una sombra suave extra para que resalte más */
+  
+  /* Esto evita que el texto del precio interfiera con el hover del pack */
+  pointer-events: none; 
+}
+
+/* --- ESTILOS PARA EL DINERO DEL JUGADOR --- */
+.player-currency {
+  font-size: 28px; /* Un poco más grande para la página principal */
+  font-weight: bold;
+  color: #FFFFFF;
+  margin-bottom: 25px; /* Espacio entre el dinero y el primer botón */
+  text-shadow:
+  -1.5px -1.5px 0 #000,
+  1.5px -1.5px 0 #000,
+  -1.5px  1.5px 0 #000,
+  1.5px  1.5px 0 #000,
+  0 0 8px rgba(0,0,0,0.8);
+}
+
 </style>
 </head>
 <body>
   <audio id="flipSound" src="sounds/flip-sound.mp3" preload="auto"></audio>
   <audio id="buttonClickSound" src="sounds/button-click.mp3" preload="auto"></audio>
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
+  <div id="player-currency-display" class="player-currency">0 💎</div>
   <div class="button-container">
-    <button onclick="openPack()">Open Pack</button>
+    <button id="openPacksViewBtn">Buy / Open Packs</button>
     <button id="showcaseBtn">My Album</button>
     <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">Reset Progress</button>
   </div>
   <div id="cards"></div>
-  <div id="showcase-overlay">
-    <!-- FILTROS Album -->
-    <div id="showcase-filters-container">
-      <div id="filter-controls">
-        <!-- Los botones de filtro se generarán aquí con JavaScript -->
-      </div>
-      <div id="search-controls">
-        <input type="text" id="name-search" placeholder="Search by name or position...">
-        <label for="show-missing-checkbox" class="checkbox-label">
-          <input type="checkbox" id="show-missing-checkbox">
-          Show missing cards
-        </label>
-        <button id="clear-filters-btn">Clear All</button>
+
+<!-- ============= VISTA DEL ÁLBUM (SHOWCASE) =============== -->
+<div id="showcase-overlay">
+  <div id="showcase-filters-container">
+    <div id="filter-controls">
+      <!-- Los botones de filtro se generarán aquí con JavaScript -->
+    </div>
+    <div id="search-controls">
+      <input type="text" id="name-search" placeholder="Search by name or position...">
+      <label for="show-owned-checkbox" class="checkbox-label">
+        <input type="checkbox" id="show-owned-checkbox">
+        Show owned cards
+      </label>
+      <label for="show-missing-checkbox" class="checkbox-label">
+        <input type="checkbox" id="show-missing-checkbox">
+        Show missing cards
+      </label>
+      <button id="clear-filters-btn">Clear All</button>
+    </div>
+  </div>
+  <div id="showcase-content"></div>
+  <button id="closeShowcaseBtn">X</button>
+</div>
+
+<!-- =========  VISTA DE LA TIENDA DE PACKS  ========== -->
+<div id="packs-overlay">
+  <div id="packs-container">
+    <!-- SECCIÓN DE LA TIENDA -->
+    <div class="packs-section" id="pack-store">
+      <h2 class="section-title">Store</h2>
+      <div class="pack-grid" id="pack-store-grid">
+        <!-- Los packs para comprar se generarán aquí con JavaScript -->
       </div>
     </div>
-    <div id="showcase-content"></div>
-    <button id="closeShowcaseBtn">X</button>
+
+    <!-- SECCIÓN DEL INVENTARIO -->
+    <div class="packs-section" id="my-packs-inventory">
+      <h2 class="section-title">My Packs</h2>
+      <div class="pack-grid" id="my-packs-grid">
+        <!-- Los packs que posees se generarán aquí con JavaScript -->
+      </div>
+    </div>
   </div>
 
-  <div id="inspect-overlay"></div>
+  <!-- =========  NUEVO ESCENARIO DE APERTURA DE PACKS ========== -->
+  <!-- ======================================================== -->
+  <div id="pack-opening-stage" style="display: none;">
 
-  <script>
+    <!-- 1. Contenedor para la fila de packs (MOVIDO AQUÍ) -->
+    <div id="next-pack-container">
+      <!-- Los packs se generarán aquí con JavaScript -->
+    </div>
+
+    <!-- 2. Contenedor para las cartas reveladas -->
+    <div id="pack-opening-cards-container"></div>
+
+  </div>
+
+  <!-- 3. Contenedor SOLO para el botón, que se queda abajo -->
+  <div id="pack-opening-controls" style="display: none;">
+    <button id="back-to-store-btn" style="background-color: #ff4d4d; color: #fff;">Back to Store</button>
+  </div>
+  <button id="closePacksViewBtn">Back</button>
+</div>
+
+<!-- =========== VISTA DE INSPECCIÓN DE CARTA =============== -->
+<!-- ======================================================== -->
+<div id="inspect-overlay"></div>
+
+<script>
     const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
     const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
-    const playersDB = [
+  const playersDB = [
     /* RELIC (12 Jugadores) */
     { id: 1, name: "Lionel Messi", position: "ATK", rating: 99, rarity: "relic", img: "images/lionelmessi.png" },/*DONE*/
     { id: 2, name: "Pelé", position: "ATK", rating: 98, rarity: "relic", img: "images/pele.png" },/*DONE*/
@@ -1089,7 +1376,7 @@ h1 img {
     { id: 64, name: "Enzo Fernández", position: "MID", rating: 82, rarity: "common", img: "images/enzofernandez.png" },/*DONE*/
     { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png" },/*DONE*/
     { id: 66, name: "Bruno Guimarães", position: "MID", rating: 82, rarity: "common", img: "images/brunoguimaraes.png" },/*DONE*/
-      { id: 67, name: "Dominik Szoboszlai", position: "MID", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png" },
+    { id: 67, name: "Dominik Szoboszlai", position: "MID", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png" },
     { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png" },/*DONE*/
     { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png" },/*DONE*/
     { id: 70, name: "Lucas Paquetá", position: "MID", rating: 81, rarity: "common", img: "images/lucaspaqueta.png" },/*DONE*/
@@ -1111,103 +1398,135 @@ h1 img {
     { id: 86, name: "Santiago Giménez", position: "ATK", rating: 78, rarity: "common", img: "images/santiagogimenez.png" },/*DONE*/
     { id: 87, name: "Alejandro Balde", position: "DEF", rating: 80, rarity: "common", img: "images/alejandrobalde.png" },/*DONE*/
     { id: 88, name: "Anthony Gordon", position: "ATK", rating: 77, rarity: "common", img: "images/anthonygordon.png" }/*DONE*/
-    ];
+  ];
 
-    const CONFIG = {
-      packSize: 11,
-      rarities: { common: { p: 69.5, p_golden: 1.5, order: 1 }, rare: { p: 21.2, p_golden: 1.1, order: 2 }, epic: { p: 4.2,  p_golden: 0.6, order: 3 }, legendary: { p: 0.8,  p_golden: 0.3, order: 4 }, relic: { p: 0.5,  p_golden: 0.1, order: 5 }, },
-      variants: { none: {p:0}, foil: { p: 1.1 }, holo: { p: 0.6 }, poli: { p: 0.3 }, negative: { p: 0.1 }, },
-      goldenChance: 3.8,
-    };
+  const CONFIG = {
+    packSize: 11,
+    rarities: { common: { p: 69.5, p_golden: 1.5, order: 1 }, rare: { p: 21.2, p_golden: 1.1, order: 2 }, epic: { p: 4.2,  p_golden: 0.6, order: 3 }, legendary: { p: 0.8,  p_golden: 0.3, order: 4 }, relic: { p: 0.5,  p_golden: 0.1, order: 5 }, },
+    variants: { none: {p:0}, foil: { p: 1.1 }, holo: { p: 0.6 }, poli: { p: 0.3 }, negative: { p: 0.1 }, },
+    goldenChance: 3.8,
+  };
 
-    function buildProbLists(config) {
-      const regularProbs = []; const goldenRaw = [];
-      for (const key in config.rarities) { regularProbs.push({ r: key, p: config.rarities[key].p }); goldenRaw.push({ r: key, p: config.rarities[key].p_golden }); }
-        const goldenTotalRaw = goldenRaw.reduce((s, x) => s + x.p, 0); const goldenScale = config.goldenChance / goldenTotalRaw;
-      const goldenProbs = goldenRaw.map(x => ({ r: x.r, p: x.p * goldenScale }));
-      const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
-      return { regularProbs, goldenProbs, variantProbs };
-    }
+  function buildProbLists(config) {
+    const regularProbs = []; const goldenRaw = [];
+    for (const key in config.rarities) { regularProbs.push({ r: key, p: config.rarities[key].p }); goldenRaw.push({ r: key, p: config.rarities[key].p_golden }); }
+      const goldenTotalRaw = goldenRaw.reduce((s, x) => s + x.p, 0); const goldenScale = config.goldenChance / goldenTotalRaw;
+    const goldenProbs = goldenRaw.map(x => ({ r: x.r, p: x.p * goldenScale }));
+    const variantProbs = Object.entries(config.variants).filter(([k,v])=> k !== 'none').map(([key, value]) => ({ v: key, p: value.p }));
+    return { regularProbs, goldenProbs, variantProbs };
+  }
 
-    const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
+  const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
     // 1. Intentamos cargar la colección guardada desde localStorage.
-    const savedCollection = localStorage.getItem('myFootballCollection');
-    
+  const savedCollection = localStorage.getItem('myFootballCollection');
+
     // 2. Si había algo guardado, lo convertimos de texto a objeto.
     //    Si no había nada (la primera vez que se visita), empezamos con una colección vacía.
-    let collection = savedCollection ? JSON.parse(savedCollection) : {};
+  let collection = savedCollection ? JSON.parse(savedCollection) : {};
+
+    // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
+  const savedPacks = localStorage.getItem('myFootballPacks');
+  let packInventory = savedPacks ? JSON.parse(savedPacks) : {};
+
+  // --- Lógica para el dinero del jugador ---
+  const savedCurrency = localStorage.getItem('myPlayerCurrency');
+// Si no hay dinero guardado (primera vez que juega), empieza con 50.
+let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 100; //DINERO INICIAL
+
+const packTypes = {
+  'common-pack': {
+    name: 'Common Pack',
+      cost: 0 // PRECIO PAQUETES
+    },
+    'holo-pack': {
+      name: 'Holo Pack',
+      cost: 500
+    }
+  };
 
     // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
-    let activeFilters = {
-      rarity: null,
-      variant: null,
-      golden: null,
-      query: '',
-      showMissing: false
-    };
-    let filtersInitialized = false;
+  let activeFilters = {
+    rarity: null,
+    variant: null,
+    golden: null,
+    query: '',
+    showMissing: false,
+    showOwned: false
+  };
+  let filtersInitialized = false;
 
-    let flippedCardsInPack = 0;
-    const openPackBtn = document.querySelector('button[onclick="openPack()"]');
+  let flippedCardsInPack = 0;
 
-    let counters = {};
-    for (const rarityKey in CONFIG.rarities) {
-      counters[rarityKey] = {};
-      for (const variantKey in CONFIG.variants) {
-        counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
+  const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+
+  let counters = {};
+  for (const rarityKey in CONFIG.rarities) {
+    counters[rarityKey] = {};
+    for (const variantKey in CONFIG.variants) {
+      counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
+    }
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function pickByProb(list) {
+    const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
+    let acc = 0;
+    for (const item of list) { acc += item.p; if (roll < acc) return item; }
+      return list[list.length - 1];
+  }
+
+  function generateCard() {
+    const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
+    const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+    const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
+    const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
+    const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+    const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+    return { playerData: player, rarity, golden: isGolden, variant };
+  }
+
+    function openPack(containerId = 'cards') { // Por defecto usa 'cards'
+  // El botón a deshabilitar es siempre el principal
+      const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+      if (openPacksViewBtn) openPacksViewBtn.disabled = true;
+
+      flippedCardsInPack = 0;
+  // ¡CAMBIO CLAVE! Usa el ID del contenedor que le pasamos
+      const container = document.getElementById(containerId); 
+      if (!container) {
+        console.error("Error: Container not found!", containerId);
+        return;
       }
-    }
+      container.innerHTML = "";
 
-    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+      let pack = [];
+      for (let i = 0; i < CONFIG.packSize; i++) { 
+        pack.push(generateCard());
+      }
 
-    function pickByProb(list) {
-      const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
-      let acc = 0;
-      for (const item of list) { acc += item.p; if (roll < acc) return item; }
-        return list[list.length - 1];
-    }
+      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+      }
+      pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
 
-    function generateCard() {
-      const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
-      const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
-      const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
-      const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
-      const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
-      const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
-      return { playerData: player, rarity, golden: isGolden, variant };
-    }
+      pack.forEach((cardObj, i) => {
+        const div = document.createElement("div");
+        const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+        div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+        div.style.zIndex = pack.length - i;
+        div.dataset.rarity = cardObj.rarity;
+        div.dataset.golden = cardObj.golden;
+        div.dataset.variant = cardObj.variant;
+        div.dataset.index = i;
+        div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
 
-    function openPack() {
-      openPackBtn.disabled = true; // Desactiva el botón
-  flippedCardsInPack = 0;      // Reinicia el contador
-  const container = document.getElementById("cards");
-  container.innerHTML = "";
-  let pack = [];
-  for (let i = 0; i < CONFIG.packSize; i++) { 
-    pack.push(generateCard());
-  }
+        const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
-  if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-    const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
-    pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
-  }
-  pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
-
-  pack.forEach((cardObj, i) => {
-    const div = document.createElement("div");
-    const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
-    div.style.zIndex = pack.length - i;
-    div.dataset.rarity = cardObj.rarity;
-    div.dataset.golden = cardObj.golden;
-    div.dataset.variant = cardObj.variant;
-    div.dataset.index = i;
-    div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
-
-    const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
-
-    div.innerHTML = `
+    // --- ESTA ES LA PARTE QUE FALTABA ---
+        div.innerHTML = `
           <div class="side front">
             <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
             ${indicatorsHTML}
@@ -1215,12 +1534,14 @@ h1 img {
             </div>
           </div>
           <div class="side back">⚽</div>
-    `;
-    div.cardData = cardObj;
-    div.onclick = () => flipCard(div, i);
-    container.appendChild(div);
-  });
-}
+        `;
+    // --- FIN DE LA CORRECCIÓN ---
+
+        div.cardData = cardObj;
+        div.onclick = () => flipCard(div, i);
+        container.appendChild(div);
+      });
+    }
 
 /*esto va en player-info por si acaso el de arriba ye en createShowcase (album)
 
@@ -1230,11 +1551,57 @@ h1 img {
 
 */
 
-function flipCard(card, index) {
- if (card.classList.contains("flipped")) return;
- flippedCardsInPack++;
- if (flippedCardsInPack === CONFIG.packSize) {
-  openPackBtn.disabled = false;
+    function flipCard(card, index) {
+     if (card.classList.contains("flipped")) return;
+     flippedCardsInPack++;
+ // Dentro de la función flipCard...
+     if (flippedCardsInPack === CONFIG.packSize) {
+      const openingControls = document.getElementById('pack-opening-controls');
+      const nextPackContainer = document.getElementById('next-pack-container');
+  nextPackContainer.innerHTML = ''; // Limpiamos el contenedor por si acaso
+
+  // Comprobamos si quedan packs del tipo que estamos abriendo
+  if (packInventory[currentOpeningPackId] > 0) {
+    // ¡Sí quedan! Creamos el elemento del pack
+    const pack = packTypes[currentOpeningPackId];
+    
+    // Esta lógica es idéntica a la de renderPacksView
+    const packEl = document.createElement('div');
+    packEl.className = 'pack-item';
+    packEl.dataset.packType = currentOpeningPackId;
+    packEl.title = `Click to open another ${pack.name}`;
+    
+    const packImg = document.createElement('img');
+    packImg.src = `packs/packs/${currentOpeningPackId}.png`;
+    packImg.alt = pack.name;
+    packEl.appendChild(packImg);
+
+    const quantityEl = document.createElement('div');
+    quantityEl.className = 'pack-quantity';
+    quantityEl.textContent = `x${packInventory[currentOpeningPackId]}`;
+    packEl.appendChild(quantityEl);
+    
+    // --- LÓGICA DE CLICK MEJORADA ---
+    packEl.addEventListener('click', () => {
+      // 1. ¡ACCIÓN INMEDIATA! Ocultamos el pack que acabamos de clickear.
+      //    La forma más sencilla es limpiar el contenedor.
+      nextPackContainer.innerHTML = '';
+
+      // 2. Ahora, procedemos con la lógica de abrir el sobre como antes.
+      openOwnedPack(currentOpeningPackId);
+    });
+    
+    // Lo añadimos al contenedor y le damos el efecto de inclinación
+    nextPackContainer.appendChild(packEl);
+    addInteractiveTiltToPack(packEl);
+  }
+
+  // Mostramos la barra de controles (que ahora contiene el pack o está vacía)
+  openingControls.style.display = 'flex';
+
+  // Reactivamos el botón principal por si el usuario cierra todo
+  const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+  if (openPacksViewBtn) openPacksViewBtn.disabled = false;
 }
 
 const flipSound = document.getElementById('flipSound');
@@ -1371,7 +1738,7 @@ function createShowcase() {
 
           if (collectedVersion) {
             playerHasVisibleSlots = true;
-            anyContentWasDisplayed = true; // Marcamos que se ha mostrado contenido.
+            anyContentWasDisplayed = true;
 
             const { cardData, count } = collectedVersion;
             const div = document.createElement("div");
@@ -1392,7 +1759,7 @@ function createShowcase() {
             addReactiveEffects(div);
             div.addEventListener('click', () => showInspectView(div));
 
-          } else if (!isFiltering || (isFiltering && activeFilters.showMissing)) {
+          } else if (!activeFilters.showOwned && (!isFiltering || (isFiltering && activeFilters.showMissing))) {
             playerHasVisibleSlots = true;
             anyContentWasDisplayed = true; // Marcamos que se ha mostrado contenido (un hueco).
 
@@ -1437,6 +1804,7 @@ const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
 
 showcaseBtn.addEventListener('click', () => {
   buildFilterUI(); // Construye los botones de filtro la primera vez
+  updateFilterUI(); //muestra y desmuestra owned y missing
   createShowcase(); // Renderiza el álbum (ya filtrado si hay filtros activos)
   showcaseOverlay.classList.add('visible');
 });
@@ -1453,8 +1821,52 @@ showcaseOverlay.addEventListener('click', (e) => {
 
 // --- NUEVOS LISTENERS PARA LOS FILTROS ---
 document.addEventListener('DOMContentLoaded', () => {
+  updateCurrencyDisplay();
   const showMissingCheckbox = document.getElementById('show-missing-checkbox');
   const showMissingLabel = document.querySelector('.checkbox-label[for="show-missing-checkbox"]');
+  const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
+  const packsOverlay = document.getElementById('packs-overlay');
+  const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+
+  if(showOwnedCheckbox) {
+    showOwnedCheckbox.addEventListener('change', () => {
+      activeFilters.showOwned = showOwnedCheckbox.checked;
+      createShowcase();
+    });
+  }
+  
+  const backToStoreBtn = document.getElementById('back-to-store-btn');
+  backToStoreBtn.addEventListener('click', () => {
+    const packsOverlay = document.getElementById('packs-overlay');
+    const openingStage = document.getElementById('pack-opening-stage');
+    
+    // 1. Salimos del "modo apertura" para que la tienda reaparezca
+    packsOverlay.classList.remove('opening-mode');
+
+    // 2. Ocultamos el escenario y limpiamos las cartas
+    openingStage.style.display = 'none';
+    document.getElementById('pack-opening-cards-container').innerHTML = '';
+    
+    // 3. ¡LA LÍNEA CLAVE DEL BUG FIX! Ocultamos los controles.
+    document.getElementById('pack-opening-controls').style.display = 'none';
+
+    // 4. Volvemos a renderizar el inventario para que se actualice el contador
+    renderPacksView();
+  });
+
+
+  // --- Listener para el botón principal "Back" (CORREGIDO) ---
+  const closePacksViewBtn = document.getElementById('closePacksViewBtn');
+  if(closePacksViewBtn) {
+    closePacksViewBtn.addEventListener('click', () => {
+      packsOverlay.classList.remove('visible');
+
+      // ¡AÑADIMOS LAS MISMAS LÍNEAS AQUÍ PARA CONSISTENCIA!
+      document.getElementById('pack-opening-controls').style.display = 'none';
+      document.getElementById('pack-opening-cards-container').innerHTML = '';
+      packsOverlay.classList.remove('opening-mode');
+    });
+  }
 
   // Delegación de eventos para los botones de filtro
   const filterControls = document.getElementById('filter-controls');
@@ -1493,11 +1905,30 @@ document.addEventListener('DOMContentLoaded', () => {
         buttonSound.play();
       }
       // Resetea todos los filtros, incluyendo el nuevo
-      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false };
+      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false  };
       searchInput.value = '';
-      showMissingCheckbox.checked = false; // Asegúrate de desmarcar el checkbox visualmente
+      showMissingCheckbox.checked = false;
+      showOwnedCheckbox.checked = false;
       updateFilterUI();
       createShowcase();
+    });
+  }
+
+  if(openPacksViewBtn) {
+    openPacksViewBtn.addEventListener('click', () => {
+      renderPacksView(); // Dibuja la tienda y el inventario
+      packsOverlay.classList.add('visible');
+    });
+  }
+
+  if(closePacksViewBtn) {
+    closePacksViewBtn.addEventListener('click', () => {
+      packsOverlay.classList.remove('visible');
+
+      document.getElementById('pack-opening-controls').style.display = 'none';
+      document.getElementById('pack-opening-cards-container').innerHTML = '';
+
+      packsOverlay.classList.remove('opening-mode');
     });
   }
 });
@@ -1558,12 +1989,35 @@ function addReactiveEffects(cardElement) {
   });
 }
 
+function addInteractiveTiltToPack(packElement) {
+  packElement.addEventListener("mousemove", (e) => {
+    const rect = packElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Lógica idéntica a la de las cartas para una sensación consistente
+    const rotateX = ((y / rect.height) - 0.5) * 40; 
+    const rotateY = ((x / rect.width) - 0.5) * 40;
+    const scale = 1.25; // Misma escala que las cartas en el tablero
+
+    // Aplicamos la transformación 3D (sin el rotateY(180deg) de las cartas volteadas)
+    packElement.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+    packElement.style.zIndex = '100'; 
+  });
+
+  packElement.addEventListener("mouseleave", () => {
+    // Al salir, volvemos a la transformación base
+    packElement.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+    packElement.style.zIndex = '';
+  });
+}
+
 function resetCollection() {
   // Preguntamos para evitar clics accidentales
   if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
-    // Borramos los datos del localStorage
     localStorage.removeItem('myFootballCollection');
-    // Recargamos la página para que se apliquen los cambios
+    localStorage.removeItem('myFootballPacks');
+    localStorage.removeItem('myPlayerCurrency');
     location.reload();
   }
 }
@@ -1629,22 +2083,50 @@ function buildFilterUI() {
   }
 
   function updateFilterUI() {
+    // 1. Obtenemos las ETIQUETAS de los checkboxes para poder ocultarlas por completo.
+    const showOwnedLabel = document.querySelector('label[for="show-owned-checkbox"]');
+    const showMissingLabel = document.querySelector('label[for="show-missing-checkbox"]');
+    const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
     const showMissingCheckbox = document.getElementById('show-missing-checkbox');
+
+    // 2. La variable 'isFiltering' sigue siendo nuestra clave.
     const isFiltering = 
     activeFilters.rarity !== null || 
     activeFilters.variant !== null || 
     activeFilters.golden === true || 
     activeFilters.query.trim() !== '';
 
-    if (showMissingCheckbox) {
-      showMissingCheckbox.disabled = !isFiltering;
+    // 3. LA LÓGICA DE INTERCAMBIO
+    if (isFiltering) {
+      // ESTAMOS FILTRANDO -> Mostramos "Show Missing", ocultamos "Show Owned"
+      if (showOwnedLabel) showOwnedLabel.style.display = 'none';
+      if (showMissingLabel) showMissingLabel.style.display = 'flex';
 
-      if (!isFiltering) {
-        showMissingCheckbox.checked = false;
-        activeFilters.showMissing = false;
+      // Reseteamos el estado de "Show Owned" para evitar conflictos
+      if (activeFilters.showOwned) {
+        activeFilters.showOwned = false;
+        showOwnedCheckbox.checked = false;
       }
+      
+      // El checkbox "Show Missing" ahora está habilitado
+      showMissingCheckbox.disabled = false;
+
+    } else {
+      // NO ESTAMOS FILTRANDO -> Mostramos "Show Owned", ocultamos "Show Missing"
+      if (showOwnedLabel) showOwnedLabel.style.display = 'flex';
+      if (showMissingLabel) showMissingLabel.style.display = 'none';
+      
+      // Reseteamos el estado de "Show Missing"
+      if (activeFilters.showMissing) {
+        activeFilters.showMissing = false;
+        showMissingCheckbox.checked = false;
+      }
+      
+      // Deshabilitamos "Show Missing" ya que no es relevante ahora
+      showMissingCheckbox.disabled = true;
     }
 
+    // 4. La lógica para los botones de rareza/variante no cambia
     const rarityBtns = document.querySelectorAll('.rarity-filter');
     rarityBtns.forEach(btn => {
       const value = btn.dataset.filterValue;
@@ -1678,23 +2160,28 @@ function buildFilterUI() {
     });
   });
 
-// --- NUEVO CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA ---
+// --- CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA (VERSIÓN MEJORADA) ---
   document.addEventListener('keydown', (event) => {
   // Solo reaccionamos si la tecla presionada es la barra espaciadora
-  // y si el álbum no está abierto.
-    if (event.code === 'Space' && !showcaseOverlay.classList.contains('visible')) {
+    if (event.code === 'Space') {
     // Prevenimos la acción por defecto de la barra espaciadora (hacer scroll)
       event.preventDefault();
 
-    // Buscamos la primera carta en el mazo que todavía no haya sido girada
-      const nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
+      let nextCardToFlip = null;
+      const packsOverlay = document.getElementById('packs-overlay');
 
-    // Si encontramos una carta sin girar...
+    // DECISIÓN CLAVE: ¿Dónde buscamos la carta a girar?
+      if (packsOverlay.classList.contains('visible') && packsOverlay.classList.contains('opening-mode')) {
+      // Caso 1: Estamos DENTRO del escenario de apertura de packs
+        nextCardToFlip = document.querySelector('#pack-opening-cards-container .card:not(.flipped)');
+      } else if (!showcaseOverlay.classList.contains('visible')) {
+      // Caso 2: Estamos en la PÁGINA PRINCIPAL (comportamiento original)
+        nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
+      }
+
+    // Si encontramos una carta sin girar en el contexto correcto...
       if (nextCardToFlip) {
-      // Obtenemos su índice, que guardamos previamente en el 'data-attribute'
         const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
-        
-      // Llamamos a la misma función que usa el clic para girarla
         flipCard(nextCardToFlip, cardIndex);
       }
     }
@@ -1731,7 +2218,143 @@ function buildFilterUI() {
     }
   });
 
-  openPack();
+
+// ========= FUNCIONES TIENDA ========= //
+  function savePackInventory() {
+    localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
+  }
+
+  function renderPacksView() {
+    const storeGrid = document.getElementById('pack-store-grid');
+    const inventoryGrid = document.getElementById('my-packs-grid');
+
+    storeGrid.innerHTML = '';
+    inventoryGrid.innerHTML = '';
+
+  // Renderizar los packs disponibles en la tienda
+   // Renderizar los packs disponibles en la tienda
+    for (const packId in packTypes) {
+      const pack = packTypes[packId];
+      const packEl = document.createElement('div');
+      packEl.className = 'pack-item';
+      packEl.dataset.packType = packId;
+    packEl.title = `${pack.name} - Cost: ${pack.cost}`; // Actualizamos el title también
+    
+    const packImg = document.createElement('img');
+    packImg.src = `packs/packs/${packId}.png`;
+    packImg.alt = pack.name;
+    packEl.appendChild(packImg);
+
+    // --- INICIO DE LA NUEVA LÓGICA ---
+    // Creamos el div para el precio
+    const priceEl = document.createElement('div');
+    priceEl.className = 'pack-price';
+    // Añadimos el coste y el diamante
+    priceEl.innerHTML = `${pack.cost} 💎`;
+    // Lo añadimos al contenedor del pack
+    packEl.appendChild(priceEl);
+    // --- FIN DE LA NUEVA LÓGICA ---
+    
+    packEl.addEventListener('click', () => buyPack(packId));
+    storeGrid.appendChild(packEl);
+    addInteractiveTiltToPack(packEl); 
+  }
+
+  // Renderizar los packs que el usuario posee
+  for (const packId in packInventory) {
+    if (packInventory[packId] > 0) {
+      const pack = packTypes[packId];
+      // Repetimos la misma lógica aquí
+      const packEl = document.createElement('div');
+      packEl.className = 'pack-item';
+      packEl.dataset.packType = packId;
+      packEl.title = `Click to open one ${pack.name}`;
+      
+      const packImg = document.createElement('img');
+      packImg.src = `packs/packs/${packId}.png`;
+      packImg.alt = pack.name;
+      packEl.appendChild(packImg);
+
+      const quantityEl = document.createElement('div');
+      quantityEl.className = 'pack-quantity';
+      quantityEl.textContent = `x${packInventory[packId]}`;
+      packEl.appendChild(quantityEl);
+      
+      packEl.addEventListener('click', () => openOwnedPack(packId));
+      inventoryGrid.appendChild(packEl);
+      addInteractiveTiltToPack(packEl);
+    }
+  }
+}
+
+function buyPack(packId) {
+  // Aquí iría la lógica para descontar oro en el futuro.
+  const packCost = packTypes[packId].cost;
+
+  if (playerCurrency >= packCost) {
+    // 1. Resta el dinero y guarda
+    playerCurrency -= packCost;
+    saveCurrency();
+    updateCurrencyDisplay();
+
+    // 2. Añade el pack al inventario y guarda
+    packInventory[packId] = (packInventory[packId] || 0) + 1;
+    savePackInventory();
+
+    // 3. Actualiza la vista de la tienda
+    renderPacksView();
+
+    // 4. Reproduce el sonido
+    const buttonSound = document.getElementById('buttonClickSound');
+    if (buttonSound) {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+    }
+  } else {
+    // Si no tiene suficiente dinero
+    alert("You don't have enough currency to buy this pack!");
+  }
+}
+
+// Variable global para recordar qué pack estamos abriendo
+let currentOpeningPackId = null;
+
+function openOwnedPack(packId) {
+  if (packInventory[packId] > 0) {
+    // Guardamos el tipo de pack para el botón "Abrir Otro"
+    currentOpeningPackId = packId; 
+
+    // Preparamos el escenario
+    const packsOverlay = document.getElementById('packs-overlay');
+    const openingStage = document.getElementById('pack-opening-stage');
+    const openingControls = document.getElementById('pack-opening-controls');
+    
+    // 1. Restamos el pack y guardamos
+    packInventory[packId]--; 
+    savePackInventory();
+    
+    // 2. Entramos en "modo apertura" (esto hace que la tienda se desvanezca)
+    packsOverlay.classList.add('opening-mode');
+    
+    // 3. Mostramos el escenario y ocultamos los controles de "Abrir Otro"
+    openingStage.style.display = 'flex';
+    openingControls.style.display = 'none';
+
+    // 4. Llamamos a la función openPack, pero le decimos que use nuestro nuevo contenedor
+    openPack('pack-opening-cards-container'); 
+  }
+}
+
+function updateCurrencyDisplay() {
+  const currencyEl = document.getElementById('player-currency-display');
+  if (currencyEl) {
+    currencyEl.innerHTML = `${playerCurrency} 💎`;
+  }
+}
+
+function saveCurrency() {
+  localStorage.setItem('myPlayerCurrency', playerCurrency.toString());
+}
 
 </script>
 </body>
