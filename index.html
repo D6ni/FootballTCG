@@ -1215,6 +1215,116 @@ h1 img {
   0 0 8px rgba(0,0,0,0.8);
 }
 
+/* --- ESTILOS PARA EL MODAL DE COMPRA DE PACKS --- */
+#pack-purchase-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.95);
+  z-index: 1000;
+  display: none; /* Oculto por defecto */
+  place-items: center; /* La forma más fácil de centrar el contenido */
+  padding: 20px;
+  overflow-y: auto; /* Permite scroll si el contenido es muy alto en pantallas pequeñas */
+}
+
+#pack-purchase-overlay.visible {
+  display: grid;
+}
+
+/* El nuevo contenedor principal que apila y centra todo */
+.purchase-inspect-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* ¡LA CLAVE! Centra todo horizontalmente */
+  gap: 20px; /* Espacio vertical entre la imagen, el texto y los controles */
+}
+
+/* Hacemos la imagen del pack grande y dominante */
+#purchase-pack-img {
+  height: 450px; /* Ajusta este valor si lo quieres más grande o pequeño */
+  width: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 10px 25px rgba(0,0,0,0.5));
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+#purchase-pack-name {
+  margin: 0;
+  font-size: 28px;
+  color: #eee;
+}
+
+#purchase-pack-cost {
+  position: static; /* Importante para que se centre con el resto */
+  font-size: 24px;
+}
+
+/* El contenedor de los botones y el input ya está centrado por su padre */
+.purchase-controls {
+  margin-top: 15px; /* Un poco de espacio extra arriba */
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap; /* Permite que se apile en pantallas muy estrechas */
+  justify-content: center; /* Asegura el centrado si se apila */
+}
+
+.buy-many-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#buy-quantity-input {
+  width: 70px;
+  padding: 10px;
+  text-align: center;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #fff;
+}
+
+.buy-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #1f7;
+  color: #022;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.buy-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(31, 255, 7, 0.4);
+}
+
+/* Estilo del botón de cerrar, consistente con el del álbum */
+#close-purchase-btn {
+  position: fixed; /* Lo fijamos a la ventana */
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 20px;
+  background-color: #ff4d4d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#close-purchase-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+  transform: scale(1.05);
+}
+
 </style>
 </head>
 <body>
@@ -1293,8 +1403,27 @@ h1 img {
   <button id="closePacksViewBtn">Back</button>
 </div>
 
+<!-- ============= VISTA DE COMPRA DE PACKS (NUEVO) =============== -->
+<div id="pack-purchase-overlay">
+  <!-- El contenido principal ahora es una columna flexible centrada -->
+  <div class="purchase-inspect-view">
+    <img id="purchase-pack-img" src="" alt="Pack Preview">
+    <h2 id="purchase-pack-name">Pack Name</h2>
+    <div id="purchase-pack-cost" class="pack-price"></div>
+    
+    <div class="purchase-controls">
+      <button id="buy-one-btn" class="buy-btn">Buy 1</button>
+      <div class="buy-many-container">
+        <input type="number" id="buy-quantity-input" value="1" min="1" max="100">
+        <button id="buy-many-btn" class="buy-btn">Buy Many</button>
+      </div>
+    </div>
+  </div>
+  <!-- El botón de cerrar ahora es un hijo directo del overlay -->
+  <button id="close-purchase-btn">X</button>
+</div>
+
 <!-- =========== VISTA DE INSPECCIÓN DE CARTA =============== -->
-<!-- ======================================================== -->
 <div id="inspect-overlay"></div>
 
 <script>
@@ -1931,7 +2060,13 @@ document.addEventListener('DOMContentLoaded', () => {
       packsOverlay.classList.remove('opening-mode');
     });
   }
-});
+
+  const purchasePackImg = document.getElementById('purchase-pack-img');
+  if (purchasePackImg) {
+    addInteractiveTiltToPack(purchasePackImg, 1.05);
+  }
+
+}); //FIN DEL DOM
 
 function addInteractiveTilt(cardElement) {
   cardElement.addEventListener("mousemove", (e) => {
@@ -1989,24 +2124,21 @@ function addReactiveEffects(cardElement) {
   });
 }
 
-function addInteractiveTiltToPack(packElement) {
+function addInteractiveTiltToPack(packElement, hoverScale = 1.25) {
   packElement.addEventListener("mousemove", (e) => {
     const rect = packElement.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Lógica idéntica a la de las cartas para una sensación consistente
     const rotateX = ((y / rect.height) - 0.5) * 40; 
     const rotateY = ((x / rect.width) - 0.5) * 40;
-    const scale = 1.25; // Misma escala que las cartas en el tablero
+    const scale = hoverScale;
 
-    // Aplicamos la transformación 3D (sin el rotateY(180deg) de las cartas volteadas)
     packElement.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
     packElement.style.zIndex = '100'; 
   });
 
   packElement.addEventListener("mouseleave", () => {
-    // Al salir, volvemos a la transformación base
     packElement.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     packElement.style.zIndex = '';
   });
@@ -2255,7 +2387,7 @@ function buildFilterUI() {
     packEl.appendChild(priceEl);
     // --- FIN DE LA NUEVA LÓGICA ---
     
-    packEl.addEventListener('click', () => buyPack(packId));
+    packEl.addEventListener('click', () => showPackPurchaseView(packId));
     storeGrid.appendChild(packEl);
     addInteractiveTiltToPack(packEl); 
   }
@@ -2287,32 +2419,40 @@ function buildFilterUI() {
   }
 }
 
-function buyPack(packId) {
-  // Aquí iría la lógica para descontar oro en el futuro.
-  const packCost = packTypes[packId].cost;
+function purchasePacks(packId, quantity) {
+  // Validamos que la cantidad sea un número positivo
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    alert("Please enter a valid quantity.");
+    return;
+  }
 
-  if (playerCurrency >= packCost) {
+  const pack = packTypes[packId];
+  const totalCost = pack.cost * quantity;
+
+  if (playerCurrency >= totalCost) {
     // 1. Resta el dinero y guarda
-    playerCurrency -= packCost;
+    playerCurrency -= totalCost;
     saveCurrency();
     updateCurrencyDisplay();
 
-    // 2. Añade el pack al inventario y guarda
-    packInventory[packId] = (packInventory[packId] || 0) + 1;
+    // 2. Añade los packs al inventario y guarda
+    packInventory[packId] = (packInventory[packId] || 0) + quantity;
     savePackInventory();
 
     // 3. Actualiza la vista de la tienda
     renderPacksView();
 
-    // 4. Reproduce el sonido
+    // 4. Cierra el modal de compra
+    closePackPurchaseView();
+
+    // 5. Reproduce un sonido (opcional, pero un buen detalle)
     const buttonSound = document.getElementById('buttonClickSound');
     if (buttonSound) {
       buttonSound.currentTime = 0;
       buttonSound.play();
     }
   } else {
-    // Si no tiene suficiente dinero
-    alert("You don't have enough currency to buy this pack!");
+    alert("You don't have enough currency for this purchase!");
   }
 }
 
@@ -2355,6 +2495,46 @@ function updateCurrencyDisplay() {
 function saveCurrency() {
   localStorage.setItem('myPlayerCurrency', playerCurrency.toString());
 }
+
+const purchaseOverlay = document.getElementById('pack-purchase-overlay');
+
+function showPackPurchaseView(packId) {
+  const pack = packTypes[packId];
+
+  // Rellenamos el modal con la información del pack
+  document.getElementById('purchase-pack-img').src = `packs/packs/${packId}.png`;
+  document.getElementById('purchase-pack-name').textContent = pack.name;
+  document.getElementById('purchase-pack-cost').innerHTML = `${pack.cost} 💎`;
+  document.getElementById('buy-quantity-input').value = '1';
+
+  // Asignamos los eventos a los botones de compra (IMPORTANTE: se hace aquí)
+  document.getElementById('buy-one-btn').onclick = () => purchasePacks(packId, 1);
+  document.getElementById('buy-many-btn').onclick = () => {
+    const quantity = parseInt(document.getElementById('buy-quantity-input').value, 10);
+    purchasePacks(packId, quantity);
+  };
+
+  // Mostramos el overlay
+  purchaseOverlay.classList.add('visible');
+}
+
+function closePackPurchaseView() {
+  // Ocultamos el overlay
+  purchaseOverlay.classList.remove('visible');
+  
+  // Limpiamos los eventos para evitar problemas a futuro
+  document.getElementById('buy-one-btn').onclick = null;
+  document.getElementById('buy-many-btn').onclick = null;
+}
+
+// Añadimos los listeners para cerrar el modal
+document.getElementById('close-purchase-btn').addEventListener('click', closePackPurchaseView);
+purchaseOverlay.addEventListener('click', (event) => {
+  // Se cierra solo si se clickea en el fondo, no en el contenido
+  if (event.target === purchaseOverlay) {
+    closePackPurchaseView();
+  }
+});
 
 </script>
 </body>
