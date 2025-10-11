@@ -729,7 +729,7 @@ h1 img {
 
 .filter-btn {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid #555;
@@ -739,6 +739,11 @@ h1 img {
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1.2;
+  box-sizing: border-box;
+  margin-top: 0;
 }
 
 .filter-btn > * {
@@ -897,12 +902,6 @@ h1 img {
   background-color: rgba(0,0,0,0.1);
 }
 
-#search-controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
 #name-search {
   padding: 8px 12px;
   border-radius: 6px;
@@ -937,10 +936,6 @@ h1 img {
 }
 
 /* --- ESTILOS PARA EL CHECKBOX 'SHOW MISSING' --- */
-#search-controls {
-  align-items: center; /* Asegura que todo esté alineado verticalmente */
-}
-
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -1042,7 +1037,6 @@ h1 img {
 }
 
 /* --- ESTILOS PARA LA TIENDA DE PACKS (ACTUALIZADO Y CORREGIDO) --- */
-
 .pack-item {
   --card-w: 160px;
   --card-h: 228px;
@@ -1648,6 +1642,31 @@ h1 img {
   cursor: not-allowed;
 }
 
+/* --- ESTILOS DEFINITIVOS PARA LA MAQUETACIÓN DE FILTROS --- */
+
+/* Fila SUPERIOR: Botones de rareza/variante (CENTRADA) */
+#filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Fila INFERIOR: Contenedor principal */
+#search-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Grupo del MEDIO de la fila inferior (búsqueda y checkboxes) */
+.search-middle-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 </style>
 </head>
 <body>
@@ -1672,25 +1691,34 @@ h1 img {
     <div id="collection-progress-stat" class="album-stat">0 / 0 Cards</div>
   </div>
   <div id="showcase-filters-container">
+
+    <!-- Fila Superior: Filtros de Rareza y Variante (Centrados) -->
     <div id="filter-controls">
       <!-- Los botones de filtro se generarán aquí con JavaScript -->
     </div>
+
+    <!-- Fila Inferior: Búsqueda y Ordenación (Justificados) -->
     <div id="search-controls">
-      <input type="text" id="name-search" placeholder="Search by name or position...">
-      <label for="show-owned-checkbox" class="checkbox-label">
-        <input type="checkbox" id="show-owned-checkbox">
-        Show owned cards
-      </label>
-      <label for="show-missing-checkbox" class="checkbox-label">
-        <input type="checkbox" id="show-missing-checkbox">
-        Show missing cards
-      </label>
-      <button id="clear-filters-btn">Clear All</button>
+      <!-- Grupo central para mantener juntos la búsqueda y los checkboxes -->
+      <div class="search-middle-group">
+        <button id="ovr-sort-btn" class="filter-btn">Sort by OVR</button>
+        <input type="text" id="name-search" placeholder="Search by name or position...">
+        <label for="show-owned-checkbox" class="checkbox-label">
+          <input type="checkbox" id="show-owned-checkbox">
+          Show owned cards
+        </label>
+        <label for="show-missing-checkbox" class="checkbox-label">
+          <input type="checkbox" id="show-missing-checkbox">
+          Show missing cards
+        </label>
+        <button id="clear-filters-btn" class="filter-btn">Clear All</button>
+      </div>
     </div>
-  </div>
-  <div id="showcase-content"></div>
-  <button id="closeShowcaseBtn">X</button>
-</div>
+  </div> <!-- <-- ESTE DIV CIERRA #showcase-filters-container -->
+
+    <div id="showcase-content"></div>
+    <button id="closeShowcaseBtn">X</button>
+  </div> <!-- <-- ESTE DIV (QUE FALTABA) CIERRA #showcase-overlay -->
 
 <!-- =========  VISTA DE LA TIENDA DE PACKS  ========== -->
 <div id="packs-overlay">
@@ -1961,7 +1989,8 @@ let activeFilters = {
   golden: null,
   query: '',
   showMissing: false,
-  showOwned: false
+  showOwned: false,
+  ovrSort: null
 };
 let filtersInitialized = false;
 
@@ -1975,6 +2004,15 @@ const lineupPositions = { // Mapeo de posiciones generales a específicas
   'MID': ['LCM', 'CM', 'RCM'],
   'ATK': ['LW', 'ST', 'RW']
 };
+
+// Creamos un mapa inverso para buscar fácilmente la posición general de un hueco específico.
+const slotToGeneralPositionMap = {};
+for (const generalPosition in lineupPositions) {
+  lineupPositions[generalPosition].forEach(specificSlot => {
+    slotToGeneralPositionMap[specificSlot] = generalPosition;
+  });
+}
+
 const positionNames = { // Nombres para los placeholders (VERSIÓN MEJORADA)
   'GK': 'Goalkeeper', 
   'LB': 'Left Back', 
@@ -2232,6 +2270,15 @@ function createShowcase() {
   raritiesInOrder.forEach(rarityKey => {
     if (activeFilters.rarity && activeFilters.rarity !== rarityKey) return;
     const playersInRarity = playersDB.filter(p => p.rarity === rarityKey);
+
+    // Lógica de ordenación por OVR
+    if (activeFilters.ovrSort === 'desc') {
+      playersInRarity.sort((a, b) => b.rating - a.rating);
+    } else if (activeFilters.ovrSort === 'asc') {
+      playersInRarity.sort((a, b) => a.rating - b.rating);
+    }
+    // Si es null, no se ordena y mantiene el orden por defecto.
+
     if (playersInRarity.length === 0) return;
 
     const row = document.createElement('div');
@@ -2309,9 +2356,9 @@ function createShowcase() {
     }
   });
 
-  if (isFiltering && !anyContentWasDisplayed) {
-    container.innerHTML = `<div class="no-results-message">You don't have any cards with that combination.</div>`;
-  }
+if (isFiltering && !anyContentWasDisplayed) {
+  container.innerHTML = `<div class="no-results-message">You don't have any cards with that combination.</div>`;
+}
 }
 
 const showcaseOverlay = document.getElementById('showcase-overlay');
@@ -2319,6 +2366,10 @@ const showcaseBtn = document.getElementById('showcaseBtn');
 const closeShowcaseBtn = document.getElementById('closeShowcaseBtn');
 
 showcaseBtn.addEventListener('click', () => {
+  if (!targetedLineupSlot) {
+    activeFilters.query = '';
+    document.getElementById('name-search').value = '';
+  }
   updateAlbumStats(); //stats del album
   buildFilterUI(); // Construye los botones de filtro la primera vez
   updateFilterUI(); //muestra y desmuestra owned y missing
@@ -2440,7 +2491,8 @@ document.addEventListener('DOMContentLoaded', () => {
         buttonSound.play();
       }
       // Resetea todos los filtros, incluyendo el nuevo
-      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false  };
+      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false, ovrSort: null };
+      document.getElementById('ovr-sort-btn').textContent = 'Sort by OVR';
       searchInput.value = '';
       showMissingCheckbox.checked = false;
       showOwnedCheckbox.checked = false;
@@ -2760,9 +2812,10 @@ function buildFilterUI() {
       const sellContainer = document.createElement('div');
       sellContainer.id = 'inspect-sell-container';
 
-      const uniqueCardId = `${playerData.id}_${variantKey}`;
-      const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
-      const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
+    // --- CAMBIO CLAVE: Usamos la nueva función 'isPlayerInLineup' ---
+      const playerAlreadyInLineup = isPlayerInLineup(playerData.id);
+      const buttonText = playerAlreadyInLineup ? `${playerData.name} is in Lineup` : 'Add to Lineup';
+      const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${playerAlreadyInLineup ? 'disabled' : ''}>${buttonText}</button>`;
 
       sellContainer.innerHTML = `
       <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
@@ -2779,43 +2832,40 @@ function buildFilterUI() {
     document.getElementById('sell-max-btn').onclick = () => { /* ... tu lógica de venta ... */ };
 
       const addToLineupBtn = document.getElementById('add-to-lineup-btn');
-      if (addToLineupBtn && !isCardInLineup) {
-        // --- ESTE ES EL NUEVO COMPORTAMIENTO ---
+    // --- CAMBIO CLAVE: La condición ahora usa la nueva variable ---
+      if (addToLineupBtn && !playerAlreadyInLineup) {
         addToLineupBtn.onclick = () => {
-            // 1. Guardamos la carta que queremos añadir.
           cardToAddFromAlbum = { playerData, variantKey };
-
-            // 2. Cerramos todo y abrimos la vista de alineación.
           document.getElementById('inspect-overlay').classList.remove('visible');
           document.getElementById('showcase-overlay').classList.remove('visible');
-            renderLineupView(); // Re-renderiza en "modo colocación".
-            document.getElementById('lineup-overlay').classList.add('visible');
-          };
-        }
+          renderLineupView();
+          document.getElementById('lineup-overlay').classList.add('visible');
+        };
       }
-      inspectOverlay.classList.add('visible');
     }
+    inspectOverlay.classList.add('visible');
+  }
 
 
 // ========= FUNCIONES TIENDA ========= //
-    function savePackInventory() {
-      localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
-    }
+  function savePackInventory() {
+    localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
+  }
 
-    function renderPacksView() {
-      const storeGrid = document.getElementById('pack-store-grid');
-      const inventoryGrid = document.getElementById('my-packs-grid');
+  function renderPacksView() {
+    const storeGrid = document.getElementById('pack-store-grid');
+    const inventoryGrid = document.getElementById('my-packs-grid');
 
-      storeGrid.innerHTML = '';
-      inventoryGrid.innerHTML = '';
+    storeGrid.innerHTML = '';
+    inventoryGrid.innerHTML = '';
 
   // Renderizar los packs disponibles en la tienda
    // Renderizar los packs disponibles en la tienda
-      for (const packId in packTypes) {
-        const pack = packTypes[packId];
-        const packEl = document.createElement('div');
-        packEl.className = 'pack-item';
-        packEl.dataset.packType = packId;
+    for (const packId in packTypes) {
+      const pack = packTypes[packId];
+      const packEl = document.createElement('div');
+      packEl.className = 'pack-item';
+      packEl.dataset.packType = packId;
     packEl.title = `${pack.name} - Cost: ${pack.cost}`; // Actualizamos el title también
     
     const packImg = document.createElement('img');
@@ -2998,6 +3048,25 @@ function closePackPurchaseView() {
   // Limpiamos los eventos para evitar problemas a futuro
   document.getElementById('buy-one-btn').onclick = null;
   document.getElementById('buy-many-btn').onclick = null;
+}
+
+// --- Listener Ciclo Ovr --- //
+const ovrSortBtn = document.getElementById('ovr-sort-btn');
+if (ovrSortBtn) {
+  ovrSortBtn.addEventListener('click', () => {
+        // Ciclo de 3 estados: desc -> asc -> null
+    if (activeFilters.ovrSort === 'desc') {
+      activeFilters.ovrSort = 'asc';
+            ovrSortBtn.textContent = 'OVR ▲'; // Flecha hacia arriba
+          } else if (activeFilters.ovrSort === 'asc') {
+            activeFilters.ovrSort = null;
+            ovrSortBtn.textContent = 'Sort by OVR';
+          } else {
+            activeFilters.ovrSort = 'desc';
+            ovrSortBtn.textContent = 'OVR ▼'; // Flecha hacia abajo
+          }
+        createShowcase(); // Vuelve a renderizar el álbum con la nueva ordenación
+      });
 }
 
 // Añadimos los listeners para cerrar el modal
@@ -3186,7 +3255,7 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
 
       const uniqueCardId = lineup[posId];
       if (uniqueCardId) {
-            // ... (esta parte no cambia)
+            // ... (Esta parte no cambia, gestiona las cartas ya puestas)
         const [playerId, ...variantParts] = uniqueCardId.split('_');
         const variantKey = variantParts.join('_');
         const playerData = playersDB.find(p => p.id == playerId);
@@ -3194,7 +3263,7 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
         cardElement.onclick = () => removeCardFromLineup(posId);
         slot.appendChild(cardElement);
       } else {
-            // --- LÓGICA PARA HUECOS VACÍOS ---
+            // --- LÓGICA MEJORADA PARA HUECOS VACÍOS ---
         const placeholder = document.createElement('div');
         placeholder.className = 'placeholder-slot';
         placeholder.innerHTML = `
@@ -3204,18 +3273,21 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
         `;
 
         if (cardToAddFromAlbum) {
-                // MODO COLOCACIÓN: El usuario ha elegido una carta.
-          const cardPosition = cardToAddFromAlbum.playerData.position;
-          const isValidSlot = lineupPositions[cardPosition].includes(posId);
-
-          placeholder.classList.add(isValidSlot ? 'valid-placement' : 'invalid-placement');
-          if (isValidSlot) {
-            slot.onclick = () => placeHeldCardInSlot(posId);
-          }
+                // ... (Modo colocación, no cambia)
         } else {
                 // MODO NORMAL: El usuario quiere llenar un hueco.
           slot.onclick = () => {
+                    // 1. Guardamos el hueco específico.
             targetedLineupSlot = posId;
+
+                    // 2. Obtenemos la posición general (ej. 'DEF') usando nuestro nuevo mapa.
+            const generalPosition = slotToGeneralPositionMap[posId];
+
+                    // 3. Aplicamos el filtro en el objeto y en la UI.
+            activeFilters.query = generalPosition;
+            document.getElementById('name-search').value = generalPosition;
+
+                    // 4. Cerramos la alineación y abrimos el álbum (que ahora se renderizará con el filtro).
             document.getElementById('lineup-overlay').classList.remove('visible');
             document.getElementById('showcaseBtn').click();
           };
@@ -3271,45 +3343,63 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
     const rules = { relic: 1, legendary: 2, epic: 3, rare: 4 };
     const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
     let totalCards = 0;
+    const playerIds = new Set(); // Usamos un Set para detectar duplicados fácilmente.
 
     for (const uniqueCardId of Object.values(lineupToCheck)) {
       totalCards++;
       const [playerId] = uniqueCardId.split('_');
-      const playerData = playersDB.find(p => p.id == playerId);
-      if (playerData) {
-        counts[playerData.rarity]++;
+        playerIds.add(playerId); // Añadimos el ID del jugador al Set.
+        
+        const playerData = playersDB.find(p => p.id == playerId);
+        if (playerData) {
+          counts[playerData.rarity]++;
+        }
       }
-    }
-    
-    let message = "";
-    if (counts.relic > rules.relic) message = `Too many Relics (Max ${rules.relic})`;
-    else if (counts.legendary > rules.legendary) message = `Too many Legendaries (Max ${rules.legendary})`;
-    else if (counts.epic > rules.epic) message = `Too many Epics (Max ${rules.epic})`;
-    else if (counts.rare > rules.rare) message = `Too many Rares (Max ${rules.rare})`;
-    
-    const isValid = message === "" && totalCards >=1; // La regla es "COMO MINIMO 1 Comun" que se cumple si no hay otras restricciones
 
-    if (isSimulation) {
-      return { isValid, message };
-    }
+      let message = "";
+    // --- NUEVA REGLA DE VALIDACIÓN ---
+      if (playerIds.size < totalCards) {
+        message = "Each player can only be in the lineup once";
+      }
+    // --- FIN DE LA NUEVA REGLA ---
+      else if (counts.relic > rules.relic) message = `Too many Relics (Max ${rules.relic})`;
+      else if (counts.legendary > rules.legendary) message = `Too many Legendaries (Max ${rules.legendary})`;
+      else if (counts.epic > rules.epic) message = `Too many Epics (Max ${rules.epic})`;
+      else if (counts.rare > rules.rare) message = `Too many Rares (Max ${rules.rare})`;
 
-    // Actualiza la UI si no es una simulación
-    const messageEl = document.getElementById('lineup-validation-message');
-    const playBtn = document.getElementById('play-match-btn');
-    if (!isValid) {
-      messageEl.textContent = message;
-      messageEl.style.display = 'block';
-      playBtn.disabled = true;
-    } else if (totalCards < 11) {
-     messageEl.textContent = 'Complete your lineup to play';
-     messageEl.style.display = 'block';
-     playBtn.disabled = true;
-   }
-   else {
-    messageEl.style.display = 'none';
-    playBtn.disabled = false;
+      const isValid = message === "" && totalCards >= 1;
+
+      if (isSimulation) {
+        return { isValid, message };
+      }
+
+      const messageEl = document.getElementById('lineup-validation-message');
+      const playBtn = document.getElementById('play-match-btn');
+      if (!isValid) {
+        messageEl.textContent = message;
+        messageEl.style.display = 'block';
+        playBtn.disabled = true;
+      } else if (totalCards < 11) {
+       messageEl.textContent = 'Complete your lineup to play';
+       messageEl.style.display = 'block';
+       playBtn.disabled = true;
+     }
+     else {
+      messageEl.style.display = 'none';
+      playBtn.disabled = false;
+    }
   }
-}
+
+/**
+ * Comprueba si un jugador ya está en la alineación, sin importar la versión de la carta.
+ * @param {number | string} playerId El ID del jugador a comprobar.
+ * @returns {boolean} True si el jugador ya está en la alineación.
+ */
+  function isPlayerInLineup(playerId) {
+    // Recorre todos los uniqueCardId en la alineación (ej. '1_true_foil')
+    // y comprueba si alguno empieza con el ID del jugador que queremos añadir.
+    return Object.values(lineup).some(uniqueCardId => uniqueCardId.startsWith(playerId + '_'));
+  }
 
 </script>
 
