@@ -1261,27 +1261,45 @@ h1 img {
 }
 
 /* El contenedor de los botones y el input ya está centrado por su padre */
-.purchase-controls {
-  margin-top: 15px; /* Un poco de espacio extra arriba */
+.purchase-controls, .sell-controls {
+  width: 220px; /* Ancho fijo para todo el bloque de control */
+  margin-top: 15px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap; /* Permite que se apile en pantallas muy estrechas */
-  justify-content: center; /* Asegura el centrado si se apila */
+  gap: 10px; /* Espacio reducido entre elementos */
 }
 
-.buy-many-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Hace que todos los hijos directos (input, button) tengan el mismo ancho */
+.purchase-controls > *, .sell-controls > * {
+  width: 100%; /* Todos los elementos ocupan el 100% del contenedor padre */
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+  margin: 0; /* Reseteamos márgenes por si acaso */
 }
 
-#buy-quantity-input {
-  width: 70px;
-  padding: 10px;
+/* NUEVO ESTILO: Botón de Compra Máxima */
+.buy-max-btn {
+  background-color: #3b68d1; /* Azul, como el botón del álbum */
+  color: #fff;
+}
+.buy-max-btn:hover {
+  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6);
+}
+
+/* NUEVO ESTILO: Botón de Venta Máxima */
+.sell-max-btn {
+  background-color: #a12c1e; /* Un rojo más oscuro para diferenciar */
+}
+.sell-max-btn:hover {
+  box-shadow: 0 0 15px rgba(161, 44, 30, 0.6);
+}
+
+#buy-quantity-input, #sell-quantity-input {
+  padding: 12px; /* Aumentamos el padding para que la altura sea similar a los botones */
   text-align: center;
   font-size: 16px;
-  border-radius: 6px;
+  font-weight: bold;
+  border-radius: 8px; /* Mismo borde que los botones */
   border: 1px solid #555;
   background-color: #222;
   color: #fff;
@@ -1353,6 +1371,275 @@ h1 img {
   font-weight: 700;
 }
 
+/* --- ESTILOS PARA LA VENTA DE CARTAS EN LA VISTA DE INSPECCIÓN --- */
+#inspect-sell-container {
+  position: absolute;
+  bottom: 20px; /* Lo posicionamos debajo de la carta */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 90%;
+  max-width: 450px; /* Ancho máximo para la interfaz */
+  z-index: 1001; /* Por encima de la carta */
+}
+
+.sell-price-display {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 5px #000;
+}
+
+.sell-price-display .gem-icon {
+  color: #ffc84a; /* Color dorado para el icono de gema */
+}
+
+.sell-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #e74c3c; /* Un rojo para la acción de vender */
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sell-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+}
+
+/* --- ESTILOS PARA LA NOTIFICACIÓN "TOAST" GENERAL (VERSIÓN CENTRADA Y TRANSLÚCIDA) --- */
+#toast-notification {
+  position: fixed;
+  /* 1. Centramos horizontal y verticalmente */
+  top: 50%;
+  left: 50%;
+  /* 2. El transform ahora también centra y empieza ligeramente arriba */
+  transform: translate(-50%, -70%); 
+  
+  /* 3. Estilo translúcido y nuevo color */
+  background-color: rgba(28, 176, 217, 0.33); /* #1CB0D9 con 85% de opacidad */
+  backdrop-filter: blur(5px); /* Efecto "frosty glass" para el fondo */
+  
+  color: #fff;
+  padding: 15px 30px; /* Un poco más de padding */
+  border-radius: 12px;
+  font-size: 20px; /* Un poco más grande */
+  font-weight: bold;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Borde sutil para definirlo */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+#toast-notification.show {
+  opacity: 1;
+  transform: translate(-50%, -50%); /* La posición final es perfectamente centrada */
+}
+
+/* 4. Mantenemos la lógica de colores para diferentes tipos, pero la adaptamos al nuevo estilo */
+#toast-notification.success {
+  background-color: rgba(28, 176, 217, 0.33); /* Azul #1CB0D9 translúcido (default) */
+}
+
+#toast-notification.info {
+  background-color: rgba(28, 176, 217, 0.33); /* Azul #1CB0D9 translúcido (default) */
+}
+
+#toast-notification.error {
+  background-color: rgba(192, 57, 43, 0.33); /* Rojo translúcido */
+}
+
+/* --- ESTILOS PARA LA VISTA DE ALINEACIÓN (VERSIÓN CORREGIDA) --- */
+#lineup-overlay {
+  position: fixed;
+  inset: 0;
+  /* 1. Eliminamos la imagen de fondo y usamos el color sólido */
+  background-color: rgba(10, 12, 20, 0.98);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#lineup-overlay.visible {
+  display: flex;
+}
+
+#lineup-pitch {
+  position: relative;
+  width: 100%;
+  /* 3. Aumentamos el ancho máximo para usar mejor el espacio */
+  max-width: 1000px; 
+  aspect-ratio: 1.5 / 1; 
+  transform-style: preserve-d;
+  perspective: 2000px;
+}
+
+.lineup-slot {
+  position: absolute;
+  width: var(--card-w);
+  height: var(--card-h);
+  transform: translate(-50%, -50%); 
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lineup-slot:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  z-index: 10;
+  box-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
+}
+
+/* --- Posiciones 4-3-3 (MÁXIMA SEPARACIÓN VERTICAL) --- */
+
+/* Portero (prácticamente en la línea de fondo) */
+#lineup-slot-GK  { top: 115%; left: 50%; }
+
+/* Defensas (muy retrasados) */
+#lineup-slot-LB  { top: 85%; left: 10%; }
+#lineup-slot-LCB { top: 85%; left: 35%; }
+#lineup-slot-RCB { top: 85%; left: 65%; }
+#lineup-slot-RB  { top: 85%; left: 90%; }
+
+/* Medios (ocupando el gran espacio central) */
+#lineup-slot-LCM { top: 50%; left: 25%; }
+#lineup-slot-CM  { top: 55%; left: 50%; } /* El CM un poco más anclado */
+#lineup-slot-RCM { top: 50%; left: 75%; }
+
+/* Delanteros (muy adelantados, casi en el área rival) */
+#lineup-slot-LW  { top: 18%; left: 15%; }
+#lineup-slot-ST  { top: 12%; left: 50%; }
+#lineup-slot-RW  { top: 18%; left: 85%; }
+
+
+.placeholder-slot {
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 2px dashed #666;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-weight: bold;
+  font-size: 16px; /* Ajustamos tamaño para que quepa mejor */
+  box-sizing: border-box;
+  text-align: center;
+  padding: 5px;
+}
+
+.placeholder-position {
+  font-size: 22px;
+  color: #fff;
+}
+
+.placeholder-name {
+  /* El nombre ahora se mostrará debajo de la posición */
+  font-size: 14px;
+  font-weight: normal;
+  color: #ccc;
+  margin-top: 4px;
+}
+
+.placeholder-instruction {
+  font-size: 12px;
+  margin-top: 8px;
+  color: #777;
+}
+
+#close-lineup-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 20px;
+  background-color: #ff4d4d;
+  color: #fff;
+}
+
+#close-lineup-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+}
+
+#add-to-lineup-btn {
+  background-color: #27ae60; /* Verde */
+  color: #fff;
+  margin-top: 10px;
+}
+
+#add-to-lineup-btn:hover {
+  box-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
+}
+
+#lineup-validation-message {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(192, 57, 43, 0.9); /* Rojo más visible */
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #fff;
+  border: 1px solid #ff7675;
+  text-align: center;
+}
+
+#play-match-btn {
+  position: absolute;
+  top: 20px; /* <-- CAMBIO CLAVE: de 'bottom' a 'top' */
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px 30px;
+  font-size: 18px;
+  background-color: #1f7; /* Le damos el color verde para que destaque */
+  color: #022;
+}
+
+/* --- ESTILOS PERSONALIZADOS PARA EL BOTÓN 'MY LINEUP' --- */
+#my-lineup-btn {
+  background-color: #ffffff; /* Fondo blanco */
+  color: #0A1931;           /* Azul muy, muy oscuro, casi negro */
+  font-weight: 700;          /* Hacemos la letra un poco más gruesa para que resalte */
+  border: 1px solid #dde4f0; /* Un borde muy sutil para definir el botón */
+}
+
+#my-lineup-btn:hover {
+  background-color: #f0f4fc; /* Un blanco ligeramente azulado al pasar el ratón */
+  box-shadow: 0 0 12px rgba(59, 104, 209, 0.5); /* Mantenemos un brillo azul para consistencia */
+}
+
+/* --- ESTILOS PARA EL MODO DE COLOCACIÓN DE CARTAS --- */
+.lineup-slot .placeholder-slot.valid-placement {
+  border-color: #27ae60; /* Verde */
+  background-color: rgba(39, 174, 96, 0.2);
+  box-shadow: 0 0 15px rgba(39, 174, 96, 0.7);
+}
+.lineup-slot .placeholder-slot.invalid-placement {
+  border-color: #c0392b; /* Rojo */
+  background-color: rgba(192, 57, 43, 0.2);
+  cursor: not-allowed;
+}
+
 </style>
 </head>
 <body>
@@ -1365,6 +1652,7 @@ h1 img {
     <button id="showcaseBtn">My Album</button>
     <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">Reset Progress</button>
   </div>
+
   <div id="cards"></div>
 
 <!-- ============= VISTA DEL ÁLBUM (SHOWCASE) =============== -->
@@ -1372,6 +1660,7 @@ h1 img {
   <!-- Contenedor para las estadísticas del álbum -->
   <div id="album-stats-header">
     <div id="packs-opened-stat" class="album-stat">Packs Opened: 0</div>
+    <button id="my-lineup-btn" class="album-stat" style="cursor:pointer;">My Lineup</button>
     <div id="collection-progress-stat" class="album-stat">0 / 0 Cards</div>
   </div>
   <div id="showcase-filters-container">
@@ -1458,6 +1747,17 @@ h1 img {
 
 <!-- =========== VISTA DE INSPECCIÓN DE CARTA =============== -->
 <div id="inspect-overlay"></div>
+
+<!-- =========== VISTA DE LA ALINEACIÓN =============== -->
+<div id="lineup-overlay">
+  <div id="lineup-pitch">
+    <!-- Las 11 ranuras para los jugadores se generarán aquí con JavaScript -->
+  </div>
+  <button id="close-lineup-btn">X</button>
+  <div id="lineup-validation-message" style="display: none;"></div>
+  <!-- El botón de jugar partido irá aquí más adelante -->
+  <button id="play-match-btn" disabled>Play Match</button>
+</div>
 
 <script>
     const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
@@ -1569,6 +1869,46 @@ h1 img {
     goldenChance: 3.8,
   };
 
+  // Economia
+  const ECONOMY_CONFIG = {
+    baseSellValue: 2, // Valor base en gemas para una carta común, normal y sin variante
+    matchRewards: {
+      win: 25,
+      draw: 10,
+      loss: 5
+    },
+    raritySellMultipliers: {
+      common: 1,
+      rare: 4,
+      epic: 12,
+      legendary: 40,
+      relic: 125
+    },
+    goldenSellMultiplier: 5,
+    variantSellMultipliers: {
+      none: 1,
+      foil: 1.5,
+      holo: 2.5,
+      poli: 5,
+      negative: 10
+    }
+  };
+
+  const packTypes = {
+    'common-pack': {
+      name: 'Common Pack',
+      cost: 0 // PRECIO PAQUETES
+    },
+    /*'barça-pack': {
+      name: 'Barça Pack',
+      cost: 300 // PRECIO ACTUALIZADO
+    },
+    'holo-pack': {
+      name: 'Holo Pack',
+      cost: 600 // PRECIO ACTUALIZADO
+    }*/
+  };
+
   // --- Cálculo del total de cartas posibles en el juego ---
 const totalPossibleCards = playersDB.length * Object.keys(CONFIG.variants).length * 2; // x2 para Normal y Golden
 
@@ -1603,64 +1943,75 @@ let packInventory = savedPacks ? JSON.parse(savedPacks) : {};
   // --- Lógica para el dinero del jugador ---
 const savedCurrency = localStorage.getItem('myPlayerCurrency');
 // Si no hay dinero guardado (primera vez que juega), empieza con 50.
-let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 100; //DINERO INICIAL
+let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 50; //DINERO INICIAL
 
-const packTypes = {
-  'common-pack': {
-    name: 'Common Pack',
-      cost: 0 // PRECIO PAQUETES
-    },
-    'barça-pack': {
-      name: 'Barça Pack',
-      cost: 250
-    },
-    'holo-pack': {
-      name: 'Holo Pack',
-      cost: 500
-    }
-  };
 
-    // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
-  let activeFilters = {
-    rarity: null,
-    variant: null,
-    golden: null,
-    query: '',
-    showMissing: false,
-    showOwned: false
-  };
-  let filtersInitialized = false;
+  // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
+let activeFilters = {
+  rarity: null,
+  variant: null,
+  golden: null,
+  query: '',
+  showMissing: false,
+  showOwned: false
+};
+let filtersInitialized = false;
 
-  let flippedCardsInPack = 0;
+let flippedCardsInPack = 0;
 
-  const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+// --- NUEVAS VARIABLES PARA LA ALINEACIÓN ---
+let lineup = {}; // Objeto para guardar la alineación: { GK: 'card_unique_id', LB: '...', ... }
+const lineupPositions = { // Mapeo de posiciones generales a específicas
+  'GK': ['GK'],
+  'DEF': ['LB', 'LCB', 'RCB', 'RB'],
+  'MID': ['LCM', 'CM', 'RCM'],
+  'ATK': ['LW', 'ST', 'RW']
+};
+const positionNames = { // Nombres para los placeholders (VERSIÓN MEJORADA)
+  'GK': 'Goalkeeper', 
+  'LB': 'Left Back', 
+  'LCB': 'Center Back', 
+  'RCB': 'Center Back', 
+  'RB': 'Right Back',
+  'LCM': 'Left Midfielder', 
+  'CM': 'Center Midfielder', 
+  'RCM': 'Right Midfielder', 
+  'LW': 'Left Wing', 
+  'ST': 'Striker', 
+  'RW': 'Right Wing'
+};
 
-  let counters = {};
-  for (const rarityKey in CONFIG.rarities) {
-    counters[rarityKey] = {};
-    for (const variantKey in CONFIG.variants) {
-      counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
-    }
+let targetedLineupSlot = null; // Guarda el HUECO al que se apunta desde la alineación.
+let cardToAddFromAlbum = null; // Guarda la CARTA que se quiere colocar desde el álbum.
+
+const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+
+let counters = {};
+for (const rarityKey in CONFIG.rarities) {
+  counters[rarityKey] = {};
+  for (const variantKey in CONFIG.variants) {
+    counters[rarityKey][variantKey] = { normal: 0, golden: 0 };
   }
+}
 
-  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-  function pickByProb(list) {
-    const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
-    let acc = 0;
-    for (const item of list) { acc += item.p; if (roll < acc) return item; }
-      return list[list.length - 1];
-  }
+function pickByProb(list) {
+  const totalProb = list.reduce((sum, item) => sum + item.p, 0); const roll = Math.random() * totalProb;
+  let acc = 0;
+  for (const item of list) { acc += item.p; if (roll < acc) return item; }
+    return list[list.length - 1];
+}
 
-  function generateCard() {
-    const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
-    const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
-    const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
-    const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
-    const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
-    const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
-    return { playerData: player, rarity, golden: isGolden, variant };
-  }
+function generateCard() {
+  const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
+  const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+  const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
+  const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
+  const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+  const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+  return { playerData: player, rarity, golden: isGolden, variant };
+}
 
     function openPack(containerId = 'cards') { // Por defecto usa 'cards'
   // El botón a deshabilitar es siempre el principal
@@ -1865,21 +2216,13 @@ function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
   const query = activeFilters.query.toLowerCase().trim();
-
   const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '';
-  
-  // --- CAMBIO CLAVE: movemos esta variable aquí arriba ---
-  // Ahora también registrará si se muestra algún HUECO, no solo cartas poseídas.
   let anyContentWasDisplayed = false; 
-
   const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
   const variantKeys = Object.keys(CONFIG.variants);
 
   raritiesInOrder.forEach(rarityKey => {
-    if (activeFilters.rarity && activeFilters.rarity !== rarityKey) {
-      return;
-    }
-
+    if (activeFilters.rarity && activeFilters.rarity !== rarityKey) return;
     const playersInRarity = playersDB.filter(p => p.rarity === rarityKey);
     if (playersInRarity.length === 0) return;
 
@@ -1887,70 +2230,63 @@ function createShowcase() {
     row.className = 'showcase-row';
     const grid = document.createElement('div');
     grid.className = 'showcase-grid';
-    
     let rowHasVisiblePlayers = false;
 
     playersInRarity.forEach(player => {
-      if (query && !player.name.toLowerCase().includes(query) && !player.position.toLowerCase().includes(query)) {
-        return;
-      }
-
+      if (query && !player.name.toLowerCase().includes(query) && !player.position.toLowerCase().includes(query)) return;
       const playerEntry = document.createElement('div');
       playerEntry.className = 'player-album-entry';
       const variantsGrid = document.createElement('div');
       variantsGrid.className = 'variants-grid';
-      
       let playerHasVisibleSlots = false;
 
       for (const isGolden of [false, true]) {
         if (activeFilters.golden !== null && isGolden !== activeFilters.golden) continue;
-
         for (const variantKey of variantKeys) {
           if (activeFilters.variant && variantKey !== activeFilters.variant) continue;
-          
           const lookupKey = `${isGolden}_${variantKey}`;
           const collectedVersion = collection[player.id]?.[lookupKey];
 
           if (collectedVersion) {
             playerHasVisibleSlots = true;
             anyContentWasDisplayed = true;
-
             const { cardData, count } = collectedVersion;
             const div = document.createElement("div");
             const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
             div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
-            const indicatorsHTML = `<div class="card-indicators">${cardData.variant !== 'none' ? `<div class="indicator">${cardData.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
             const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
-
             div.innerHTML = `
               <div class="side front">
                 <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
-                ${indicatorsHTML}
                 ${duplicateCounterHTML}
                 <div class="player-info"></div>
             </div>`;
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
             addReactiveEffects(div);
-            div.addEventListener('click', () => showInspectView(div));
+            
+            // --- ESTE ES EL CAMBIO CLAVE ---
+            div.addEventListener('click', () => {
+              if (targetedLineupSlot) {
+                    // FLUJO 2: Añadir directamente sin inspeccionar.
+                addCardToLineup(player, lookupKey);
+              } else {
+                    // FLUJO 1: Abrir la vista de inspección.
+                showInspectView(div, collectedVersion);
+              }
+            });
 
           } else if (!activeFilters.showOwned && (!isFiltering || (isFiltering && activeFilters.showMissing))) {
+            // ... (el resto de la lógica no cambia)
             playerHasVisibleSlots = true;
-            anyContentWasDisplayed = true; // Marcamos que se ha mostrado contenido (un hueco).
-
+            anyContentWasDisplayed = true;
             const placeholder = document.createElement('div');
             placeholder.className = 'card showcase-card album-placeholder';
-            const phIndicators = `
-              <div class="placeholder-indicators">
-                ${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}
-              ${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}
-            </div>`;
-            placeholder.innerHTML = phIndicators;
+            placeholder.innerHTML = `<div class="placeholder-indicators">${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}${variantKey !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantKey)}</div>` : ''}</div>`;
             variantsGrid.appendChild(placeholder);
           }
         }
       }
-      
       if (playerHasVisibleSlots) {
         rowHasVisiblePlayers = true;
         playerEntry.innerHTML = `<h3>${player.name}</h3>`;
@@ -1958,7 +2294,6 @@ function createShowcase() {
         grid.appendChild(playerEntry);
       }
     });
-    
     if (rowHasVisiblePlayers) {
       row.innerHTML = `<h2>${capitalize(rarityKey)}</h2>`;
       row.appendChild(grid);
@@ -1966,8 +2301,6 @@ function createShowcase() {
     }
   });
 
-  // --- LÓGICA FINAL MODIFICADA ---
-  // Ahora, solo mostramos el mensaje si se estaba filtrando Y no se mostró NINGÚN contenido (ni cartas ni huecos).
   if (isFiltering && !anyContentWasDisplayed) {
     container.innerHTML = `<div class="no-results-message">You don't have any cards with that combination.</div>`;
   }
@@ -1998,6 +2331,7 @@ showcaseOverlay.addEventListener('click', (e) => {
 // --- NUEVOS LISTENERS PARA LOS FILTROS ---
 document.addEventListener('DOMContentLoaded', () => {
   updateCurrencyDisplay();
+  loadLineup();
   const showMissingCheckbox = document.getElementById('show-missing-checkbox');
   const showMissingLabel = document.querySelector('.checkbox-label[for="show-missing-checkbox"]');
   const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
@@ -2030,6 +2364,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPacksView();
   });
 
+  // --- NUEVOS LISTENERS PARA LA ALINEACIÓN ---
+  const lineupOverlay = document.getElementById('lineup-overlay');
+  const myLineupBtn = document.getElementById('my-lineup-btn');
+  const closeLineupBtn = document.getElementById('close-lineup-btn');
+
+  if (myLineupBtn) {
+    myLineupBtn.addEventListener('click', () => {
+      renderLineupView();
+      lineupOverlay.classList.add('visible');
+    });
+  }
+
+  if (closeLineupBtn) {
+    closeLineupBtn.addEventListener('click', () => {
+      lineupOverlay.classList.remove('visible');
+    });
+  }
 
   // --- Listener para el botón principal "Back" (CORREGIDO) ---
   const closePacksViewBtn = document.getElementById('closePacksViewBtn');
@@ -2111,6 +2462,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const purchasePackImg = document.getElementById('purchase-pack-img');
   if (purchasePackImg) {
     addInteractiveTiltToPack(purchasePackImg, 1.05);
+  }
+
+  const inspectOverlay = document.getElementById('inspect-overlay');
+// Listener para cerrar el overlay de inspección al clicar en el fondo
+  if (inspectOverlay) {
+    inspectOverlay.addEventListener('click', (event) => {
+    // Se cierra solo si el elemento clickeado es el propio overlay (el fondo)
+    // y no uno de sus hijos (la carta, el contenedor de venta, etc.)
+      if (event.target === inspectOverlay) {
+        inspectOverlay.classList.remove('visible');
+      }
+    });
   }
 
 }); //FIN DEL DOM
@@ -2371,53 +2734,80 @@ function buildFilterUI() {
 
   const inspectOverlay = document.getElementById('inspect-overlay');
 
-  function showInspectView(originalCard) {
-  // 1. Limpiamos cualquier contenido previo
-    inspectOverlay.innerHTML = '';
+  function showInspectView(originalCard, cardStackData) {
+    const inspectOverlay = document.getElementById('inspect-overlay');
+    inspectOverlay.innerHTML = ''; 
 
-  // 2. Clonamos la carta que se ha clickeado. 'true' copia todos sus hijos.
     const cardClone = originalCard.cloneNode(true);
-
-  // 3. Es CRUCIAL volver a añadir los listeners interactivos al clon
     addInteractiveTilt(cardClone);
     addReactiveEffects(cardClone);
-    
-  // 4. Añadimos el clon al overlay
     inspectOverlay.appendChild(cardClone);
 
-  // 5. Hacemos visible el overlay con una transición suave
-    inspectOverlay.classList.add('visible');
-  }
+    if (cardStackData && cardStackData.cardData) {
+      const { playerData, ...cardInfo } = cardStackData.cardData;
+      const pricePerCard = calculateSellPrice(cardInfo);
+      const variantKey = `${cardInfo.golden}_${cardInfo.variant}`;
+      const maxQuantity = cardStackData.count;
 
-// Listener para cerrar el overlay
-  inspectOverlay.addEventListener('click', (event) => {
-  // Nos aseguramos de cerrar solo si se hace clic en el fondo (el overlay en sí),
-  // y no en la carta que está dentro.
-    if (event.target === inspectOverlay) {
-      inspectOverlay.classList.remove('visible');
+      const sellContainer = document.createElement('div');
+      sellContainer.id = 'inspect-sell-container';
+
+      const uniqueCardId = `${playerData.id}_${variantKey}`;
+      const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
+      const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
+
+      sellContainer.innerHTML = `
+      <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
+      <div class="sell-controls">
+          <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
+          <button id="sell-btn" class="sell-btn">Sell</button>
+          <button id="sell-max-btn" class="sell-btn sell-max-btn">Sell Max (${maxQuantity})</button>
+          ${lineupButtonHTML}
+      </div>
+      `;
+      inspectOverlay.appendChild(sellContainer);
+
+    document.getElementById('sell-btn').onclick = () => { /* ... tu lógica de venta ... */ };
+    document.getElementById('sell-max-btn').onclick = () => { /* ... tu lógica de venta ... */ };
+
+      const addToLineupBtn = document.getElementById('add-to-lineup-btn');
+      if (addToLineupBtn && !isCardInLineup) {
+        // --- ESTE ES EL NUEVO COMPORTAMIENTO ---
+        addToLineupBtn.onclick = () => {
+            // 1. Guardamos la carta que queremos añadir.
+          cardToAddFromAlbum = { playerData, variantKey };
+
+            // 2. Cerramos todo y abrimos la vista de alineación.
+          document.getElementById('inspect-overlay').classList.remove('visible');
+          document.getElementById('showcase-overlay').classList.remove('visible');
+            renderLineupView(); // Re-renderiza en "modo colocación".
+            document.getElementById('lineup-overlay').classList.add('visible');
+          };
+        }
+      }
+      inspectOverlay.classList.add('visible');
     }
-  });
 
 
 // ========= FUNCIONES TIENDA ========= //
-  function savePackInventory() {
-    localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
-  }
+    function savePackInventory() {
+      localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
+    }
 
-  function renderPacksView() {
-    const storeGrid = document.getElementById('pack-store-grid');
-    const inventoryGrid = document.getElementById('my-packs-grid');
+    function renderPacksView() {
+      const storeGrid = document.getElementById('pack-store-grid');
+      const inventoryGrid = document.getElementById('my-packs-grid');
 
-    storeGrid.innerHTML = '';
-    inventoryGrid.innerHTML = '';
+      storeGrid.innerHTML = '';
+      inventoryGrid.innerHTML = '';
 
   // Renderizar los packs disponibles en la tienda
    // Renderizar los packs disponibles en la tienda
-    for (const packId in packTypes) {
-      const pack = packTypes[packId];
-      const packEl = document.createElement('div');
-      packEl.className = 'pack-item';
-      packEl.dataset.packType = packId;
+      for (const packId in packTypes) {
+        const pack = packTypes[packId];
+        const packEl = document.createElement('div');
+        packEl.className = 'pack-item';
+        packEl.dataset.packType = packId;
     packEl.title = `${pack.name} - Cost: ${pack.cost}`; // Actualizamos el title también
     
     const packImg = document.createElement('img');
@@ -2552,18 +2942,41 @@ const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
 function showPackPurchaseView(packId) {
   const pack = packTypes[packId];
+  const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
   // Rellenamos el modal con la información del pack
   document.getElementById('purchase-pack-img').src = `packs/packs/${packId}.png`;
   document.getElementById('purchase-pack-name').textContent = pack.name;
   document.getElementById('purchase-pack-cost').innerHTML = `${pack.cost} 💎`;
-  document.getElementById('buy-quantity-input').value = '1';
 
-  // Asignamos los eventos a los botones de compra (IMPORTANTE: se hace aquí)
-  document.getElementById('buy-one-btn').onclick = () => purchasePacks(packId, 1);
-  document.getElementById('buy-many-btn').onclick = () => {
-    const quantity = parseInt(document.getElementById('buy-quantity-input').value, 10);
+  // --- HTML ACTUALIZADO PARA LOS CONTROLES ---
+  const controlsContainer = document.querySelector('.purchase-controls');
+  
+  // Calculamos la cantidad máxima aquí para poder mostrarla en el botón
+  let maxQuantity = 100; // Límite por defecto
+  if (pack.cost > 0) {
+    maxQuantity = Math.floor(playerCurrency / pack.cost);
+  }
+
+  controlsContainer.innerHTML = `
+    <input type="number" id="buy-quantity-input" placeholder="1" min="1" max="100">
+    <button id="buy-btn" class="buy-btn">Buy</button>
+    <button id="buy-max-btn" class="buy-btn buy-max-btn">Buy Max (${maxQuantity})</button>
+  `;
+
+  // --- LÓGICA DE BOTONES (Sin cambios, pero la incluimos para que sea un solo bloque) ---
+  document.getElementById('buy-btn').onclick = () => {
+    const quantityInput = document.getElementById('buy-quantity-input');
+    let quantity = parseInt(quantityInput.value, 10) || 1;
     purchasePacks(packId, quantity);
+  };
+
+  document.getElementById('buy-max-btn').onclick = () => {
+    if (maxQuantity > 0) {
+      purchasePacks(packId, maxQuantity);
+    } else {
+      showToast("Not enough 💎 to buy even one!", 'error');
+    }
   };
 
   // Mostramos el overlay
@@ -2617,6 +3030,282 @@ function updateAlbumStats() {
   }
 }
 
+function calculateSellPrice(cardData) {
+  const { rarity, golden, variant } = cardData;
+  
+  const baseValue = ECONOMY_CONFIG.baseSellValue;
+  const rarityMultiplier = ECONOMY_CONFIG.raritySellMultipliers[rarity] || 1;
+  const goldenMultiplier = golden ? ECONOMY_CONFIG.goldenSellMultiplier : 1;
+  const variantMultiplier = ECONOMY_CONFIG.variantSellMultipliers[variant] || 1;
+
+  // Usamos Math.round para evitar decimales extraños por los multiplicadores
+  return Math.round(baseValue * rarityMultiplier * goldenMultiplier * variantMultiplier);
+}
+
+// Variable global para gestionar el temporizador de la notificación
+let toastTimeout;
+
+/**
+ * Muestra una notificación en pantalla.
+ * @param {string} message El texto que se mostrará.
+ * @param {string} type El tipo de notificación ('success', 'info', 'error').
+ * @param {number} duration Cuánto tiempo (en ms) se mostrará la notificación.
+ */
+
+function showToast(message, type = 'info', duration = 3000) {
+  const toast = document.getElementById('toast-notification');
+  if (!toast) return;
+
+  // Limpia cualquier notificación anterior para evitar solapamientos
+  clearTimeout(toastTimeout);
+
+  // Configura el mensaje y el estilo
+  toast.textContent = message;
+  // Reseteamos las clases de tipo antes de añadir la nueva
+  toast.className = ''; 
+  toast.classList.add(type);
+  
+  // Mostramos la notificación
+  toast.classList.add('show');
+
+  // Programamos que se oculte
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+function sellCard(playerId, variantKey, quantity, pricePerCard) {
+  const cardStack = collection[playerId]?.[variantKey];
+
+  // Doble verificación de seguridad
+  if (!cardStack || cardStack.count < quantity) {
+    alert("Error: You don't have enough cards to sell.");
+    return;
+  }
+
+  // 1. Calcular ganancias y actualizar moneda
+  const totalEarnings = quantity * pricePerCard;
+  playerCurrency += totalEarnings;
+  saveCurrency();
+  updateCurrencyDisplay();
+
+  // 2. Actualizar la colección
+  cardStack.count -= quantity;
+  if (cardStack.count <= 0) {
+    delete collection[playerId][variantKey];
+    // Si era la última variante de ese jugador, eliminamos al jugador
+    if (Object.keys(collection[playerId]).length === 0) {
+      delete collection[playerId];
+    }
+  }
+  saveCollection(); // Guardamos la colección actualizada
+
+  // 3. Cerrar la vista de inspección y refrescar el álbum
+  inspectOverlay.classList.remove('visible');
+  if (showcaseOverlay.classList.contains('visible')) {
+      createShowcase(); // Actualiza el álbum si está abierto
+    }
+
+    showToast(`Sold for ${totalEarnings} 💎`, 'info');
+  }
+
+// Necesitamos una función para guardar la colección, por si no la tienes
+  function saveCollection() {
+    localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+  }
+
+// Guardar / Cargar lineup
+  function saveLineup() {
+    localStorage.setItem('myFootballLineup', JSON.stringify(lineup));
+  }
+
+  function loadLineup() {
+    const savedLineup = localStorage.getItem('myFootballLineup');
+    lineup = savedLineup ? JSON.parse(savedLineup) : {};
+  }
+
+// --- FUNCIONES PARA LA LÓGICA DE LA ALINEACIÓN ---
+
+  function createCardElement(playerData, variantKey) {
+    const cardStackData = collection[playerData.id][variantKey];
+    const { cardData } = cardStackData; // Ya no necesitamos 'count' aquí
+    const div = document.createElement("div");
+    const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
+    div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
+    div.innerHTML = `
+      <div class="side front">
+        <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
+        <div class="player-info">
+            <!-- La media y la posición ya no se renderizan aquí -->
+        </div>
+    </div>`;
+    
+    addInteractiveTilt(div);
+    addReactiveEffects(div);
+    return div;
+  }
+
+  function placeHeldCardInSlot(targetSlot) {
+    if (!cardToAddFromAlbum) return;
+
+    const { playerData, variantKey } = cardToAddFromAlbum;
+    const uniqueCardId = `${playerData.id}_${variantKey}`;
+    
+    const tempLineup = { ...lineup, [targetSlot]: uniqueCardId };
+    const validationResult = validateLineup(tempLineup, true);
+
+    if (validationResult.isValid) {
+      lineup[targetSlot] = uniqueCardId;
+      saveLineup();
+      showToast(`${playerData.name} placed in ${targetSlot}!`, 'success');
+    } else {
+      showToast(validationResult.message, 'error');
+    }
+
+    // Reseteamos el estado y re-renderizamos la alineación en modo normal.
+    cardToAddFromAlbum = null;
+    renderLineupView();
+  }
+
+  function renderLineupView() {
+    const pitch = document.getElementById('lineup-pitch');
+    pitch.innerHTML = '';
+
+    Object.values(lineupPositions).flat().forEach(posId => {
+      const slot = document.createElement('div');
+      slot.id = `lineup-slot-${posId}`;
+      slot.className = 'lineup-slot';
+
+      const uniqueCardId = lineup[posId];
+      if (uniqueCardId) {
+            // ... (esta parte no cambia)
+        const [playerId, ...variantParts] = uniqueCardId.split('_');
+        const variantKey = variantParts.join('_');
+        const playerData = playersDB.find(p => p.id == playerId);
+        const cardElement = createCardElement(playerData, variantKey);
+        cardElement.onclick = () => removeCardFromLineup(posId);
+        slot.appendChild(cardElement);
+      } else {
+            // --- LÓGICA PARA HUECOS VACÍOS ---
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder-slot';
+        placeholder.innerHTML = `
+                <div class="placeholder-position">${posId}</div>
+                <div class="placeholder-name">${positionNames[posId]}</div>
+                <div class="placeholder-instruction">${cardToAddFromAlbum ? 'Click to Place' : 'Click to Add'}</div>
+        `;
+
+        if (cardToAddFromAlbum) {
+                // MODO COLOCACIÓN: El usuario ha elegido una carta.
+          const cardPosition = cardToAddFromAlbum.playerData.position;
+          const isValidSlot = lineupPositions[cardPosition].includes(posId);
+
+          placeholder.classList.add(isValidSlot ? 'valid-placement' : 'invalid-placement');
+          if (isValidSlot) {
+            slot.onclick = () => placeHeldCardInSlot(posId);
+          }
+        } else {
+                // MODO NORMAL: El usuario quiere llenar un hueco.
+          slot.onclick = () => {
+            targetedLineupSlot = posId;
+            document.getElementById('lineup-overlay').classList.remove('visible');
+            document.getElementById('showcaseBtn').click();
+          };
+        }
+        slot.appendChild(placeholder);
+      }
+      pitch.appendChild(slot);
+    });
+    validateLineup();
+  }
+
+  function addCardToLineup(playerData, variantKey) {
+    // Esta función solo se llama cuando 'targetedLineupSlot' está definido.
+    if (!targetedLineupSlot) return; 
+
+    const uniqueCardId = `${playerData.id}_${variantKey}`;
+    const cardPosition = playerData.position;
+    const possibleSlots = lineupPositions[cardPosition];
+
+    // Validamos que la carta sea compatible con el hueco pulsado.
+    if (!possibleSlots.includes(targetedLineupSlot)) {
+      showToast(`${playerData.name} (${cardPosition}) can't play in ${targetedLineupSlot}.`, 'error');
+        targetedLineupSlot = null; // Reseteamos el estado.
+        return;
+      }
+
+      const tempLineup = { ...lineup, [targetedLineupSlot]: uniqueCardId };
+      const validationResult = validateLineup(tempLineup, true);
+
+      if (validationResult.isValid) {
+        lineup[targetedLineupSlot] = uniqueCardId;
+        saveLineup();
+        showToast(`${playerData.name} added to ${targetedLineupSlot}!`, 'success');
+        // Cerramos el álbum y volvemos a la alineación.
+        document.getElementById('showcase-overlay').classList.remove('visible');
+        renderLineupView();
+        document.getElementById('lineup-overlay').classList.add('visible');
+      } else {
+        showToast(validationResult.message, 'error');
+      }
+
+    // Reseteamos el estado después de la operación.
+      targetedLineupSlot = null;
+    }
+
+    function removeCardFromLineup(posId) {
+      delete lineup[posId];
+      saveLineup();
+    renderLineupView(); // Re-renderiza para mostrar el hueco vacío
+  }
+
+  function validateLineup(lineupToCheck = lineup, isSimulation = false) {
+    const rules = { relic: 1, legendary: 2, epic: 3, rare: 4 };
+    const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
+    let totalCards = 0;
+
+    for (const uniqueCardId of Object.values(lineupToCheck)) {
+      totalCards++;
+      const [playerId] = uniqueCardId.split('_');
+      const playerData = playersDB.find(p => p.id == playerId);
+      if (playerData) {
+        counts[playerData.rarity]++;
+      }
+    }
+    
+    let message = "";
+    if (counts.relic > rules.relic) message = `Too many Relics (Max ${rules.relic})`;
+    else if (counts.legendary > rules.legendary) message = `Too many Legendaries (Max ${rules.legendary})`;
+    else if (counts.epic > rules.epic) message = `Too many Epics (Max ${rules.epic})`;
+    else if (counts.rare > rules.rare) message = `Too many Rares (Max ${rules.rare})`;
+    
+    const isValid = message === "" && totalCards >=1; // La regla es "COMO MINIMO 1 Comun" que se cumple si no hay otras restricciones
+
+    if (isSimulation) {
+      return { isValid, message };
+    }
+
+    // Actualiza la UI si no es una simulación
+    const messageEl = document.getElementById('lineup-validation-message');
+    const playBtn = document.getElementById('play-match-btn');
+    if (!isValid) {
+      messageEl.textContent = message;
+      messageEl.style.display = 'block';
+      playBtn.disabled = true;
+    } else if (totalCards < 11) {
+     messageEl.textContent = 'Complete your lineup to play';
+     messageEl.style.display = 'block';
+     playBtn.disabled = true;
+   }
+   else {
+    messageEl.style.display = 'none';
+    playBtn.disabled = false;
+  }
+}
+
 </script>
+
+<div id="toast-notification"></div>
+
 </body>
 </html>
