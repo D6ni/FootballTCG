@@ -1374,20 +1374,28 @@ h1 img {
 /* --- ESTILOS PARA LA VENTA DE CARTAS EN LA VISTA DE INSPECCIÓN --- */
 #inspect-sell-container {
   position: absolute;
-  bottom: 20px; /* Lo posicionamos debajo de la carta */
+  bottom: 30px; 
   left: 50%;
-  transform: translateX(-50%);
+  
+  /* --- AÑADE ESTA LÍNEA --- */
+  transform: translateX(-50%) scale(0.85); /* Escala al 85% de su tamaño original */
+
+  /* El resto de tus propiedades... */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 20px;
+  gap: 10px;
+  padding: 15px;
+  max-width: 350px;
+  width: 90%;
+  background: rgba(0, 0, 0, 0.33);
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.1);
-  width: 90%;
-  max-width: 450px; /* Ancho máximo para la interfaz */
-  z-index: 1001; /* Por encima de la carta */
+  z-index: 1001;
+  backdrop-filter: blur(4px);
+
+  /* --- Y AÑADE ESTO TAMBIÉN PARA CORREGIR EL PUNTO DE ORIGEN --- */
+  transform-origin: bottom center; /* Asegura que escale desde abajo y en el centro */
 }
 
 .sell-price-display {
