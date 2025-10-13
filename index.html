@@ -1730,7 +1730,7 @@ h1 img {
   <div id="pack-opening-controls" style="display: none;">
     <button id="back-to-store-btn" style="background-color: #ff4d4d; color: #fff;">Back to Store</button>
   </div>
-  <button id="closePacksViewBtn">Back</button>
+  <button id="closePacksViewBtn">Close</button>
 </div>
 
 <!-- ============= VISTA DE COMPRA DE PACKS (NUEVO) =============== -->
@@ -1750,7 +1750,7 @@ h1 img {
     </div>
   </div>
   <!-- El botón de cerrar ahora es un hijo directo del overlay -->
-  <button id="close-purchase-btn">X</button>
+  <button id="close-purchase-btn">Close</button>
 </div>
 
 <!-- =========== VISTA DE INSPECCIÓN DE CARTA =============== -->
@@ -1946,12 +1946,14 @@ let collection = savedCollection ? JSON.parse(savedCollection) : {};
 
     // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
 const savedPacks = localStorage.getItem('myFootballPacks');
-let packInventory = savedPacks ? JSON.parse(savedPacks) : {};
+let packInventory = savedPacks ? JSON.parse(savedPacks) : {
+  'common-pack': 5 
+}; //Sobres iniciales
 
   // --- Lógica para el dinero del jugador ---
 const savedCurrency = localStorage.getItem('myPlayerCurrency');
 // Si no hay dinero guardado (primera vez que juega), empieza con 50.
-let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 50; //DINERO INICIAL
+let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 100; //DINERO INICIAL
 
 
   // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
@@ -2387,6 +2389,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeLineupBtn) {
     closeLineupBtn.addEventListener('click', () => {
       lineupOverlay.classList.remove('visible');
+      document.getElementById('showcaseBtn').click();
     });
   }
 
@@ -2765,57 +2768,85 @@ function buildFilterUI() {
       const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
 
       sellContainer.innerHTML = `
-      <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
-      <div class="sell-controls">
-          <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
-          <button id="sell-btn" class="sell-btn">Sell</button>
-          <button id="sell-max-btn" class="sell-btn sell-max-btn">Sell Max (${maxQuantity})</button>
-          ${lineupButtonHTML}
-      </div>
+        <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
+        <div class="sell-controls">
+            <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
+            <button id="sell-btn" class="sell-btn">Sell</button>
+            <button id="sell-max-btn" class="sell-btn sell-max-btn">Sell Max (${maxQuantity})</button>
+            ${lineupButtonHTML}
+        </div>
       `;
       inspectOverlay.appendChild(sellContainer);
 
-    document.getElementById('sell-btn').onclick = () => { /* ... tu lógica de venta ... */ };
-    document.getElementById('sell-max-btn').onclick = () => { /* ... tu lógica de venta ... */ };
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Ahora asignamos la lógica REAL a los botones de venta.
+
+      const sellBtn = document.getElementById('sell-btn');
+      const sellMaxBtn = document.getElementById('sell-max-btn');
+      const quantityInput = document.getElementById('sell-quantity-input');
+
+        // Lógica para el botón "Sell"
+      sellBtn.onclick = () => {
+        const quantity = parseInt(quantityInput.value, 10);
+
+            // Validaciones para evitar errores
+        if (!quantity || quantity <= 0) {
+          showToast('Please enter a valid quantity.', 'error');
+          return;
+        }
+        if (quantity > maxQuantity) {
+          showToast(`You only have ${maxQuantity} copies to sell.`, 'error');
+          return;
+        }
+
+            // Si todo es correcto, llamamos a la función para vender
+        sellCard(playerData.id, variantKey, quantity, pricePerCard);
+      };
+
+        // Lógica para el botón "Sell Max"
+      sellMaxBtn.onclick = () => {
+        if (maxQuantity > 0) {
+          sellCard(playerData.id, variantKey, maxQuantity, pricePerCard);
+        } else {
+          showToast("You don't have any copies to sell.", 'error');
+        }
+      };
+        // --- FIN DE LA CORRECCIÓN ---
 
       const addToLineupBtn = document.getElementById('add-to-lineup-btn');
       if (addToLineupBtn && !isCardInLineup) {
-        // --- ESTE ES EL NUEVO COMPORTAMIENTO ---
         addToLineupBtn.onclick = () => {
-            // 1. Guardamos la carta que queremos añadir.
           cardToAddFromAlbum = { playerData, variantKey };
-
-            // 2. Cerramos todo y abrimos la vista de alineación.
           document.getElementById('inspect-overlay').classList.remove('visible');
           document.getElementById('showcase-overlay').classList.remove('visible');
-            renderLineupView(); // Re-renderiza en "modo colocación".
-            document.getElementById('lineup-overlay').classList.add('visible');
-          };
-        }
+          renderLineupView();
+          document.getElementById('lineup-overlay').classList.add('visible');
+        };
       }
-      inspectOverlay.classList.add('visible');
     }
+    inspectOverlay.classList.add('visible');
+  }
 
 
 // ========= FUNCIONES TIENDA ========= //
-    function savePackInventory() {
-      localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
-    }
+  function savePackInventory() {
+    localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
+  }
 
-    function renderPacksView() {
-      const storeGrid = document.getElementById('pack-store-grid');
-      const inventoryGrid = document.getElementById('my-packs-grid');
+  function renderPacksView() {
+    const storeGrid = document.getElementById('pack-store-grid');
+    const inventoryGrid = document.getElementById('my-packs-grid');
 
-      storeGrid.innerHTML = '';
-      inventoryGrid.innerHTML = '';
+    storeGrid.innerHTML = '';
+    inventoryGrid.innerHTML = '';
 
   // Renderizar los packs disponibles en la tienda
    // Renderizar los packs disponibles en la tienda
-      for (const packId in packTypes) {
-        const pack = packTypes[packId];
-        const packEl = document.createElement('div');
-        packEl.className = 'pack-item';
-        packEl.dataset.packType = packId;
+    for (const packId in packTypes) {
+      const pack = packTypes[packId];
+      const packEl = document.createElement('div');
+      packEl.className = 'pack-item';
+      packEl.dataset.packType = packId;
     packEl.title = `${pack.name} - Cost: ${pack.cost}`; // Actualizamos el title también
     
     const packImg = document.createElement('img');
