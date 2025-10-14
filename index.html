@@ -1652,7 +1652,7 @@ h1 img {
 .pack-description {
   position: absolute;
   /* Lo posicionamos justo debajo del precio (-28px) + su propio tamaño */
-  bottom: -65px; 
+  bottom: -90px; 
   left: 0;
   right: 0;
   text-align: center;
@@ -1797,102 +1797,102 @@ h1 img {
     const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
   const playersDB = [
     /* RELIC (12 Jugadores) */
-    { id: 1, name: "Lionel Messi", position: "ATK", rating: 99, rarity: "relic", img: "images/lionelmessi.png", team: "Inter Miami", country: "Argentina" },
-    { id: 2, name: "Pelé", position: "ATK", rating: 98, rarity: "relic", img: "images/pele.png", team: "Retired", country: "Brazil" },
-    { id: 3, name: "Diego Maradona", position: "MID", rating: 97, rarity: "relic", img: "images/diegomaradona.png", team: "Retired", country: "Argentina" },
-    { id: 4, name: "Cristiano Ronaldo", position: "ATK", rating: 95, rarity: "relic", img: "images/cristianoronaldo.png", team: "Al Nassr", country: "Portugal" },
-    { id: 5, name: "Johan Cruyff", position: "MID", rating: 97, rarity: "relic", img: "images/johancruyff.png", team: "Retired", country: "Netherlands" },
-    { id: 6, name: "Zinedine Zidane", position: "MID", rating: 95, rarity: "relic", img: "images/zinedinezidane.png", team: "Retired", country: "France" },
-    { id: 7, name: "Ronaldo Nazário", position: "ATK", rating: 95, rarity: "relic", img: "images/ronaldonazario.png", team: "Retired", country: "Brazil" },
-    { id: 8, name: "Ronaldinho", position: "MID", rating: 96, rarity: "relic", img: "images/ronaldinho.png", team: "Retired", country: "Brazil" },
-    { id: 9, name: "Andrés Iniesta", position: "MID", rating: 95, rarity: "relic", img: "images/andresiniesta.png", team: "Retired", country: "Spain" },
-    { id: 10, name: "Xavi Hernández", position: "MID", rating: 96, rarity: "relic", img: "images/xavihernandez.png", team: "Retired", country: "Spain" },
-    { id: 11, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png", team: "Retired", country: "Spain" },
-    { id: 12, name: "Oliver Khan", position: "GK", rating: 92, rarity: "relic", img: "images/oliverkhan.png", team: "Retired", country: "Germany" },
+    { id: 1, name: "Lionel Messi", position: "ATK", rating: 99, rarity: "relic", img: "images/lionelmessi.png", teams: ["Inter Miami","FC Barcelona"], country: "Argentina" },
+    { id: 2, name: "Pelé", position: "ATK", rating: 98, rarity: "relic", img: "images/pele.png", teams: ["Retired"], country: "Brazil" },
+    { id: 3, name: "Diego Maradona", position: "ATK", rating: 97, rarity: "relic", img: "images/diegomaradona.png", teams: ["Retired"], country: "Argentina" },
+    { id: 4, name: "Cristiano Ronaldo", position: "ATK", rating: 95, rarity: "relic", img: "images/cristianoronaldo.png", teams: ["Al Nassr","Real Madrid"], country: "Portugal" },
+    { id: 5, name: "Johan Cruyff", position: "ATK", rating: 97, rarity: "relic", img: "images/johancruyff.png", teams: ["Retired","Ajax","FC Barcelona"], country: "Netherlands" },
+    { id: 6, name: "Zinedine Zidane", position: "MID", rating: 95, rarity: "relic", img: "images/zinedinezidane.png", teams: ["Retired"], country: "France" },
+    { id: 7, name: "Ronaldo Nazário", position: "ATK", rating: 95, rarity: "relic", img: "images/ronaldonazario.png", teams: ["Retired","FC Barcelona","Real Madrid"], country: "Brazil" },
+    { id: 8, name: "Ronaldinho", position: "ATK", rating: 96, rarity: "relic", img: "images/ronaldinho.png", teams: ["Retired","FC Barcelona"], country: "Brazil" },
+    { id: 9, name: "Andrés Iniesta", position: "MID", rating: 95, rarity: "relic", img: "images/andresiniesta.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
+    { id: 10, name: "Xavi Hernández", position: "MID", rating: 96, rarity: "relic", img: "images/xavihernandez.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
+    { id: 11, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
+    { id: 12, name: "Oliver Khan", position: "GK", rating: 92, rarity: "relic", img: "images/oliverkhan.png", teams: ["Retired"], country: "Germany" },
 
     /* LEGENDARY (17 Jugadores) */
-    { id: 13, name: "Kylian Mbappé", position: "ATK", rating: 94, rarity: "legendary", img: "images/kylianmbappe.png", team: "Real Madrid", country: "France" },
-    { id: 14, name: "Erling Haaland", position: "ATK", rating: 93, rarity: "legendary", img: "images/erlinghaaland.png", team: "Manchester City", country: "Norway" },
-    { id: 15, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png", team: "Retired", country: "Serbia" },
-    { id: 16, name: "Thierry Henry", position: "ATK", rating: 94, rarity: "legendary", img: "images/thierryhenry.png", team: "Retired", country: "France" },
-    { id: 17, name: "Kevin De Bruyne", position: "MID", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png", team: "Manchester City", country: "Belgium" },
-    { id: 18, name: "Hristo Stoichkov", position: "ATK", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png", team: "Retired", country: "Bulgaria" },
-    { id: 19, name: "Sergio Busquets", position: "MID", rating: 93, rarity: "legendary", img: "images/sergiobusquets.png", team: "Inter Miami", country: "Spain" },
-    { id: 20, name: "Zlatan Ibrahimovic", position: "ATK", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png", team: "Retired", country: "Sweden" },
-    { id: 21, name: "Neymar Jr.", position: "ATK", rating: 93, rarity: "legendary", img: "images/neymarjr.png", team: "Al Hilal", country: "Brazil" },
-    { id: 22, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png", team: "Liverpool", country: "Netherlands" },
-    { id: 23, name: "Gennaro Gattuso", position: "MID", rating: 91, rarity: "legendary", img: "images/gennarogattuso.png", team: "Retired", country: "Italy" },
-    { id: 24, name: "Robert Lewandowski", position: "ATK", rating: 91, rarity: "legendary", img: "images/robertlewandowski.png", team: "FC Barcelona", country: "Poland" },
-    { id: 25, name: "Sergio Ramos", position: "DEF", rating: 90, rarity: "legendary", img: "images/sergioramos.png", team: "Sevilla", country: "Spain" },
-    { id: 26, name: "Thibaut Courtois", position: "GK", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png", team: "Real Madrid", country: "Belgium" },
-    { id: 27, name: "Mohamed Salah", position: "ATK", rating: 91, rarity: "legendary", img: "images/mohamedsalah.png", team: "Liverpool", country: "Egypt" },
-    { id: 28, name: "Paolo Maldini", position: "DEF", rating: 94, rarity: "legendary", img: "images/paolomaldini.png", team: "Retired", country: "Italy" },
-    { id: 54, name: "Lamine Yamal", position: "ATK", rating: 83, rarity: "legendary", img: "images/lamineyamal.png", team: "FC Barcelona", country: "Spain" },
+    { id: 13, name: "Kylian Mbappé", position: "ATK", rating: 94, rarity: "legendary", img: "images/kylianmbappe.png", teams: ["Real Madrid"], country: "France" },
+    { id: 14, name: "Erling Haaland", position: "ATK", rating: 93, rarity: "legendary", img: "images/erlinghaaland.png", teams: ["Manchester City"], country: "Norway" },
+    { id: 15, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png", teams: ["Retired"], country: "Serbia" },
+    { id: 16, name: "Thierry Henry", position: "ATK", rating: 94, rarity: "legendary", img: "images/thierryhenry.png", teams: ["Retired","FC Barcelona","Arsenal"], country: "France" },
+    { id: 17, name: "Kevin De Bruyne", position: "MID", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png", teams: ["Manchester City"], country: "Belgium" },
+    { id: 18, name: "Hristo Stoichkov", position: "ATK", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png", teams: ["Retired","FC Barcelona"], country: "Bulgaria" },
+    { id: 19, name: "Sergio Busquets", position: "MID", rating: 93, rarity: "legendary", img: "images/sergiobusquets.png", teams: ["Inter Miami","FC Barcelona"], country: "Spain" },
+    { id: 20, name: "Zlatan Ibrahimovic", position: "ATK", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png", teams: ["Retired"], country: "Sweden" },
+    { id: 21, name: "Neymar Jr.", position: "ATK", rating: 93, rarity: "legendary", img: "images/neymarjr.png", teams: ["Santos","FC Barcelona"], country: "Brazil" },
+    { id: 22, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png", teams: ["Liverpool"], country: "Netherlands" },
+    { id: 23, name: "Gennaro Gattuso", position: "MID", rating: 91, rarity: "legendary", img: "images/gennarogattuso.png", teams: ["Retired"], country: "Italy" },
+    { id: 24, name: "Robert Lewandowski", position: "ATK", rating: 91, rarity: "legendary", img: "images/robertlewandowski.png", teams: ["FC Barcelona"], country: "Poland" },
+    { id: 25, name: "Sergio Ramos", position: "DEF", rating: 90, rarity: "legendary", img: "images/sergioramos.png", teams: ["Sevilla"], country: "Spain" },
+    { id: 26, name: "Thibaut Courtois", position: "GK", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png", teams: ["Real Madrid"], country: "Belgium" },
+    { id: 27, name: "Mohamed Salah", position: "ATK", rating: 91, rarity: "legendary", img: "images/mohamedsalah.png", teams: ["Liverpool"], country: "Egypt" },
+    { id: 28, name: "Paolo Maldini", position: "DEF", rating: 94, rarity: "legendary", img: "images/paolomaldini.png", teams: ["Retired"], country: "Italy" },
+    { id: 54, name: "Lamine Yamal", position: "ATK", rating: 83, rarity: "legendary", img: "images/lamineyamal.png", teams: ["FC Barcelona"], country: "Spain" },
 
     /* EPIC (17 Jugadores) */
-    { id: 29, name: "Jude Bellingham", position: "MID", rating: 88, rarity: "epic", img: "images/judebellingham.png", team: "Real Madrid", country: "England" },
-    { id: 30, name: "Harry Kane", position: "ATK", rating: 90, rarity: "epic", img: "images/harrykane.png", team: "Bayern Munich", country: "England" },
-    { id: 31, name: "Rodri", position: "MID", rating: 89, rarity: "epic", img: "images/rodri.png", team: "Manchester City", country: "Spain" },
-    { id: 32, name: "Alisson Becker", position: "GK", rating: 89, rarity: "epic", img: "images/alissonbecker.png", team: "Liverpool", country: "Brazil" },
-    { id: 33, name: "Pedri", position: "MID", rating: 90, rarity: "epic", img: "images/pedri.png", team: "FC Barcelona", country: "Spain" },
-    { id: 34, name: "Lautaro Martínez", position: "ATK", rating: 88, rarity: "epic", img: "images/lautaromartinez.png", team: "Inter Milan", country: "Argentina" },
-    { id: 35, name: "Bukayo Saka", position: "ATK", rating: 88, rarity: "epic", img: "images/bukayosaka.png", team: "Arsenal", country: "England" },
-    { id: 36, name: "Jamal Musiala", position: "MID", rating: 88, rarity: "epic", img: "images/jamalmusiala.png", team: "Bayern Munich", country: "Germany" },
-    { id: 37, name: "Julián Álvarez", position: "ATK", rating: 87, rarity: "epic", img: "images/julianalvarez.png", team: "Manchester City", country: "Argentina" },
-    { id: 38, name: "Frenkie de Jong", position: "MID", rating: 89, rarity: "epic", img: "images/frenkiedejong.png", team: "FC Barcelona", country: "Netherlands" },
-    { id: 39, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png", team: "Arsenal", country: "France" },
-    { id: 40, name: "Viktor Gyokeres", position: "ATK", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png", team: "Sporting CP", country: "Sweden" },
-    { id: 41, name: "Rúben Dias", position: "DEF", rating: 87, rarity: "epic", img: "images/rubendias.png", team: "Manchester City", country: "Portugal" },
-    { id: 42, name: "Son Heung-min", position: "ATK", rating: 87, rarity: "epic", img: "images/sonheungmin.png", team: "Tottenham Hotspur", country: "South Korea" },
-    { id: 43, name: "Gavi", position: "MID", rating: 86, rarity: "epic", img: "images/gavi.png", team: "FC Barcelona", country: "Spain" },
-    { id: 44, name: "Marc-André ter Stegen", position: "GK", rating: 86, rarity: "epic", img: "images/terstegen.png", team: "FC Barcelona", country: "Germany" },
-    { id: 45, name: "Joan Garcia", position: "GK", rating: 86, rarity: "epic", img: "images/joangarcia.png", team: "RCD Espanyol", country: "Spain" },
+    { id: 29, name: "Jude Bellingham", position: "MID", rating: 88, rarity: "epic", img: "images/judebellingham.png", teams: ["Real Madrid"], country: "England" },
+    { id: 30, name: "Harry Kane", position: "ATK", rating: 90, rarity: "epic", img: "images/harrykane.png", teams: ["Bayern Munich"], country: "England" },
+    { id: 31, name: "Rodri", position: "MID", rating: 89, rarity: "epic", img: "images/rodri.png", teams: ["Manchester City"], country: "Spain" },
+    { id: 32, name: "Alisson Becker", position: "GK", rating: 89, rarity: "epic", img: "images/alissonbecker.png", teams: ["Liverpool"], country: "Brazil" },
+    { id: 33, name: "Pedri", position: "MID", rating: 90, rarity: "epic", img: "images/pedri.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 34, name: "Lautaro Martínez", position: "ATK", rating: 88, rarity: "epic", img: "images/lautaromartinez.png", teams: ["Inter Milan"], country: "Argentina" },
+    { id: 35, name: "Bukayo Saka", position: "ATK", rating: 88, rarity: "epic", img: "images/bukayosaka.png", teams: ["Arsenal"], country: "England" },
+    { id: 36, name: "Jamal Musiala", position: "MID", rating: 88, rarity: "epic", img: "images/jamalmusiala.png", teams: ["Bayern Munich"], country: "Germany" },
+    { id: 37, name: "Julián Álvarez", position: "ATK", rating: 87, rarity: "epic", img: "images/julianalvarez.png", teams: ["Manchester City"], country: "Argentina" },
+    { id: 38, name: "Frenkie de Jong", position: "MID", rating: 89, rarity: "epic", img: "images/frenkiedejong.png", teams: ["FC Barcelona"], country: "Netherlands" },
+    { id: 39, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png", teams: ["Arsenal"], country: "France" },
+    { id: 40, name: "Viktor Gyokeres", position: "ATK", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png", teams: ["Sporting CP"], country: "Sweden" },
+    { id: 41, name: "Rúben Dias", position: "DEF", rating: 87, rarity: "epic", img: "images/rubendias.png", teams: ["Manchester City"], country: "Portugal" },
+    { id: 42, name: "Son Heung-min", position: "ATK", rating: 87, rarity: "epic", img: "images/sonheungmin.png", teams: ["Tottenham Hotspur"], country: "South Korea" },
+    { id: 43, name: "Gavi", position: "MID", rating: 86, rarity: "epic", img: "images/gavi.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 44, name: "Marc-André ter Stegen", position: "GK", rating: 86, rarity: "epic", img: "images/terstegen.png", teams: ["FC Barcelona"], country: "Germany" },
+    { id: 45, name: "Joan Garcia", position: "GK", rating: 86, rarity: "epic", img: "images/joangarcia.png", teams: ["FC Barcelona"], country: "Spain" },
 
     /* RARE (18 Jugadores) */
-    { id: 46, name: "Martin Ødegaard", position: "MID", rating: 85, rarity: "rare", img: "images/martinodegaard.png", team: "Arsenal", country: "Norway" },
-    { id: 47, name: "Declan Rice", position: "MID", rating: 85, rarity: "rare", img: "images/declanrice.png", team: "Arsenal", country: "England" },
-    { id: 48, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png", team: "Girona FC", country: "Spain" },
-    { id: 49, name: "Jackson Irvine", position: "MID", rating: 85, rarity: "rare", img: "images/jacksonirvine.png", team: "FC St. Pauli", country: "Australia" },
-    { id: 50, name: "Alexis Mac Allister", position: "MID", rating: 84, rarity: "rare", img: "images/alexismacallister.png", team: "Liverpool", country: "Argentina" },
-    { id: 51, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png", team: "Bayer Leverkusen", country: "Spain" },
-    { id: 52, name: "Theo Hernández", position: "DEF", rating: 84, rarity: "rare", img: "images/theohernandez.png", team: "AC Milan", country: "France" },
-    { id: 53, name: "Takefusa Kubo", position: "ATK", rating: 83, rarity: "rare", img: "images/takefusakubo.png", team: "Real Sociedad", country: "Japan" },
-    { id: 55, name: "Darwin Núñez", position: "ATK", rating: 81, rarity: "rare", img: "images/darwinnunez.png", team: "Liverpool", country: "Uruguay" },
-    { id: 56, name: "Christopher Nkunku", position: "MID", rating: 82, rarity: "rare", img: "images/christophernkunku.png", team: "Chelsea", country: "France" },
-    { id: 57, name: "Unai Simón", position: "GK", rating: 81, rarity: "rare", img: "images/unaisimon.png", team: "Athletic Bilbao", country: "Spain" },
-    { id: 58, name: "Nicolò Barella", position: "MID", rating: 81, rarity: "rare", img: "images/nicolobarella.png", team: "Inter Milan", country: "Italy" },
-    { id: 59, name: "Alexander Isak", position: "ATK", rating: 84, rarity: "rare", img: "images/alexanderisak.png", team: "Newcastle United", country: "Sweden" },
-    { id: 60, name: "Alphonso Davies", position: "DEF", rating: 81, rarity: "rare", img: "images/alphonsodavies.png", team: "Bayern Munich", country: "Canada" },
-    { id: 61, name: "Ollie Watkins", position: "ATK", rating: 81, rarity: "rare", img: "images/olliewatkins.png", team: "Aston Villa", country: "England" },
-    { id: 62, name: "Mikel Merino", position: "MID", rating: 81, rarity: "rare", img: "images/mikelmerino.png", team: "Real Sociedad", country: "Spain" },
-    { id: 63, name: "Federico Chiesa", position: "ATK", rating: 81, rarity: "rare", img: "images/federicochiesa.png", team: "Juventus", country: "Italy" },
+    { id: 46, name: "Martin Ødegaard", position: "MID", rating: 85, rarity: "rare", img: "images/martinodegaard.png", teams: ["Arsenal"], country: "Norway" },
+    { id: 47, name: "Declan Rice", position: "MID", rating: 85, rarity: "rare", img: "images/declanrice.png", teams: ["Arsenal"], country: "England" },
+    { id: 48, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 49, name: "Jackson Irvine", position: "MID", rating: 85, rarity: "rare", img: "images/jacksonirvine.png", teams: ["FC St. Pauli"], country: "Australia" },
+    { id: 50, name: "Alexis Mac Allister", position: "MID", rating: 84, rarity: "rare", img: "images/alexismacallister.png", teams: ["Liverpool"], country: "Argentina" },
+    { id: 51, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png", teams: ["Bayer Leverkusen"], country: "Spain" },
+    { id: 52, name: "Theo Hernández", position: "DEF", rating: 84, rarity: "rare", img: "images/theohernandez.png", teams: ["AC Milan"], country: "France" },
+    { id: 53, name: "Takefusa Kubo", position: "ATK", rating: 83, rarity: "rare", img: "images/takefusakubo.png", teams: ["Real Sociedad"], country: "Japan" },
+    { id: 55, name: "Darwin Núñez", position: "ATK", rating: 81, rarity: "rare", img: "images/darwinnunez.png", teams: ["Liverpool"], country: "Uruguay" },
+    { id: 56, name: "Christopher Nkunku", position: "MID", rating: 82, rarity: "rare", img: "images/christophernkunku.png", teams: ["Chelsea"], country: "France" },
+    { id: 57, name: "Unai Simón", position: "GK", rating: 81, rarity: "rare", img: "images/unaisimon.png", teams: ["Athletic Bilbao"], country: "Spain" },
+    { id: 58, name: "Nicolò Barella", position: "MID", rating: 81, rarity: "rare", img: "images/nicolobarella.png", teams: ["Inter Milan"], country: "Italy" },
+    { id: 59, name: "Alexander Isak", position: "ATK", rating: 84, rarity: "rare", img: "images/alexanderisak.png", teams: ["Newcastle United"], country: "Sweden" },
+    { id: 60, name: "Alphonso Davies", position: "DEF", rating: 81, rarity: "rare", img: "images/alphonsodavies.png", teams: ["Bayern Munich"], country: "Canada" },
+    { id: 61, name: "Ollie Watkins", position: "ATK", rating: 81, rarity: "rare", img: "images/olliewatkins.png", teams: ["Aston Villa"], country: "England" },
+    { id: 62, name: "Mikel Merino", position: "ATK", rating: 81, rarity: "rare", img: "images/mikelmerino.png", teams: ["Real Sociedad"], country: "Spain" },
+    { id: 63, name: "Federico Chiesa", position: "ATK", rating: 81, rarity: "rare", img: "images/federicochiesa.png", teams: ["Juventus"], country: "Italy" },
 
     /* COMMON (25 Jugadores) */
-    { id: 64, name: "Enzo Fernández", position: "MID", rating: 82, rarity: "common", img: "images/enzofernandez.png", team: "Chelsea", country: "Argentina" },
-    { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png", team: "Manchester City", country: "Croatia" },
-    { id: 66, name: "Bruno Guimarães", position: "MID", rating: 82, rarity: "common", img: "images/brunoguimaraes.png", team: "Newcastle United", country: "Brazil" },
-    { id: 67, name: "Dominik Szoboszlai", position: "MID", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png", team: "Liverpool", country: "Hungary" },
-    { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png", team: "Manchester United", country: "Argentina" },
-    { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png", team: "Aston Villa", country: "Spain" },
-    { id: 70, name: "Lucas Paquetá", position: "MID", rating: 81, rarity: "common", img: "images/lucaspaqueta.png", team: "West Ham United", country: "Brazil" },
-    { id: 71, name: "Nico Williams", position: "ATK", rating: 80, rarity: "common", img: "images/nicowilliams.png", team: "Athletic Bilbao", country: "Spain" },
-    { id: 72, name: "André Onana", position: "GK", rating: 78, rarity: "common", img: "images/andreonana.png", team: "Manchester United", country: "Cameroon" },
-    { id: 73, name: "Iñaki Williams", position: "ATK", rating: 78, rarity: "common", img: "images/inakiwilliams.png", team: "Athletic Bilbao", country: "Ghana" },
-    { id: 74, name: "João Palhinha", position: "MID", rating: 80, rarity: "common", img: "images/joaopalhinha.png", team: "Fulham", country: "Portugal" },
-    { id: 75, name: "Jeremie Frimpong", position: "DEF", rating: 80, rarity: "common", img: "images/jeremiefrimpong.png", team: "Bayer Leverkusen", country: "Netherlands" },
-    { id: 76, name: "Sandro Tonali", position: "MID", rating: 80, rarity: "common", img: "images/sandrotonali.png", team: "Newcastle United", country: "Italy" },
-    { id: 77, name: "Ferran Jutgla", position: "ATK", rating: 79, rarity: "common", img: "images/ferranjutgla.png", team: "Club Brugge", country: "Spain" },
-    { id: 78, name: "Moisés Caicedo", position: "MID", rating: 79, rarity: "common", img: "images/moisescaicedo.png", team: "Chelsea", country: "Ecuador" },
-    { id: 79, name: "Pau Cubarsí", position: "DEF", rating: 81, rarity: "common", img: "images/paucubarsi.png", team: "FC Barcelona", country: "Spain" },
-    { id: 80, name: "Kaoru Mitoma", position: "ATK", rating: 79, rarity: "common", img: "images/kaorumitoma.png", team: "Brighton & Hove Albion", country: "Japan" },
-    { id: 81, name: "Guido Rodríguez", position: "MID", rating: 79, rarity: "common", img: "images/guidorodriguez.png", team: "Real Betis", country: "Argentina" },
-    { id: 82, name: "Álex Baena", position: "MID", rating: 78, rarity: "common", img: "images/alexbaena.png", team: "Villarreal", country: "Spain" },
-    { id: 83, name: "Conor Gallagher", position: "MID", rating: 78, rarity: "common", img: "images/conorgallagher.png", team: "Chelsea", country: "England" },
-    { id: 84, name: "Manuel Ugarte", position: "MID", rating: 78, rarity: "common", img: "images/manuelugarte.png", team: "Paris Saint-Germain", country: "Uruguay" },
-    { id: 85, name: "Giorgi Mamardashvili", position: "GK", rating: 78, rarity: "common", img: "images/mamardashvili.png", team: "Valencia", country: "Georgia" },
-    { id: 86, name: "Santiago Giménez", position: "ATK", rating: 78, rarity: "common", img: "images/santiagogimenez.png", team: "Feyenoord", country: "Mexico" },
-    { id: 87, name: "Alejandro Balde", position: "DEF", rating: 80, rarity: "common", img: "images/alejandrobalde.png", team: "FC Barcelona", country: "Spain" },
-    { id: 88, name: "Anthony Gordon", position: "ATK", rating: 77, rarity: "common", img: "images/anthonygordon.png", team: "Newcastle United", country: "England" }
+    { id: 64, name: "Enzo Fernández", position: "MID", rating: 82, rarity: "common", img: "images/enzofernandez.png", teams: ["Chelsea"], country: "Argentina" },
+    { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png", teams: ["Manchester City"], country: "Croatia" },
+    { id: 66, name: "Bruno Guimarães", position: "MID", rating: 82, rarity: "common", img: "images/brunoguimaraes.png", teams: ["Newcastle United"], country: "Brazil" },
+    { id: 67, name: "Dominik Szoboszlai", position: "MID", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png", teams: ["Liverpool"], country: "Hungary" },
+    { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png", teams: ["Manchester United"], country: "Argentina" },
+    { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png", teams: ["Aston Villa"], country: "Spain" },
+    { id: 70, name: "Lucas Paquetá", position: "MID", rating: 81, rarity: "common", img: "images/lucaspaqueta.png", teams: ["West Ham United"], country: "Brazil" },
+    { id: 71, name: "Nico Williams", position: "ATK", rating: 80, rarity: "common", img: "images/nicowilliams.png", teams: ["Athletic Bilbao"], country: "Spain" },
+    { id: 72, name: "André Onana", position: "GK", rating: 78, rarity: "common", img: "images/andreonana.png", teams: ["Manchester United"], country: "Cameroon" },
+    { id: 73, name: "Iñaki Williams", position: "ATK", rating: 78, rarity: "common", img: "images/inakiwilliams.png", teams: ["Athletic Bilbao"], country: "Ghana" },
+    { id: 74, name: "João Palhinha", position: "MID", rating: 80, rarity: "common", img: "images/joaopalhinha.png", teams: ["Fulham"], country: "Portugal" },
+    { id: 75, name: "Jeremie Frimpong", position: "DEF", rating: 80, rarity: "common", img: "images/jeremiefrimpong.png", teams: ["Bayer Leverkusen"], country: "Netherlands" },
+    { id: 76, name: "Sandro Tonali", position: "MID", rating: 80, rarity: "common", img: "images/sandrotonali.png", teams: ["Newcastle United"], country: "Italy" },
+    { id: 77, name: "Ferran Jutgla", position: "ATK", rating: 79, rarity: "common", img: "images/ferranjutgla.png", teams: ["Club Brugge"], country: "Spain" },
+    { id: 78, name: "Moisés Caicedo", position: "MID", rating: 79, rarity: "common", img: "images/moisescaicedo.png", teams: ["Chelsea"], country: "Ecuador" },
+    { id: 79, name: "Pau Cubarsí", position: "DEF", rating: 81, rarity: "common", img: "images/paucubarsi.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 80, name: "Kaoru Mitoma", position: "ATK", rating: 79, rarity: "common", img: "images/kaorumitoma.png", teams: ["Brighton & Hove Albion"], country: "Japan" },
+    { id: 81, name: "Guido Rodríguez", position: "MID", rating: 79, rarity: "common", img: "images/guidorodriguez.png", teams: ["Real Betis"], country: "Argentina" },
+    { id: 82, name: "Álex Baena", position: "MID", rating: 78, rarity: "common", img: "images/alexbaena.png", teams: ["Villarreal"], country: "Spain" },
+    { id: 83, name: "Conor Gallagher", position: "MID", rating: 78, rarity: "common", img: "images/conorgallagher.png", teams: ["Chelsea"], country: "England" },
+    { id: 84, name: "Manuel Ugarte", position: "MID", rating: 78, rarity: "common", img: "images/manuelugarte.png", teams: ["Paris Saint-Germain"], country: "Uruguay" },
+    { id: 85, name: "Giorgi Mamardashvili", position: "GK", rating: 78, rarity: "common", img: "images/mamardashvili.png", teams: ["Valencia"], country: "Georgia" },
+    { id: 86, name: "Santiago Giménez", position: "ATK", rating: 78, rarity: "common", img: "images/santiagogimenez.png", teams: ["Feyenoord"], country: "Mexico" },
+    { id: 87, name: "Alejandro Balde", position: "DEF", rating: 80, rarity: "common", img: "images/alejandrobalde.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 88, name: "Anthony Gordon", position: "ATK", rating: 77, rarity: "common", img: "images/anthonygordon.png", teams: ["Newcastle United"], country: "England" }
   ];
 
   const CONFIG = {
@@ -1931,22 +1931,26 @@ h1 img {
     'common-pack': {
       name: 'Common Pack',
       cost: 0, // PRECIO PAQUETES
-      description: 'A basic pack, 11 cards and at least 1 Rare.'
+      description: 'A basic pack, 11 cards and at least 1 Rare.',
+      size: 11
     },
-    'pitty-pack': {
-      name: 'Barça Pack',
+    'collectors-pack': {
+      name: 'Collectors Pack',
       cost: 0, // PRECIO ACTUALIZADO
-      description: 'NOT IMPLEMENTED, just placeholder'
+      description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
+      size: 3
     },
     'barça-pack': {
       name: 'Barça Pack',
       cost: 0, // PRECIO ACTUALIZADO
-      description: 'NOT IMPLEMENTED, just placeholder'
+      description: 'NOT IMPLEMENTED, just placeholder',
+      size: 11
     },
     'holo-pack': {
       name: 'Holo Pack',
       cost: 0, // PRECIO ACTUALIZADO
-      description: 'NOT IMPLEMENTED, just placeholder'
+      description: 'NOT IMPLEMENTED, just placeholder',
+      size: 11
     }
   };
 
@@ -2001,6 +2005,7 @@ let activeFilters = {
 let filtersInitialized = false;
 
 let flippedCardsInPack = 0;
+let currentPackContentSize = 0;
 
 // --- NUEVAS VARIABLES PARA LA ALINEACIÓN ---
 let lineup = {}; // Objeto para guardar la alineación: { GK: 'card_unique_id', LB: '...', ... }
@@ -2056,32 +2061,94 @@ function generateCard() {
   return { playerData: player, rarity, golden: isGolden, variant };
 }
 
-    function openPack(containerId = 'cards') { // Por defecto usa 'cards'
-  // El botón a deshabilitar es siempre el principal
-      const openPacksViewBtn = document.getElementById('openPacksViewBtn');
-      if (openPacksViewBtn) openPacksViewBtn.disabled = true;
+//para el collectors pack
+/**
+ * Comprueba si una variante de carta específica ya está en la colección del jugador.
+ * @param {object} cardData El objeto de la carta generada (ej: { playerData, golden, variant }).
+ * @returns {boolean} True si la carta ya se posee, false si es nueva.
+ */
+function isCardOwned(cardData) {
+  const playerId = cardData.playerData.id;
+  const variantKey = `${cardData.golden}_${cardData.variant}`;
+  
+  // Usamos el encadenamiento opcional (?.) por seguridad.
+  // Si collection[playerId] no existe, devolverá undefined (falso), lo cual es correcto.
+  return !!collection[playerId]?.[variantKey];
+}
 
-      flippedCardsInPack = 0;
-  // ¡CAMBIO CLAVE! Usa el ID del contenedor que le pasamos
-      const container = document.getElementById(containerId); 
-      if (!container) {
-        console.error("Error: Container not found!", containerId);
-        return;
-      }
-      container.innerHTML = "";
+function openPack(containerId = 'cards', packId = 'common-pack') {
+  const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+  if (openPacksViewBtn) openPacksViewBtn.disabled = true;
 
-      let pack = [];
-      for (let i = 0; i < CONFIG.packSize; i++) { 
+  flippedCardsInPack = 0;
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error("Error: Container not found!", containerId);
+    return;
+  }
+  container.innerHTML = "";
+
+  let pack = [];
+
+  const packInfo = packTypes[packId] || { size: 11 };
+  currentPackContentSize = packInfo.size;
+
+  switch (packId) {
+  case 'collectors-pack':
+    console.log("Opening a Collectors Pack with Weighted New Card logic.");
+
+    const unlockedCount = calculateUnlockedCards();
+
+    if (unlockedCount >= totalPossibleCards) {
+      showToast("You have all the cards! Opening a regular pack instead.", 'info');
+      for (let i = 0; i < currentPackContentSize; i++) {
         pack.push(generateCard());
       }
+    } else {
+        // --- LÓGICA FINAL Y CORRECTA ---
 
-      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
-        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+        // 1. Obtenemos nuestra carta nueva garantizada usando el método ponderado.
+      const guaranteedNewCard = getWeightedNewCard();
+      
+      if (guaranteedNewCard) {
+        pack.push(guaranteedNewCard);
+      } else {
+            // Fallback por si la colección está completa y el chequeo inicial falló.
+        pack.push(generateCard());
       }
-      pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+      
+        // 2. Rellenamos el resto del sobre con cartas de la pool completa.
+      while (pack.length < currentPackContentSize) {
+        pack.push(generateCard());
+      }
+      
+        // 3. Mezclamos el sobre.
+      pack.sort(() => Math.random() - 0.5);
+    }
+    break;
 
-      pack.forEach((cardObj, i) => {
+        default: // <-- Esto ahora se encarga del 'common-pack' y cualquier otro futuro pack estándar
+          console.log("Opening a standard pack.");
+          for (let i = 0; i < currentPackContentSize; i++) {
+            pack.push(generateCard());
+          }
+
+            // --- ¡SOLUCIÓN! ---
+            // La lógica de "garantizar una rara" AHORA ESTÁ AQUÍ DENTRO,
+            // donde solo afecta a los sobres que lo necesiten.
+          if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+            const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+            if (rarePlayers.length > 0) {
+             pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+           }
+         }
+         break;
+       }
+
+    // El resto de la función (que renderiza las cartas) no cambia.
+       pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+
+       pack.forEach((cardObj, i) => {
         const div = document.createElement("div");
         const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
         div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
@@ -2094,7 +2161,6 @@ function generateCard() {
 
         const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
-    // --- ESTA ES LA PARTE QUE FALTABA ---
         div.innerHTML = `
           <div class="side front">
             <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
@@ -2104,13 +2170,12 @@ function generateCard() {
           </div>
           <div class="side back">⚽</div>
         `;
-    // --- FIN DE LA CORRECCIÓN ---
 
         div.cardData = cardObj;
         div.onclick = () => flipCard(div, i);
         container.appendChild(div);
       });
-    }
+     }
 
 /*esto va en player-info por si acaso el de arriba ye en createShowcase (album)
 
@@ -2120,7 +2185,7 @@ function generateCard() {
 
 */
 
-    function playSpecialCardSound(cardData) {
+     function playSpecialCardSound(cardData) {
       const { rarity, golden, variant } = cardData;
 
   // 1. No hacemos nada si la carta es común
@@ -2162,23 +2227,27 @@ function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
-  // Dentro de la función flipCard...
-  if (flippedCardsInPack === CONFIG.packSize) {
+  // --- ¡EL CAMBIO MÁS IMPORTANTE ESTÁ AQUÍ! ---
+  // Ahora comprueba contra el tamaño del sobre actual, no contra el valor fijo 11.
+  // Dentro de la función flipCard, reemplaza este bloque:
+
+  if (flippedCardsInPack === currentPackContentSize) {
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
-    nextPackContainer.innerHTML = ''; // Limpiamos el contenedor por si acaso
+    
+    // --- ¡LA SOLUCIÓN! ---
+    // 1. Mostramos SIEMPRE el contenedor de controles (con el botón "Back to Store").
+    //    Esto ahora es incondicional y ya no depende de si quedan más sobres.
+    openingControls.style.display = 'flex';
+    
+    // 2. Limpiamos el contenedor de los "siguientes sobres" por si acaso.
+    nextPackContainer.innerHTML = ''; 
 
-    // --- NUEVA LÓGICA: Mostrar TODO el inventario ---
-    let hasAnyPack = false;
-
-    // Recorremos todo el inventario
+    // 3. Ahora, de forma separada, llenamos el contenedor de los siguientes sobres
+    //    SOLAMENTE si quedan más en el inventario.
     for (const packId in packInventory) {
-      // Si tienes al menos uno de este tipo...
       if (packInventory[packId] > 0) {
-        hasAnyPack = true;
         const pack = packTypes[packId];
-
-        // Creamos el elemento visual del pack (igual que en la tienda)
         const packEl = document.createElement('div');
         packEl.className = 'pack-item';
         packEl.dataset.packType = packId;
@@ -2193,32 +2262,23 @@ function flipCard(card, index) {
         quantityEl.className = 'pack-quantity';
         quantityEl.textContent = `x${packInventory[packId]}`;
         packEl.appendChild(quantityEl);
-
-        // --- LÓGICA DE CLICK ESPECÍFICA PARA CADA PACK ---
+        
         packEl.addEventListener('click', () => {
-          // 1. Limpiamos la fila de packs inmediatamente
           nextPackContainer.innerHTML = '';
-          // 2. Abrimos ESTE pack específico (packId)
           openOwnedPack(packId);
         });
-
-        // Lo añadimos al contenedor superior y le damos el efecto de inclinación
+        
         nextPackContainer.appendChild(packEl);
         addInteractiveTiltToPack(packEl);
       }
     }
+    // Ya no necesitamos la variable 'hasAnyPack' para los controles.
 
-    // Solo mostramos los controles si el usuario tiene al menos un pack
-    if (hasAnyPack) {
-      openingControls.style.display = 'flex';
-    }
-    // --------------------------------------------------
-
-    // Reactivamos el botón principal por si el usuario cierra todo
     const openPacksViewBtn = document.getElementById('openPacksViewBtn');
     if (openPacksViewBtn) openPacksViewBtn.disabled = false;
   }
 
+  // El resto de la función sigue igual...
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
     flipSound.currentTime = 0;
@@ -2276,7 +2336,7 @@ function flipCard(card, index) {
   }
 
   const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
-  const cardSpacing = containerWidth / CONFIG.packSize;
+  const cardSpacing = containerWidth / currentPackContentSize; // Usamos el tamaño actual para el espaciado
   const spread = (containerWidth - cardSpacing) / 2;
 
   card.style.left = `${-spread + index * cardSpacing}px`;
@@ -2310,7 +2370,7 @@ function createShowcase() {
   container.innerHTML = '';
   const query = activeFilters.query.toLowerCase().trim();
   const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '';
-  let anyContentWasDisplayed = false; 
+  let anyContentWasDisplayed = false;
   const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
   const variantKeys = Object.keys(CONFIG.variants);
 
@@ -2326,26 +2386,26 @@ function createShowcase() {
     let rowHasVisiblePlayers = false;
 
     playersInRarity.forEach(player => {
-      // --- LÓGICA DE BÚSQUEDA MULTI-TÉRMINO ---
+      // --- LÓGICA DE BÚSQUEDA MULTI-TÉRMINO ACTUALIZADA ---
       if (query) {
-  // 1. Separa la búsqueda en términos individuales, usando espacios o comas.
-  //    También elimina términos vacíos si hay dobles espacios.
         const searchTerms = query.split(/[\s,]+/).filter(term => term);
-
-  // 2. Comprueba si el jugador actual cumple con CADA UNO de los términos de búsqueda.
         const playerMatchesAllTerms = searchTerms.every(term => {
-    // Para cada término, comprueba si está en el nombre, posición, equipo O país.
+          // Comprueba si el término está en el nombre, posición, país, O en ALGUNO de los equipos.
           return player.name.toLowerCase().includes(term) ||
           player.position.toLowerCase().includes(term) ||
-          player.team.toLowerCase().includes(term) ||
-          player.country.toLowerCase().includes(term);
-        });
+                 (player.teams && player.teams.some(team => team.toLowerCase().includes(term))) || // <-- LÍNEA CLAVE
+                 player.country.toLowerCase().includes(term);
+               });
 
-  // 3. Si el jugador no cumple con TODOS los términos, lo saltamos.
         if (!playerMatchesAllTerms) {
           return;
         }
       }
+
+      // (El resto de la función no necesita cambios)
+      // ...
+      // ... (Aquí sigue el resto de tu función para mostrar las cartas)
+      
       const playerEntry = document.createElement('div');
       playerEntry.className = 'player-album-entry';
       const variantsGrid = document.createElement('div');
@@ -2377,19 +2437,15 @@ function createShowcase() {
             addInteractiveTilt(div);
             addReactiveEffects(div);
             
-            // --- ESTE ES EL CAMBIO CLAVE ---
             div.addEventListener('click', () => {
               if (targetedLineupSlot) {
-                    // FLUJO 2: Añadir directamente sin inspeccionar.
                 addCardToLineup(player, lookupKey);
               } else {
-                    // FLUJO 1: Abrir la vista de inspección.
                 showInspectView(div, collectedVersion);
               }
             });
 
           } else if (!activeFilters.showOwned && (!isFiltering || (isFiltering && activeFilters.showMissing))) {
-            // ... (el resto de la lógica no cambia)
             playerHasVisibleSlots = true;
             anyContentWasDisplayed = true;
             const placeholder = document.createElement('div');
@@ -3078,7 +3134,7 @@ function openOwnedPack(packId) {
     openingControls.style.display = 'none';
 
     // 4. Llamamos a la función openPack, pero le decimos que use nuestro nuevo contenedor
-    openPack('pack-opening-cards-container'); 
+    openPack('pack-opening-cards-container', packId); 
   }
 }
 
@@ -3489,6 +3545,7 @@ function removeCardFromLineup(posId) {
      playBtn.disabled = true;
    }
    else {
+    messageEl.textContent = 'Complete your lineup to play';
     messageEl.style.display = 'none';
     playBtn.disabled = false;
   }
@@ -3524,10 +3581,81 @@ function getGeneralPosition(specificPos) {
   return null; // Como fallback, por si algo sale mal.
 }
 
-</script>
+/**
+ * Encuentra una carta nueva garantizada para el jugador utilizando un muestreo ponderado
+ * sobre las cartas que le faltan, respetando las proporciones de probabilidad originales.
+ * @returns {object | null} Un objeto de carta nueva, o null si la colección está completa.
+ */
+function getWeightedNewCard() {
+    // 1. Identificar qué categorías de probabilidad todavía tienen cartas por descubrir.
+  const availableProbabilities = [];
+  const allProbabilities = [...regularProbs, ...goldenProbs];
 
-<div id="toast-notification"></div>
+  for (const prob of allProbabilities) {
+    const { r: rarity } = prob;
+    const isGolden = goldenProbs.some(p => p.r === rarity && p.p === prob.p);
 
-</body>
-</html>
+        // Buscamos si existe AL MENOS UNA carta de esta categoría que el jugador no tenga.
+    const hasMissingCardInCategory = playersDB.some(player => {
+      if (player.rarity !== rarity) return false;
+            // Comprobamos todas las variantes para este jugador en esta categoría
+      return Object.keys(CONFIG.variants).some(variant => {
+        const cardData = { playerData: player, golden: isGolden, variant };
+        return !isCardOwned(cardData);
+      });
+    });
+
+        // Si encontramos al menos una carta faltante, esta categoría es viable.
+    if (hasMissingCardInCategory) {
+      availableProbabilities.push(prob);
+    }
+  }
+
+    // Si no hay categorías viables, la colección está completa.
+  if (availableProbabilities.length === 0) {
+    console.warn("getWeightedNewCard fue llamada, pero la colección está completa.");
+    return null;
+  }
+
+    // 2. Elegir una categoría ponderada de entre las disponibles.
+    // Usamos la función pickByProb que ya tienes, ¡perfecto para esto!
+  const chosenCategory = pickByProb(availableProbabilities);
+  const { r: chosenRarity } = chosenCategory;
+  const isChosenGolden = goldenProbs.some(p => p.r === chosenRarity && p.p === chosenCategory.p);
+
+    // 3. Crear una "mini-pool" solo con las cartas que faltan de la categoría elegida.
+  const missingCardsInChosenCategory = [];
+  const playersInRarity = playersDB.filter(p => p.rarity === chosenRarity);
+
+  for (const player of playersInRarity) {
+    for (const variant of Object.keys(CONFIG.variants)) {
+      const cardData = {
+        playerData: player,
+        golden: isChosenGolden,
+        variant,
+                rarity: chosenRarity // ¡Añadimos la rareza para consistencia!
+              };
+              if (!isCardOwned(cardData)) {
+                missingCardsInChosenCategory.push(cardData);
+              }
+            }
+          }
+
+    // 4. Elegir una carta al azar de esa mini-pool y devolverla.
+          if (missingCardsInChosenCategory.length > 0) {
+            const randomIndex = Math.floor(Math.random() * missingCardsInChosenCategory.length);
+            return missingCardsInChosenCategory[randomIndex];
+          }
+
+    // Como fallback por si algo sale mal (no debería ocurrir gracias al paso 1).
+          console.error("Error lógico en getWeightedNewCard: No se encontraron cartas faltantes en una categoría que debería tenerlas.");
+          return null;
+        }
+
+      </script>
+
+      <div id="toast-notification"></div>
+
+    </body>
+    </html>
 
