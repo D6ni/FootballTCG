@@ -1930,16 +1930,22 @@ h1 img {
   const packTypes = {
     'common-pack': {
       name: 'Common Pack',
-      cost: 0, // PRECIO PAQUETES
+      cost: 160, // PRECIO PAQUETES
       description: 'A basic pack, 11 cards and at least 1 Rare.',
       size: 11
     },
+    'rare-pack': {
+      name: 'Common Pack',
+      cost: 400, // PRECIO PAQUETES
+      description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
+      size: 5
+    },
     'collectors-pack': {
       name: 'Collectors Pack',
-      cost: 10000, // PRECIO ACTUALIZADO
+      cost: 1200, // PRECIO ACTUALIZADO
       description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
       size: 3
-    },
+    }/*,
     'barça-pack': {
       name: 'Barça Pack',
       cost: 0, // PRECIO ACTUALIZADO
@@ -1951,8 +1957,8 @@ h1 img {
       cost: 0, // PRECIO ACTUALIZADO
       description: 'NOT IMPLEMENTED, just placeholder',
       size: 11
-    }
-  };
+    }*/
+    };
 
   // --- Cálculo del total de cartas posibles en el juego ---
 const totalPossibleCards = playersDB.length * Object.keys(CONFIG.variants).length * 2; // x2 para Normal y Golden
@@ -1984,13 +1990,13 @@ let collection = savedCollection ? JSON.parse(savedCollection) : {};
     // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
 const savedPacks = localStorage.getItem('myFootballPacks');
 let packInventory = savedPacks ? JSON.parse(savedPacks) : {
-  'common-pack': 5 
+  'common-pack': 2 
 }; //Sobres iniciales
 
   // --- Lógica para el dinero del jugador ---
 const savedCurrency = localStorage.getItem('myPlayerCurrency');
 // Si no hay dinero guardado (primera vez que juega), empieza con 50.
-let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 100; //DINERO INICIAL
+let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 2000000; //DINERO INICIAL
 
 
   // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
@@ -2061,6 +2067,64 @@ function generateCard() {
   return { playerData: player, rarity, golden: isGolden, variant };
 }
 
+//para el rare pack
+// Coloca esta función junto a las otras funciones de generación de cartas.
+
+/**
+ * Genera una carta para el "Rare Pack" utilizando la lógica de "transferencia de probabilidad".
+ * La probabilidad de las Comunes se suma directamente a la de las Raras.
+ * Las demás probabilidades permanecen iguales.
+ * @returns {object} Un objeto de carta con rareza >= Rara.
+ */
+function generateTransferredProbCard() {
+    // 1. Definir la nueva tabla de probabilidades para este paquete específico.
+  const probCommonTotal = (CONFIG.rarities.common.p || 0) + (CONFIG.rarities.common.p_golden || 0);
+  
+    // Creamos las probabilidades para las rarezas que sí pueden aparecer.
+  const transferredProbs = [
+    { r: 'rare',      p: ((CONFIG.rarities.rare.p || 0) + (CONFIG.rarities.rare.p_golden || 0) + probCommonTotal) },
+    { r: 'epic',      p: ((CONFIG.rarities.epic.p || 0) + (CONFIG.rarities.epic.p_golden || 0)) },
+    { r: 'legendary', p: ((CONFIG.rarities.legendary.p || 0) + (CONFIG.rarities.legendary.p_golden || 0)) },
+    { r: 'relic',     p: ((CONFIG.rarities.relic.p || 0) + (CONFIG.rarities.relic.p_golden || 0)) }
+  ];
+
+    // 2. Elegimos una RAREZA usando esta nueva tabla ponderada.
+  const chosenCategory = pickByProb(transferredProbs);
+  const { r: rarity } = chosenCategory;
+
+    // 3. Dentro de la rareza elegida, determinamos si es Golden o no.
+    // Para RARE, la probabilidad de ser Golden es ahora mucho más baja en proporción, lo cual es correcto.
+  const probNormal = CONFIG.rarities[rarity].p || 0;
+  const probGolden = CONFIG.rarities[rarity].p_golden || 0;
+  
+  let isGolden = false;
+  if (probGolden > 0) {
+        // Si la rareza elegida es 'rare', la prob. de ser golden es ahora p_golden / (p + p_golden + probCommonTotal)
+    let totalProbForRarity = probNormal + probGolden;
+    if (rarity === 'rare') {
+      totalProbForRarity += probCommonTotal;
+    }
+    
+    if (Math.random() * totalProbForRarity < probGolden) {
+      isGolden = true;
+    }
+  }
+
+    // 4. Generamos el resto de la carta como siempre.
+  const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
+  const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
+  const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+  
+  if (playersOfRarity.length === 0) {
+    console.error(`No players found for rarity "${rarity}". Falling back to generateCard().`);
+    return generateCard();
+  }
+
+  const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+  
+  return { playerData: player, rarity, golden: isGolden, variant };
+}
+
 //para el collectors pack
 /**
  * Comprueba si una variante de carta específica ya está en la colección del jugador.
@@ -2105,114 +2169,107 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
         pack.push(generateCard());
       }
     } else {
-        // --- LÓGICA FINAL Y CORRECTA ---
-
-        // 1. Obtenemos nuestra carta nueva garantizada usando el método ponderado.
       const guaranteedNewCard = getWeightedNewCard();
       
       if (guaranteedNewCard) {
         pack.push(guaranteedNewCard);
       } else {
-            // Fallback por si la colección está completa y el chequeo inicial falló.
         pack.push(generateCard());
       }
       
-        // 2. Rellenamos el resto del sobre con cartas de la pool completa.
       while (pack.length < currentPackContentSize) {
         pack.push(generateCard());
       }
       
-        // 3. Mezclamos el sobre.
       pack.sort(() => Math.random() - 0.5);
     }
     break;
 
-        default: // <-- Esto ahora se encarga del 'common-pack' y cualquier otro futuro pack estándar
-          console.log("Opening a standard pack.");
-          for (let i = 0; i < currentPackContentSize; i++) {
-            pack.push(generateCard());
-          }
+  case 'rare-pack':
+    console.log("Opening a Rare Pack with 'Transferred Probability' logic.");
+    while (pack.length < currentPackContentSize) {
+      pack.push(generateTransferredProbCard());
+      } // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN! La llave que faltaba.
+      break;
 
-            // --- ¡SOLUCIÓN! ---
-            // La lógica de "garantizar una rara" AHORA ESTÁ AQUÍ DENTRO,
-            // donde solo afecta a los sobres que lo necesiten.
-          if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-            const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
-            if (rarePlayers.length > 0) {
-             pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
-           }
-         }
-         break;
-       }
+    default:
+      console.log("Opening a standard pack.");
+      for (let i = 0; i < currentPackContentSize; i++) {
+        pack.push(generateCard());
+      }
 
-    // El resto de la función (que renderiza las cartas) no cambia.
-       pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+        if (rarePlayers.length > 0) {
+          pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+        }
+      }
+      break;
+    }
 
-       pack.forEach((cardObj, i) => {
-        const div = document.createElement("div");
-        const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-        div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
-        div.style.zIndex = pack.length - i;
-        div.dataset.rarity = cardObj.rarity;
-        div.dataset.golden = cardObj.golden;
-        div.dataset.variant = cardObj.variant;
-        div.dataset.index = i;
-        div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
+  // El resto de la función (que renderiza las cartas) no cambia.
+    pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
 
-        const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+    pack.forEach((cardObj, i) => {
+      const div = document.createElement("div");
+      const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+      div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+      div.style.zIndex = pack.length - i;
+      div.dataset.rarity = cardObj.rarity;
+      div.dataset.golden = cardObj.golden;
+      div.dataset.variant = cardObj.variant;
+      div.dataset.index = i;
+      div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
 
-        div.innerHTML = `
-          <div class="side front">
-            <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
-            ${indicatorsHTML}
-            <div class="player-info">
-            </div>
-          </div>
-          <div class="side back">⚽</div>
-        `;
+      const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
-        div.cardData = cardObj;
-        div.onclick = () => flipCard(div, i);
-        container.appendChild(div);
-      });
-     }
+      div.innerHTML = `
+      <div class="side front">
+        <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
+        ${indicatorsHTML}
+        <div class="player-info">
+        </div>
+      </div>
+      <div class="side back">⚽</div>
+      `;
 
-/*esto va en player-info por si acaso el de arriba ye en createShowcase (album)
+      div.cardData = cardObj;
+      div.onclick = () => flipCard(div, i);
+      container.appendChild(div);
+    });
+  }
 
 
-              <div class="player-rating">${cardObj.playerData.rating}</div>
-              <div class="player-position">${cardObj.playerData.position}</div>
 
-*/
 
-     function playSpecialCardSound(cardData) {
-      const { rarity, golden, variant } = cardData;
+  function playSpecialCardSound(cardData) {
+    const { rarity, golden, variant } = cardData;
 
   // 1. No hacemos nada si la carta es común
-      if (rarity === 'common') {
-        return;
-      }
+    if (rarity === 'common') {
+      return;
+    }
 
   // 2. Construimos el nombre del archivo de sonido basado en las propiedades de la carta
-      let filename = rarity;
-      
-      if (golden) {
-        filename += '-golden';
-      }
-      
-      if (variant !== 'none') {
-        filename += `-${variant}`;
-      }
-      
-      filename += '.mp3';
+    let filename = rarity;
+    
+    if (golden) {
+      filename += '-golden';
+    }
+    
+    if (variant !== 'none') {
+      filename += `-${variant}`;
+    }
+    
+    filename += '.mp3';
 
   // 3. Construimos la ruta completa
-      const soundPath = `sounds/${rarity}/${filename}`;
+    const soundPath = `sounds/${rarity}/${filename}`;
 
   // 4. Creamos un nuevo objeto de Audio y lo reproducimos
   //    Esto nos permite reproducir sonidos sin necesidad de tener un <audio> tag para cada uno.
-      try {
-        const specialSound = new Audio(soundPath);
+    try {
+      const specialSound = new Audio(soundPath);
     specialSound.volume = 0.4; // Puedes ajustar el volumen aquí
     specialSound.play().catch(error => {
         // Esta línea es útil para depuración. Si un sonido no se encuentra, lo verás en la consola.
@@ -2913,7 +2970,7 @@ function buildFilterUI() {
 
   function showInspectView(originalCard, cardStackData) {
     const inspectOverlay = document.getElementById('inspect-overlay');
-    inspectOverlay.innerHTML = ''; 
+    inspectOverlay.innerHTML = '';
 
     const cardClone = originalCard.cloneNode(true);
     addInteractiveTilt(cardClone);
@@ -2933,29 +2990,34 @@ function buildFilterUI() {
       const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
       const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
 
+      const duplicateQuantity = maxQuantity - 1;
+      const sellDuplicatesButtonHTML = `
+            <button 
+                id="sell-duplicates-btn" 
+                class="sell-btn sell-max-btn" 
+                ${duplicateQuantity <= 0 ? 'disabled' : ''}
+            >
+                Sell Duplicates (${duplicateQuantity})
+            </button>
+      `;
+
       sellContainer.innerHTML = `
-        <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
-        <div class="sell-controls">
-            <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
-            <button id="sell-btn" class="sell-btn">Sell</button>
-            <button id="sell-max-btn" class="sell-btn sell-max-btn">Sell Max (${maxQuantity})</button>
-            ${lineupButtonHTML}
-        </div>
+            <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
+            <div class="sell-controls">
+                <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
+                <button id="sell-btn" class="sell-btn">Sell</button>
+                ${sellDuplicatesButtonHTML}
+                ${lineupButtonHTML}
+            </div>
       `;
       inspectOverlay.appendChild(sellContainer);
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Ahora asignamos la lógica REAL a los botones de venta.
-
       const sellBtn = document.getElementById('sell-btn');
-      const sellMaxBtn = document.getElementById('sell-max-btn');
+      const sellDuplicatesBtn = document.getElementById('sell-duplicates-btn');
       const quantityInput = document.getElementById('sell-quantity-input');
 
-        // Lógica para el botón "Sell"
       sellBtn.onclick = () => {
         const quantity = parseInt(quantityInput.value, 10);
-
-            // Validaciones para evitar errores
         if (!quantity || quantity <= 0) {
           showToast('Please enter a valid quantity.', 'error');
           return;
@@ -2964,20 +3026,16 @@ function buildFilterUI() {
           showToast(`You only have ${maxQuantity} copies to sell.`, 'error');
           return;
         }
-
-            // Si todo es correcto, llamamos a la función para vender
         sellCard(playerData.id, variantKey, quantity, pricePerCard);
       };
 
-        // Lógica para el botón "Sell Max"
-      sellMaxBtn.onclick = () => {
-        if (maxQuantity > 0) {
-          sellCard(playerData.id, variantKey, maxQuantity, pricePerCard);
+      sellDuplicatesBtn.onclick = () => {
+        if (duplicateQuantity > 0) {
+          sellCard(playerData.id, variantKey, duplicateQuantity, pricePerCard);
         } else {
-          showToast("You don't have any copies to sell.", 'error');
+          showToast("You don't have any duplicates to sell.", 'info');
         }
       };
-        // --- FIN DE LA CORRECCIÓN ---
 
       const addToLineupBtn = document.getElementById('add-to-lineup-btn');
       if (addToLineupBtn && !isCardInLineup) {
@@ -3658,6 +3716,4 @@ function getWeightedNewCard() {
 
     </body>
     </html>
-
-
 
