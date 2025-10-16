@@ -348,43 +348,95 @@
 .count-box{ background:#1d1f24; border-radius:8px; padding:8px; font-size:14px; text-align:center; box-shadow:0 0 8px rgba(0,0,0,0.5); }
 .count-box span { font-weight: bold; }
 
-button{ margin-top:20px; padding:12px 24px; border-radius:8px; border:none; background:#1f7; color:#022; font-weight:700; cursor:pointer; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
+button{ 
+  margin-top:20px; 
+  padding:12px 
+  24px; 
+  border-radius:8px; 
+  border:none; 
+  background:#1f7; 
+  color:#022; 
+  font-weight:700; 
+  cursor:pointer; 
+  font-size: 16px; 
+  transition: transform 0.2s, box-shadow 0.2s; 
+}
 
 /* 1. Efecto de escala universal para TODOS los botones al pasar el ratón */
 button:not(:disabled):hover {
   transform: scale(1.05);
 }
 
-/* 2. Glow VERDE específico para "Open Pack" */
-button[onclick="openPack()"]:hover {
-  box-shadow: 0 0 15px rgba(31, 255, 7, 0.4);
+/* --- ESTILOS CON IMÁGENES SÓLO PARA LOS 3 BOTONES DEL MENÚ PRINCIPAL --- */
+
+/* 1. Propiedades COMUNES para los 3 botones para no repetir código */
+#openPacksViewBtn,
+#showcaseBtn,
+button[onclick="resetCollection()"] {
+  border: none; /* Quitamos el borde para que no se vea alrededor del PNG */
+  color: #FFFFFF; /* Texto blanco para todos */
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7); /* Sombra para legibilidad */
+
+  text-shadow: 
+  -1px -1px 0 #000,  
+  1px -1px 0 #000,
+  -1px  1px 0 #000,
+  1px  1px 0 #000;
+
+  /* Propiedades clave para la imagen de fondo */
+  background-repeat: no-repeat;
+  background-size: 100% 100%; /* La imagen se estira para cubrir el botón */
+
+  /* Mantenemos la transición de escala, pero quitamos la de box-shadow */
+  transition: transform 0.2s ease-out;
 }
 
-/* 3. Glow AZUL específico para "My Album" (este ya lo tenías, pero lo dejamos aquí para consistencia) */
-#showcaseBtn:hover { 
-  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
+/* 2. Propiedades de hover COMUNES para los 3 botones */
+#openPacksViewBtn:not(:disabled):hover,
+#showcaseBtn:not(:disabled):hover,
+button[onclick="resetCollection()"]:not(:disabled):hover {
+  box-shadow: none; /* MUY IMPORTANTE: Quitamos el 'glow' para que no interfiera con la imagen hover */
 }
 
-/* 4. Glow NARANJA/AMARILLO específico para "Reset Progress" */
+
+/* 3. Estilos ESPECÍFICOS para cada botón (su color de fallback y sus imágenes) */
+/* --- BOTÓN VERDE: "Buy / Open Packs" --- */
+#openPacksViewBtn {
+  background-color: #1f7; /* Color de fallback si la imagen no carga */
+  background-image: url('images/buttons/btn-normal.png');
+}
+#openPacksViewBtn:hover {
+  background-image: url('images/buttons/btn-hover.png');
+}
+
+/* --- BOTÓN AZUL: "My Album" --- */
+#showcaseBtn {
+  background-color: #3b68d1; /* Color de fallback */
+  background-image: url('images/buttons/btn-normal.png');
+}
+#showcaseBtn:hover {
+  background-image: url('images/buttons/btn-hover.png');
+}
+
+/* --- BOTÓN AMARILLO: "Reset Progress" --- */
+button[onclick="resetCollection()"] {
+  background-color: #E6A115; /* Color de fallback */
+  background-image: url('images/buttons/btn-normal.png');
+}
 button[onclick="resetCollection()"]:hover {
-  box-shadow: 0 0 15px rgba(230, 161, 21, 0.6);
+  background-image: url('images/buttons/btn-hover.png');
 }
 
 .button-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 15px;
+  align-items: stretch; 
+  gap: 10px;
   margin-top: 20px;
-}
-
-#showcaseBtn { 
-  background-color: #3b68d1; 
-  color: #fff; 
-}
-
-#showcaseBtn:hover { 
-  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6); 
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #showcase-overlay {
@@ -938,7 +990,7 @@ h1 img {
 
 /* --- ESTILOS PARA EL CHECKBOX 'SHOW MISSING' --- */
 #search-controls {
-  align-items: center; /* Asegura que todo esté alineado verticalmente */
+  align-items: baseline; /* Asegura que todo esté alineado verticalmente */
 }
 
 .checkbox-label {
@@ -1672,6 +1724,232 @@ h1 img {
   box-sizing: border-box;
 }
 
+/* --- ESTILOS PARA EL POPUP DE RECOMPENSA DIARIA --- */
+#daily-reward-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.95);
+  z-index: 1500; /* Muy alto para que aparezca sobre todo lo demás */
+  display: none; /* Oculto por defecto */
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+#daily-reward-overlay.visible {
+  display: grid;
+  opacity: 1;
+}
+
+#daily-reward-modal {
+  position: relative;
+  background: #1d1f24;
+  border-radius: 15px;
+  padding: 30px 40px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 90%;
+  max-width: 400px;
+}
+
+#daily-reward-modal h2 {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  color: #ffc84a;
+}
+
+#daily-reward-modal p {
+  margin: 0 0 25px 0;
+  font-size: 16px;
+  color: #ccc;
+}
+
+.reward-item {
+  position: relative;
+  width: 200px;
+  margin: 0 auto 25px auto;
+}
+
+.reward-item img {
+  width: 100%;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.4));
+}
+
+.reward-quantity {
+  position: absolute;
+  bottom: -10px;
+  right: -20px;
+  font-size: 60px;
+  font-weight: 900;
+  color: #ffeb3b;
+  -webkit-text-stroke: 2px #000;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  transform: rotate(-15deg);
+}
+
+#claim-reward-btn {
+  background-color: #1f7; /* Verde como el botón principal */
+  color: #022;
+  font-size: 18px;
+  padding: 15px 30px;
+  margin-top: 0;
+}
+#claim-reward-btn:hover {
+  box-shadow: 0 0 15px rgba(31, 255, 7, 0.4);
+}
+
+#close-reward-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 16px;
+  background-color: #ff4d4d;
+  color: #fff;
+  border-radius: 50%;
+  margin-top: 0;
+}
+#close-reward-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+}
+
+/* --- ESTILOS PARA EL BOTÓN "SELL ALL DUPLICATES" --- */
+#sell-all-duplicates-btn {
+  background-color: #ffc84a; /* Color dorado/amarillo */
+  color: #111; /* Texto negro para alto contraste */
+  font-weight: 700;
+  margin-top: 0; /* Alinea verticalmente con los otros controles */
+  margin-left: 10px; /* Un poco de espacio */
+}
+
+#sell-all-duplicates-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 200, 74, 0.7);
+  filter: brightness(1.05); /* Un pequeño brillo al pasar el ratón */
+}
+
+/* --- ESTILOS PARA LOS BOTONES DE FILTROS (AJUSTE DE TAMAÑO) --- */
+#clear-filters-btn, #sell-all-duplicates-btn {
+  padding: 8px 16px; /* <-- ¡AQUÍ ESTÁ LA CLAVE! Mismo padding para ambos */
+  margin-top: 0;
+  font-weight: 700;
+}
+
+#clear-filters-btn {
+ background-color: #c0392b; /* Rojo */
+ color: #fff;
+}
+#clear-filters-btn:hover {
+ box-shadow: 0 0 15px rgba(192, 57, 43, 0.6);
+}
+
+#sell-all-duplicates-btn {
+  background-color: #ffc84a; /* Color dorado/amarillo */
+  color: #111; /* Texto negro para alto contraste */
+  margin-left: 10px; /* Un poco de espacio */
+}
+#sell-all-duplicates-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 200, 74, 0.7);
+  filter: brightness(1.05); /* Un pequeño brillo al pasar el ratón */
+}
+
+/* --- ESTILOS PARA EL NUEVO MODAL DE CONFIRMACIÓN --- */
+#confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.95);
+  z-index: 2000; /* Muy alto para estar por encima de todo */
+  display: none; /* Oculto por defecto */
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+#confirm-modal-overlay.visible {
+  display: grid;
+  opacity: 1;
+}
+
+#confirm-modal {
+  background: #1d1f24;
+  border-radius: 12px;
+  padding: 25px 30px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 90%;
+  max-width: 400px;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#confirm-modal-overlay.visible #confirm-modal {
+  transform: scale(1);
+}
+
+#confirm-modal h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #eee;
+}
+
+#confirm-modal p {
+  margin: 0 0 20px 0;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.confirm-modal-actions button {
+  padding: 10px 20px;
+  font-size: 16px;
+  width: 120px;
+  margin-top: 0;
+}
+
+#cancel-action-btn {
+  background-color: #c0392b; /* Cambiado a rojo para que sea "detener/cancelar" */
+  color: #fff;
+}
+#cancel-action-btn:hover {
+  box-shadow: 0 0 15px rgba(192, 57, 43, 0.6); /* Sombra roja a juego */
+}
+
+#confirm-action-btn {
+  background-color: #ffc84a; /* Cambiado a amarillo, como el botón original */
+  color: #111;             /* Texto negro para un mejor contraste */
+}
+#confirm-action-btn:hover {
+  box-shadow: 0 0 15px rgba(255, 200, 74, 0.7); /* Sombra amarilla a juego */
+  filter: brightness(1.05); /* Pequeño efecto de brillo */
+}
+
+/* --- ESTILOS PARA EL NUEVO BOTÓN DE ORDENACIÓN POR MEDIA --- */
+#sort-by-ovr-btn {
+  margin-right: 10px; /* Espacio para separarlo de la barra de búsqueda */
+  background-color: #4a5568; 
+  border-color: #718096;
+}
+
+#sort-by-ovr-btn:not(:disabled):hover {
+  background-color: #718096;
+  border-color: #a0aec0;
+  box-shadow: 0 0 15px rgba(160, 174, 192, 0.5);
+}
+
+/* Estilo para cuando el botón está activo (ordenando asc o desc) */
+#sort-by-ovr-btn.active {
+  background-color: #361663; /* Un azul para indicar que está activo */
+  border-color: #3b68d1;
+  color: #fff;
+  box-shadow: 0 0 10px 2px #3b68d1;
+}
+
 </style>
 </head>
 <body>
@@ -1680,9 +1958,9 @@ h1 img {
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
   <div id="player-currency-display" class="player-currency">0 💎</div>
   <div class="button-container">
-    <button id="openPacksViewBtn">Buy / Open Packs</button>
-    <button id="showcaseBtn">My Album</button>
-    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">Reset Progress</button>
+    <button id="openPacksViewBtn">BUY / OPEN PACKS</button>
+    <button id="showcaseBtn">MY ALBUM</button>
+    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>
   </div>
 
   <div id="cards"></div>
@@ -1692,7 +1970,7 @@ h1 img {
   <!-- Contenedor para las estadísticas del álbum -->
   <div id="album-stats-header">
     <div id="packs-opened-stat" class="album-stat">Packs Opened: 0</div>
-    <button id="my-lineup-btn" class="album-stat" style="cursor:pointer;">My Lineup</button>
+    <button id="my-lineup-btn" class="album-stat" style="cursor:pointer;">MY LINEUP</button>
     <div id="collection-progress-stat" class="album-stat">0 / 0 Cards</div>
   </div>
   <div id="showcase-filters-container">
@@ -1701,6 +1979,7 @@ h1 img {
     </div>
     
     <div id="search-controls">
+      <button id="sort-by-ovr-btn" class="filter-btn">Sort by OVR</button>
       <input type="text" id="name-search" placeholder="Search by name, position, team or country...">
       <label for="show-owned-checkbox" class="checkbox-label">
         <input type="checkbox" id="show-owned-checkbox">
@@ -1711,6 +1990,7 @@ h1 img {
         Show missing cards
       </label>
       <button id="clear-filters-btn">Clear All</button>
+      <button id="sell-all-duplicates-btn">Sell All Duplicates</button>
     </div>
   </div>
   <div id="showcase-content"></div>
@@ -1775,7 +2055,7 @@ h1 img {
     </div>
   </div>
   <!-- El botón de cerrar ahora es un hijo directo del overlay -->
-  <button id="close-purchase-btn">Close</button>
+  <button id="close-purchase-btn">X</button>
 </div>
 
 <!-- =========== VISTA DE INSPECCIÓN DE CARTA =============== -->
@@ -1790,6 +2070,32 @@ h1 img {
   <div id="lineup-validation-message" style="display: none;"></div>
   <!-- El botón de jugar partido irá aquí más adelante -->
   <button id="play-match-btn" disabled>Play Match</button>
+</div>
+
+<!-- ============= POPUP DE RECOMPENSA DIARIA =============== -->
+<div id="daily-reward-overlay">
+  <div id="daily-reward-modal">
+    <button id="close-reward-btn">X</button>
+    <h2>Daily Reward!</h2>
+    <p>Your free packs for today have arrived!</p>
+    <div class="reward-item">
+      <img src="packs/packs/common-pack.png" alt="Common Pack">
+      <span class="reward-quantity">x3</span>
+    </div>
+    <button id="claim-reward-btn">Claim</button>
+  </div>
+</div>
+
+<!-- ============= MODAL DE CONFIRMACIÓN GENÉRICO =============== -->
+<div id="confirm-modal-overlay">
+  <div id="confirm-modal">
+    <h2 id="confirm-modal-title">Are you sure?</h2>
+    <p id="confirm-modal-text">This action cannot be undone.</p>
+    <div class="confirm-modal-actions">
+      <button id="cancel-action-btn">Cancel</button>
+      <button id="confirm-action-btn">Confirm</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1827,7 +2133,7 @@ h1 img {
     { id: 26, name: "Thibaut Courtois", position: "GK", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png", teams: ["Real Madrid"], country: "Belgium" },
     { id: 27, name: "Mohamed Salah", position: "ATK", rating: 91, rarity: "legendary", img: "images/mohamedsalah.png", teams: ["Liverpool"], country: "Egypt" },
     { id: 28, name: "Paolo Maldini", position: "DEF", rating: 94, rarity: "legendary", img: "images/paolomaldini.png", teams: ["Retired"], country: "Italy" },
-    { id: 54, name: "Lamine Yamal", position: "ATK", rating: 83, rarity: "legendary", img: "images/lamineyamal.png", teams: ["FC Barcelona"], country: "Spain" },
+    { id: 54, name: "Lamine Yamal", position: "ATK", rating: 94, rarity: "legendary", img: "images/lamineyamal.png", teams: ["FC Barcelona"], country: "Spain" },
 
     /* EPIC (17 Jugadores) */
     { id: 29, name: "Jude Bellingham", position: "MID", rating: 88, rarity: "epic", img: "images/judebellingham.png", teams: ["Real Madrid"], country: "England" },
@@ -1990,8 +2296,8 @@ let collection = savedCollection ? JSON.parse(savedCollection) : {};
     // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
 const savedPacks = localStorage.getItem('myFootballPacks');
 let packInventory = savedPacks ? JSON.parse(savedPacks) : {
-  'common-pack': 2 
-}; //Sobres iniciales
+  'common-pack': 3 
+}; //Paquetes iniciales
 
   // --- Lógica para el dinero del jugador ---
 const savedCurrency = localStorage.getItem('myPlayerCurrency');
@@ -2009,7 +2315,7 @@ let activeFilters = {
   showOwned: false
 };
 let filtersInitialized = false;
-
+let currentRatingSort = 'none';
 let flippedCardsInPack = 0;
 let currentPackContentSize = 0;
 
@@ -2434,6 +2740,12 @@ function createShowcase() {
   raritiesInOrder.forEach(rarityKey => {
     if (activeFilters.rarity && activeFilters.rarity !== rarityKey) return;
     const playersInRarity = playersDB.filter(p => p.rarity === rarityKey);
+    if (currentRatingSort === 'desc') {
+      playersInRarity.sort((a, b) => b.rating - a.rating);
+    } else if (currentRatingSort === 'asc') {
+      playersInRarity.sort((a, b) => a.rating - b.rating);
+    }
+
     if (playersInRarity.length === 0) return;
 
     const row = document.createElement('div');
@@ -2443,26 +2755,22 @@ function createShowcase() {
     let rowHasVisiblePlayers = false;
 
     playersInRarity.forEach(player => {
-      // --- LÓGICA DE BÚSQUEDA MULTI-TÉRMINO ACTUALIZADA ---
+      // --- LÓGICA DE BÚSQUEDA MULTI-TÉRMINO ---
       if (query) {
         const searchTerms = query.split(/[\s,]+/).filter(term => term);
         const playerMatchesAllTerms = searchTerms.every(term => {
           // Comprueba si el término está en el nombre, posición, país, O en ALGUNO de los equipos.
           return player.name.toLowerCase().includes(term) ||
           player.position.toLowerCase().includes(term) ||
-                 (player.teams && player.teams.some(team => team.toLowerCase().includes(term))) || // <-- LÍNEA CLAVE
-                 player.country.toLowerCase().includes(term);
-               });
+          (player.teams && player.teams.some(team => team.toLowerCase().includes(term))) ||
+          player.country.toLowerCase().includes(term);
+        });
 
         if (!playerMatchesAllTerms) {
           return;
         }
       }
 
-      // (El resto de la función no necesita cambios)
-      // ...
-      // ... (Aquí sigue el resto de tu función para mostrar las cartas)
-      
       const playerEntry = document.createElement('div');
       playerEntry.className = 'player-album-entry';
       const variantsGrid = document.createElement('div');
@@ -2547,16 +2855,31 @@ closeShowcaseBtn.addEventListener('click', () => {
   showcaseOverlay.classList.remove('visible');
 });
 
-showcaseOverlay.addEventListener('click', (e) => {
-  if (e.target === showcaseOverlay) {
-    showcaseOverlay.classList.remove('visible');
-  }
-});
-
 // --- NUEVOS LISTENERS PARA LOS FILTROS ---
 document.addEventListener('DOMContentLoaded', () => {
   updateCurrencyDisplay();
   loadLineup();
+
+  checkDailyReward(); // Llama a la comprobación de recompensa al cargar la página.
+
+  const dailyRewardOverlay = document.getElementById('daily-reward-overlay');
+  const claimRewardBtn = document.getElementById('claim-reward-btn');
+  const closeRewardBtn = document.getElementById('close-reward-btn');
+
+  if (claimRewardBtn) {
+    claimRewardBtn.addEventListener('click', claimDailyReward);
+  }
+  if (closeRewardBtn) {
+    closeRewardBtn.addEventListener('click', closeDailyRewardPopup);
+  }
+  if (dailyRewardOverlay) {
+    dailyRewardOverlay.addEventListener('click', (e) => {
+      if (e.target === dailyRewardOverlay) {
+        closeDailyRewardPopup();
+      }
+    });
+  }
+
   const showMissingCheckbox = document.getElementById('show-missing-checkbox');
   const showMissingLabel = document.querySelector('.checkbox-label[for="show-missing-checkbox"]');
   const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
@@ -2659,6 +2982,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       // Resetea todos los filtros, incluyendo el nuevo
       activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false  };
+      currentRatingSort = 'none';
+      updateSortButtonUI();
       searchInput.value = '';
       showMissingCheckbox.checked = false;
       showOwnedCheckbox.checked = false;
@@ -2699,6 +3024,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.target === inspectOverlay) {
         inspectOverlay.classList.remove('visible');
       }
+    });
+  }
+
+
+  // SELL ALL DUPLICATES
+  const sellAllDuplicatesBtn = document.getElementById('sell-all-duplicates-btn');
+  if (sellAllDuplicatesBtn) {
+    sellAllDuplicatesBtn.addEventListener('click', sellAllDuplicates);
+  }
+
+
+  // --- SORT BY OVR ---
+  const sortBtn = document.getElementById('sort-by-ovr-btn');
+  if (sortBtn) {
+    sortBtn.addEventListener('click', () => {
+      // Lógica del ciclo de 3 estados
+      if (currentRatingSort === 'none') {
+        currentRatingSort = 'desc';
+      } else if (currentRatingSort === 'desc') {
+        currentRatingSort = 'asc';
+      } else {
+        currentRatingSort = 'none';
+      }
+      
+      updateSortButtonUI(); // Actualiza el texto y estilo del botón
+      createShowcase(); // Vuelve a dibujar el álbum con la nueva ordenación
     });
   }
 
@@ -2989,15 +3340,20 @@ function buildFilterUI() {
       const uniqueCardId = `${playerData.id}_${variantKey}`;
       const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
       const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
-
       const duplicateQuantity = maxQuantity - 1;
+      const duplicateEarnings = duplicateQuantity * pricePerCard;
+
+      const sellDuplicatesButtonText = duplicateQuantity > 0 
+      ? `Sell Duplicates (${duplicateQuantity}) for ${duplicateEarnings} 💎` 
+      : `Sell Duplicates (0)`;
+
       const sellDuplicatesButtonHTML = `
             <button 
                 id="sell-duplicates-btn" 
                 class="sell-btn sell-max-btn" 
                 ${duplicateQuantity <= 0 ? 'disabled' : ''}
             >
-                Sell Duplicates (${duplicateQuantity})
+                ${sellDuplicatesButtonText}
             </button>
       `;
 
@@ -3710,10 +4066,170 @@ function getWeightedNewCard() {
           return null;
         }
 
-      </script>
 
-      <div id="toast-notification"></div>
+  // --- LÓGICA DE RECOMPENSA DIARIA ---
+        function checkDailyReward() {
+          const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
 
-    </body>
-    </html>
+  // Si es la primera visita, marca que ya ha visitado y no hagas nada más.
+          if (!hasVisitedBefore) {
+            localStorage.setItem('hasVisitedBefore', 'true');
+            return;
+          }
+
+          const lastClaimed = localStorage.getItem('lastLoginRewardClaimed');
+          const now = new Date().getTime();
+
+  // ----- ¡¡PARA PROBAR, PUEDES CAMBIAR ESTE VALOR!! -----
+  // const cooldown = 10 * 1000; // TEST: 10 segundos
+  const cooldown = 24 * 60 * 60 * 1000; // TIEMPO REAL: 24 horas
+
+  // Si nunca se ha reclamado O si ya ha pasado el tiempo de cooldown.
+  if (!lastClaimed || (now - lastClaimed > cooldown)) {
+    showDailyRewardPopup();
+  }
+}
+
+function showDailyRewardPopup() {
+  const overlay = document.getElementById('daily-reward-overlay');
+  if (overlay) {
+    overlay.classList.add('visible');
+  }
+}
+
+function closeDailyRewardPopup() {
+  const overlay = document.getElementById('daily-reward-overlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+  }
+}
+
+function claimDailyReward() {
+  // Añadir 3 paquetes comunes al inventario
+  packInventory['common-pack'] = (packInventory['common-pack'] || 0) + 3;
+  savePackInventory();
+
+  // Guardar el momento actual como la última vez que se reclamó
+  localStorage.setItem('lastLoginRewardClaimed', new Date().getTime());
+
+  // Notificar al jugador y cerrar
+  showToast('You received 3 Common Packs!', 'success');
+  closeDailyRewardPopup();
+  
+  // Opcional: Si la vista de paquetes está abierta, actualízala para que vea los nuevos paquetes.
+  if(document.getElementById('packs-overlay').classList.contains('visible')) {
+    renderPacksView();
+  }
+}
+
+
+//SELL ALL DUPLICATES
+/**
+ * Calcula las ganancias potenciales y luego abre un modal de confirmación
+ * antes de vender todos los duplicados.
+ */
+function sellAllDuplicates() {
+  // --- PASO 1: Pre-cálculo de ganancias y duplicados ---
+  let totalPotentialEarnings = 0;
+  let totalDuplicates = 0;
+
+  for (const playerId in collection) {
+    for (const variantKey in collection[playerId]) {
+      const cardStack = collection[playerId][variantKey];
+      if (cardStack.count > 1) {
+        const duplicatesToSell = cardStack.count - 1;
+        const pricePerCard = calculateSellPrice(cardStack.cardData);
+        
+        totalPotentialEarnings += duplicatesToSell * pricePerCard;
+        totalDuplicates += duplicatesToSell;
+      }
+    }
+  }
+
+  // Si no hay nada que vender, informa al usuario y detén la función.
+  if (totalDuplicates === 0) {
+    showToast("You don't have any duplicates to sell.", 'info');
+    return;
+  }
+
+  // --- PASO 2: Configurar y mostrar el modal con la información calculada ---
+  const overlay = document.getElementById('confirm-modal-overlay');
+  const title = document.getElementById('confirm-modal-title');
+  const text = document.getElementById('confirm-modal-text');
+  const confirmBtn = document.getElementById('confirm-action-btn');
+  const cancelBtn = document.getElementById('cancel-action-btn');
+
+  if (!overlay || !confirmBtn || !cancelBtn) {
+    console.error('Confirmation modal elements not found!');
+    return;
+  }
+
+  // Configurar el texto dinámico para el modal.
+  title.textContent = 'Confirm Sale';
+  text.innerHTML = `You are about to sell <strong>${totalDuplicates}</strong> duplicate cards for a total of <strong style="color: #ffc84a;">${totalPotentialEarnings} 💎</strong>.<br>This action cannot be undone.`;
+
+  overlay.classList.add('visible');
+
+  // --- PASO 3: Definir los manejadores de eventos (sin cambios) ---
+  const confirmHandler = () => {
+    overlay.classList.remove('visible');
+    executeSale();
+  };
+  
+  const cancelHandler = () => {
+    overlay.classList.remove('visible');
+  };
+
+  confirmBtn.addEventListener('click', confirmHandler, { once: true });
+  cancelBtn.addEventListener('click', cancelHandler, { once: true });
+
+  // La función interna de venta no necesita el pre-cálculo, ya que lo hicimos arriba.
+  // Su lógica de modificación de datos sigue siendo la misma.
+  function executeSale() {
+    playerCurrency += totalPotentialEarnings; // Usamos el total ya calculado
+    
+    // Iteramos de nuevo para actualizar los contadores
+    for (const playerId in collection) {
+      for (const variantKey in collection[playerId]) {
+        if (collection[playerId][variantKey].count > 1) {
+          collection[playerId][variantKey].count = 1;
+        }
+      }
+    }
+
+    saveCurrency();
+    saveCollection();
+    updateCurrencyDisplay();
+    createShowcase();
+    showToast(`Sold ${totalDuplicates} duplicates for ${totalPotentialEarnings} 💎!`, 'success');
+  }
+}
+
+
+//FUNCION SORT BY OVR
+/**
+ * Actualiza el texto y la clase del botón de ordenación según el estado actual.
+ */
+function updateSortButtonUI() {
+  const btn = document.getElementById('sort-by-ovr-btn');
+  if (!btn) return;
+  
+  if (currentRatingSort === 'desc') {
+    btn.textContent = 'Rating ▼';
+    btn.classList.add('active');
+  } else if (currentRatingSort === 'asc') {
+    btn.textContent = 'Rating ▲';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = 'Sort by OVR';
+    btn.classList.remove('active');
+  }
+}
+
+</script>
+
+<div id="toast-notification"></div>
+
+</body>
+</html>
 
