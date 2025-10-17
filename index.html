@@ -2318,6 +2318,7 @@ let filtersInitialized = false;
 let currentRatingSort = 'none';
 let flippedCardsInPack = 0;
 let currentPackContentSize = 0;
+let packOpeningState = null;
 
 // --- NUEVAS VARIABLES PARA LA ALINEACIÓN ---
 let lineup = {}; // Objeto para guardar la alineación: { GK: 'card_unique_id', LB: '...', ... }
@@ -2639,9 +2640,10 @@ function flipCard(card, index) {
 
     const openPacksViewBtn = document.getElementById('openPacksViewBtn');
     if (openPacksViewBtn) openPacksViewBtn.disabled = false;
+
+    packOpeningState = 'pack_complete';
   }
 
-  // El resto de la función sigue igual...
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
     flipSound.currentTime = 0;
@@ -2895,6 +2897,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const backToStoreBtn = document.getElementById('back-to-store-btn');
   backToStoreBtn.addEventListener('click', () => {
+    packOpeningState = null;
     const packsOverlay = document.getElementById('packs-overlay');
     const openingStage = document.getElementById('pack-opening-stage');
     
@@ -2935,6 +2938,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const closePacksViewBtn = document.getElementById('closePacksViewBtn');
   if(closePacksViewBtn) {
     closePacksViewBtn.addEventListener('click', () => {
+      packOpeningState = null;
       packsOverlay.classList.remove('visible');
 
       // ¡AÑADIMOS LAS MISMAS LÍNEAS AQUÍ PARA CONSISTENCIA!
@@ -3138,6 +3142,7 @@ function resetCollection() {
     localStorage.removeItem('myFootballPacks');
     localStorage.removeItem('myPlayerCurrency');
     localStorage.removeItem('myGameStats');
+    localStorage.removeItem('myFootballLineup');
     location.reload();
   }
 }
@@ -3280,40 +3285,64 @@ function buildFilterUI() {
     });
   });
 
-// --- CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA (CORREGIDO) ---
+// --- CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA ---
   document.addEventListener('keydown', (event) => {
-  // Solo reaccionamos si la tecla presionada es la barra espaciadora
-    if (event.code === 'Space') {
-
-    // 1. Comprobamos si el evento se originó en un campo de texto.
-    //    Si es así, no hacemos nada y dejamos que el espacio se escriba.
-      if (event.target.tagName === 'INPUT') {
-        return;
-      }
-
-    // 2. Ahora, el preventDefault SÓLO se ejecutará si NO estamos en un input.
-    //    Esto evita el scroll de la página al girar cartas, pero permite escribir.
-      event.preventDefault();
-
-      let nextCardToFlip = null;
-      const packsOverlay = document.getElementById('packs-overlay');
-
-    // DECISIÓN CLAVE: ¿Dónde buscamos la carta a girar?
-      if (packsOverlay.classList.contains('visible') && packsOverlay.classList.contains('opening-mode')) {
-      // Caso 1: Estamos DENTRO del escenario de apertura de packs
-        nextCardToFlip = document.querySelector('#pack-opening-cards-container .card:not(.flipped)');
-      } else if (!showcaseOverlay.classList.contains('visible')) {
-      // Caso 2: Estamos en la PÁGINA PRINCIPAL (comportamiento original)
-        nextCardToFlip = document.querySelector('#cards .card:not(.flipped)');
-      }
-
-    // Si encontramos una carta sin girar en el contexto correcto...
-      if (nextCardToFlip) {
-        const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
-        flipCard(nextCardToFlip, cardIndex);
-      }
+    // Solo reaccionamos si la tecla presionada es la barra espaciadora
+    if (event.code !== 'Space') {
+      return;
     }
-  });
+
+    // Si estamos en un input, no hacemos nada.
+    if (event.target.tagName === 'INPUT') {
+      return;
+    }
+    
+    // Comprobamos el estado actual para decidir qué hacer
+    switch (packOpeningState) {
+      
+        // CASO 1: Estamos girando cartas.
+    case 'flipping':
+            event.preventDefault(); // Prevenimos el scroll
+            
+            // Buscamos la siguiente carta a girar
+            const nextCardToFlip = document.querySelector('#pack-opening-cards-container .card:not(.flipped)');
+            
+            if (nextCardToFlip) {
+              const cardIndex = parseInt(nextCardToFlip.dataset.index, 10);
+              flipCard(nextCardToFlip, cardIndex);
+            }
+            break;
+
+        // CASO 2: Todas las cartas están giradas, esperando la siguiente acción.
+          case 'pack_complete':
+            // ¡LA CLAVE ESTÁ AQUÍ!
+            // Si el evento es una repetición (la tecla se mantuvo pulsada), no hacemos nada.
+            if (event.repeat) {
+              return; 
+            }
+            
+            event.preventDefault(); // Prevenimos el scroll
+
+            // Buscamos el primer sobre disponible en la cola
+            const nextPackElement = document.querySelector('#next-pack-container .pack-item');
+            
+            if (nextPackElement) {
+              const packId = nextPackElement.dataset.packType;
+                openOwnedPack(packId); // Esto cambiará el estado a 'flipping' y reiniciará el ciclo
+              }
+              break;
+
+        // CASO 3 (Página principal): Comportamiento original para abrir sobres desde el menú
+            default:
+              const cardOnMainMenu = document.querySelector('#cards .card:not(.flipped)');
+              if (cardOnMainMenu) {
+                event.preventDefault();
+                const cardIndex = parseInt(cardOnMainMenu.dataset.index, 10);
+                flipCard(cardOnMainMenu, cardIndex);
+              }
+              break;
+            }
+          });
 
 // --- NUEVA LÓGICA PARA INSPECCIONAR CARTAS ---
 
@@ -3524,6 +3553,7 @@ let currentOpeningPackId = null;
 
 function openOwnedPack(packId) {
   if (packInventory[packId] > 0) {
+    packOpeningState = 'flipping';
     // Guardamos el tipo de pack para el botón "Abrir Otro"
     currentOpeningPackId = packId; 
 
@@ -3613,8 +3643,13 @@ function closePackPurchaseView() {
   purchaseOverlay.classList.remove('visible');
   
   // Limpiamos los eventos para evitar problemas a futuro
-  document.getElementById('buy-one-btn').onclick = null;
-  document.getElementById('buy-many-btn').onclick = null;
+  // ¡Ahora usamos los IDs correctos que SÍ existen!
+  const buyBtn = document.getElementById('buy-btn');
+  const buyMaxBtn = document.getElementById('buy-max-btn');
+
+  // Solo intentamos limpiar si los botones existen, por seguridad.
+  if (buyBtn) buyBtn.onclick = null;
+  if (buyMaxBtn) buyMaxBtn.onclick = null;
 }
 
 // Añadimos los listeners para cerrar el modal
@@ -3745,8 +3780,23 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
   }
 
   function loadLineup() {
-    const savedLineup = localStorage.getItem('myFootballLineup');
-    lineup = savedLineup ? JSON.parse(savedLineup) : {};
+    try {
+      const savedLineup = localStorage.getItem('myFootballLineup');
+    // JSON.parse(null) devuelve null, lo cual no es un error, pero debemos manejarlo.
+      const parsed = JSON.parse(savedLineup);
+
+    // La comprobación clave: ¿El resultado es un objeto y no es null?
+      if (parsed && typeof parsed === 'object') {
+        lineup = parsed;
+      } else {
+      // Si el valor guardado es null, o no es un objeto, forzamos un objeto vacío.
+        lineup = {};
+      }
+    } catch (e) {
+    // Si JSON.parse falla (por datos corruptos), también asignamos un objeto vacío.
+      console.error("Could not parse lineup data, resetting to empty.", e);
+      lineup = {};
+    }
   }
 
 // --- FUNCIONES PARA LA LÓGICA DE LA ALINEACIÓN ---
