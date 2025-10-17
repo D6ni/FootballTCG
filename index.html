@@ -1950,6 +1950,154 @@ h1 img {
   box-shadow: 0 0 10px 2px #3b68d1;
 }
 
+/* --- NUEVOS ESTILOS PARA LA SIMULACIÓN DE PARTIDO --- */
+#match-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(10, 12, 20, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#scoreboard {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 64px;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.lineup-display {
+ flex: 1;
+ height: 95%;
+ position: relative;
+ border: 2px solid rgba(255, 255, 255, 0.1);
+ border-radius: 15px;
+ background: rgba(0,0,0,0.2);
+}
+.lineup-display .card {
+  --card-w: 100px;
+  --card-h: 142px;
+  position: absolute;
+  transform: translate(-50%, -50%) rotateY(180deg);;
+  transition: all 0.5s ease-in-out;
+}
+
+#center-duel-zone {
+  border: none;
+  background: transparent;
+}
+
+/* --- Posiciones 4-3-3 para AMBOS equipos --- */
+.lineup-display [data-position="ST"] { top: 15%; left: 50%; }
+.lineup-display [data-position="LW"] { top: 20%; left: 25%; }
+.lineup-display [data-position="RW"] { top: 20%; left: 75%; }
+.lineup-display [data-position="CM"] { top: 45%; left: 50%; }
+.lineup-display [data-position="LCM"] { top: 50%; left: 25%; }
+.lineup-display [data-position="RCM"] { top: 50%; left: 75%; }
+.lineup-display [data-position="LCB"] { top: 75%; left: 37.5%; }
+.lineup-display [data-position="RCB"] { top: 75%; left: 62.5%; }
+.lineup-display [data-position="LB"] { top: 78%; left: 15%; }
+.lineup-display [data-position="RB"] { top: 78%; left: 85%; }
+.lineup-display [data-position="GK"] { top: 92%; left: 50%; }
+
+#duel-zone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+#duel-cards {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+#duel-zone .card {
+  position: absolute;
+  transition: all 0.5s ease-in-out;
+}
+#duel-info {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  padding: 10px 20px;
+  border-radius: 10px;
+  width: 90%;
+  box-sizing: border-box;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.is-dueling {
+  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  z-index: 1001;
+}
+
+.duel-winner {
+  transform: var(--duel-transform) scale(1.1) !important;
+  box-shadow: 0 0 25px 10px #ffeb3b !important;
+}
+
+.duel-loser {
+  transform: var(--duel-transform) scale(0.9) !important;
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
+#final-result {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none; /* Changed from flex to none by default */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+#final-result-text {
+  font-size: 120px;
+  font-weight: 900;
+}
+#final-result-text.win { color: #4caf50; }
+#final-result-text.draw { color: #ffc107; }
+#final-result-text.loss { color: #f44336; }
+
+#play-again-btn {
+  margin-top: 40px;
+  padding: 15px 30px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+#start-sim-btn {
+  font-size: 28px;
+  padding: 20px 40px;
+  cursor: pointer;
+}
+
+.lineup-display .player-rating,
+.lineup-display .player-position {
+  display: none;
+}
+
 </style>
 </head>
 <body>
@@ -2070,6 +2218,22 @@ h1 img {
   <div id="lineup-validation-message" style="display: none;"></div>
   <!-- El botón de jugar partido irá aquí más adelante -->
   <button id="play-match-btn" disabled>Play Match</button>
+</div>
+
+<!-- =========== VISTA DE LA SIMULACIÓN DE PARTIDO (NUEVO) =============== -->
+<div id="match-overlay" style="display: none;">
+  <div id="scoreboard">0 - 0</div>
+  <div id="home-team-lineup" class="lineup-display"></div>
+  <div id="center-duel-zone" class="lineup-display">
+    <div id="duel-info"></div>
+  </div>
+  <div id="away-team-lineup" class="lineup-display"></div>
+  <div id="final-result">
+    <div id="final-result-text"></div>
+    <!-- VAMOS A MEJORAR ESTO MÁS ADELANTE -->
+    <button id="rematch-btn">Rematch</button>
+    <button id="back-to-album-btn">Back to Album</button>
+  </div>
 </div>
 
 <!-- ============= POPUP DE RECOMPENSA DIARIA =============== -->
@@ -2302,7 +2466,7 @@ let packInventory = savedPacks ? JSON.parse(savedPacks) : {
   // --- Lógica para el dinero del jugador ---
 const savedCurrency = localStorage.getItem('myPlayerCurrency');
 // Si no hay dinero guardado (primera vez que juega), empieza con 50.
-let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 2000000; //DINERO INICIAL
+let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 200; //DINERO INICIAL
 
 
   // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
@@ -3057,6 +3221,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
+  //listener boton play match
+  const playMatchBtn = document.getElementById('play-match-btn');
+  if (playMatchBtn) {
+    playMatchBtn.addEventListener('click', () => {
+        // 1. Ocultar el overlay de la alineación
+      document.getElementById('lineup-overlay').classList.remove('visible');
+      
+      // 2. ¡CAMBIO CLAVE! Pasamos el objeto 'lineup' directamente.
+      //    Este objeto ya contiene los IDs únicos con toda la información de la variante.
+      simulateMatch(lineup);
+    });
+  }
+
+
+//listener rematch y volver a album
+  const rematchBtn = document.getElementById('rematch-btn');
+  const backToAlbumBtn = document.getElementById('back-to-album-btn');
+
+  if (rematchBtn) {
+    rematchBtn.addEventListener('click', () => {
+        // Reutilizamos la misma lógica que el botón principal de "Play Match"
+      const playerLineup = {};
+      for (const position in lineup) {
+        const [playerId] = lineup[position].split('_');
+        playerLineup[position] = playersDB.find(p => p.id == playerId);
+      }
+        // Ocultamos el resultado y volvemos a empezar la simulación
+      document.getElementById('final-result').style.display = 'none';
+      simulateMatch(playerLineup);
+    });
+  }
+
+  if (backToAlbumBtn) {
+    backToAlbumBtn.addEventListener('click', () => {
+        // Ocultamos todo lo relacionado con el partido
+      document.getElementById('final-result').style.display = 'none';
+      document.getElementById('match-overlay').style.display = 'none';
+        // Y volvemos a mostrar el álbum
+      document.getElementById('showcaseBtn').click();
+    });
+  }
+
 }); //FIN DEL DOM
 
 function addInteractiveTilt(cardElement) {
@@ -3299,7 +3506,7 @@ function buildFilterUI() {
     
     // Comprobamos el estado actual para decidir qué hacer
     switch (packOpeningState) {
-      
+
         // CASO 1: Estamos girando cartas.
     case 'flipping':
             event.preventDefault(); // Prevenimos el scroll
@@ -3970,6 +4177,7 @@ function removeCardFromLineup(posId) {
     renderLineupView(); // Re-renderiza para mostrar el hueco vacío
   }
 
+  // Pega esta función completa en lugar de la que tienes
   function validateLineup(lineupToCheck = lineup, isSimulation = false) {
     const rules = { relic: 1, legendary: 2, epic: 3, rare: 4 };
     const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
@@ -3990,43 +4198,48 @@ function removeCardFromLineup(posId) {
     else if (counts.epic > rules.epic) message = `Too many Epics (Max ${rules.epic})`;
     else if (counts.rare > rules.rare) message = `Too many Rares (Max ${rules.rare})`;
     
-    const isValid = message === "" && totalCards >=1; // La regla es "COMO MINIMO 1 Comun" que se cumple si no hay otras restricciones
-
+    // Si estamos simulando una validación interna, solo devolvemos el resultado
     if (isSimulation) {
+      const isValid = message === "" && totalCards >= 1; // La lógica simple es suficiente aquí
       return { isValid, message };
     }
 
-    // Actualiza la UI si no es una simulación
+    // --- LÓGICA DE UI CORREGIDA ---
     const messageEl = document.getElementById('lineup-validation-message');
     const playBtn = document.getElementById('play-match-btn');
-    if (!isValid) {
+
+    // Primero, comprobamos si se rompió alguna regla de rareza
+    if (message !== "") {
       messageEl.textContent = message;
       messageEl.style.display = 'block';
       playBtn.disabled = true;
-    } else if (totalCards < 11) {
-     messageEl.textContent = 'Complete your lineup to play';
-     messageEl.style.display = 'block';
-     playBtn.disabled = true;
-   }
-   else {
-    messageEl.textContent = 'Complete your lineup to play';
-    messageEl.style.display = 'none';
-    playBtn.disabled = false;
+    } 
+    // Luego, comprobamos si la alineación está incompleta
+    else if (totalCards < 11) {
+      // Mensaje mejorado para dar feedback al usuario
+      messageEl.textContent = `Complete your lineup (${totalCards}/11)`;
+      messageEl.style.display = 'block';
+      playBtn.disabled = true;
+    } 
+    // Si no hay errores de rareza y el equipo está completo, es válido
+    else {
+      messageEl.style.display = 'none'; // Ocultamos el mensaje de error
+      playBtn.disabled = false;         // ¡Habilitamos el botón!
+    }
   }
-}
 
 /**
  * Comprueba si un jugador, por su ID, ya se encuentra en la alineación.
  * @param {number | string} playerIdToCheck El ID del jugador a comprobar.
  * @returns {boolean} True si el jugador ya está en la alineación.
  */
-function isPlayerAlreadyInLineup(playerIdToCheck) {
-  const idToCompare = String(playerIdToCheck);
+  function isPlayerAlreadyInLineup(playerIdToCheck) {
+    const idToCompare = String(playerIdToCheck);
   // Recorremos todos los 'uniqueCardId' que están actualmente en la alineación
-  for (const uniqueCardId of Object.values(lineup)) {
+    for (const uniqueCardId of Object.values(lineup)) {
     // Extraemos solo el ID del jugador (la parte antes del primer '_')
-    const existingPlayerId = uniqueCardId.split('_')[0];
-    if (existingPlayerId === idToCompare) {
+      const existingPlayerId = uniqueCardId.split('_')[0];
+      if (existingPlayerId === idToCompare) {
       return true; // ¡Encontramos una coincidencia!
     }
   }
@@ -4274,6 +4487,382 @@ function updateSortButtonUI() {
     btn.textContent = 'Sort by OVR';
     btn.classList.remove('active');
   }
+}
+
+
+const slotToGeneralPositionMap = {};
+for (const generalPosition in lineupPositions) {
+  lineupPositions[generalPosition].forEach(specificSlot => {
+    slotToGeneralPositionMap[specificSlot] = generalPosition;
+  });
+}
+
+const DUEL_ORDER = ['ST', 'RW', 'LW', 'RCM', 'CM', 'LCM', 'RB', 'RCB', 'LCB', 'LB'];
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// equipo rival pve
+function generateRandomTeam() {
+  const rules = { relic: 1, legendary: 2, epic: 3, rare: 4, minCommon: 1 };
+  const playersByPos = {
+    ATK: playersDB.filter(p => p.position === 'ATK'),
+    MID: playersDB.filter(p => p.position === 'MID'),
+    DEF: playersDB.filter(p => p.position === 'DEF'),
+    GK: playersDB.filter(p => p.position === 'GK')
+  };
+  let attempts = 0;
+  while (attempts < 1000) {
+    let lineup = {};
+    const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
+    const usedPlayerIds = new Set();
+    let isValid = true;
+
+    Object.values(playersByPos).forEach(shuffleArray);
+
+    const allPositions = Object.values(lineupPositions).flat();
+
+    for (const position of allPositions) {
+      const generalPos = slotToGeneralPositionMap[position];
+      let playerFound = false;
+      for (const player of playersByPos[generalPos]) {
+        if (usedPlayerIds.has(player.id)) continue;
+
+        const tempCounts = { ...counts };
+        tempCounts[player.rarity]++;
+
+        if (tempCounts.relic <= rules.relic &&
+          tempCounts.legendary <= rules.legendary &&
+          tempCounts.epic <= rules.epic &&
+          tempCounts.rare <= rules.rare) {
+
+                    // Guardamos el objeto del jugador temporalmente
+          lineup[position] = player; 
+        counts[player.rarity]++;
+        usedPlayerIds.add(player.id);
+        playerFound = true;
+        break;
+      }
+    }
+    if (!playerFound) {
+      isValid = false;
+      break;
+    }
+  }
+
+  if (isValid && Object.keys(lineup).length === 11 && counts.common >= rules.minCommon) {
+            // --- ¡LA MAGIA OCURRE AQUÍ! ---
+            // Una vez tenemos un equipo válido con objetos de jugador,
+            // lo convertimos a un equipo con uniqueCardIds y variantes aleatorias.
+
+    const lineupWithVariants = {};
+    const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
+
+    for (const position in lineup) {
+      const player = lineup[position];
+
+                // Generamos Golden y Variante para el jugador de la IA
+      const isGolden = ALLOW_GOLDEN_CARDS && (Math.random() * 100) < CONFIG.goldenChance;
+      const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
+
+                // Creamos el ID único
+      const uniqueCardId = `${player.id}_${isGolden}_${variant}`;
+
+                // Lo asignamos al nuevo objeto de alineación
+      lineupWithVariants[position] = uniqueCardId;
+    }
+            return lineupWithVariants; // Retornamos el equipo con variantes
+          }
+          attempts++;
+        }
+        console.error("No se pudo generar un equipo válido después de 1000 intentos.");
+        alert("Error: No se pudo generar un equipo aleatorio. Refresca la página.");
+        return null;
+      }
+
+// Pega esta función completa en lugar de la que tienes
+function createMatchCardElement(uniqueCardId, position) {
+    const [playerId, isGoldenStr, variant] = uniqueCardId.split('_');
+    const isGolden = isGoldenStr === 'true';
+    const playerData = playersDB.find(p => p.id == playerId);
+    if (!playerData) return null;
+
+    const variantClass = variant !== 'none' ? `variant-${variant}` : '';
+    const goldenClass = isGolden ? 'golden' : '';
+
+    const div = document.createElement("div");
+    
+    div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass}`;
+    div.dataset.position = position;
+
+    div.innerHTML = `
+        <div class="side front">
+            <img src="${playerData.img}" class="player-image" alt="${playerData.name}" />
+            <div class="player-info">
+                <div class="player-rating">${playerData.rating}</div>
+                <div class="player-position">${playerData.position}</div>
+            </div>
+        </div>
+        <div class="side back"></div>
+    `;
+
+    // ¡EL CAMBIO FINAL! Usamos nuestra nueva función especializada
+    addMatchCardHover(div);
+    
+    return div;
+}
+
+  function renderLineup(team, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const allPositions = Object.values(lineupPositions).flat();
+
+    allPositions.forEach(pos => {
+      if (team[pos]) {
+        const cardElement = createMatchCardElement(team[pos], pos);
+        if (cardElement) container.appendChild(cardElement);
+      }
+    });
+  }
+
+// simulacion partido
+  async function simulateMatch(homeLineup) {
+    document.getElementById('match-overlay').style.display = 'flex';
+    document.getElementById('final-result').style.display = 'none';
+
+    const awayTeam = generateRandomTeam();
+    if (!homeLineup || !awayTeam) return;
+
+    renderLineup(homeLineup, 'home-team-lineup');
+    renderLineup(awayTeam, 'away-team-lineup');
+
+    let homeScore = 0;
+    let awayScore = 0;
+    const scoreboard = document.getElementById('scoreboard');
+    scoreboard.textContent = '0 - 0';
+
+    const duelCenterX = window.innerWidth / 2 - 50;
+    const duelCenterY = window.innerHeight / 2 - 200;
+
+    await sleep(2000);
+
+    for (const position of DUEL_ORDER) {
+      const homeUniqueId = homeLineup[position];
+      const [homePlayerId] = homeUniqueId.split('_');
+      const homePlayer = playersDB.find(p => p.id == homePlayerId);
+
+      const awayUniqueId = awayTeam[position];
+      const [awayPlayerId] = awayUniqueId.split('_');
+      const awayPlayer = playersDB.find(p => p.id == awayPlayerId);
+
+      const homeCard = document.querySelector(`#home-team-lineup [data-position="${position}"]`);
+      const awayCard = document.querySelector(`#away-team-lineup [data-position="${position}"]`);
+
+      const cardGap = 80;
+      const cardWidth = homeCard.offsetWidth;
+      const totalSeparation = cardWidth + cardGap;
+      const homeTargetX = duelCenterX - (totalSeparation / 2);
+      const awayTargetX = duelCenterX + (totalSeparation / 2);
+
+      const homeStartRect = homeCard.getBoundingClientRect();
+      const awayStartRect = awayCard.getBoundingClientRect();
+
+      const homeTranslateX = homeTargetX - (homeStartRect.left + homeStartRect.width / 2);
+      const homeTranslateY = duelCenterY - (homeStartRect.top + homeStartRect.height / 2);
+      const awayTranslateX = awayTargetX - (awayStartRect.left + awayStartRect.width / 2);
+      const awayTranslateY = duelCenterY - (awayStartRect.top + awayStartRect.height / 2);
+
+      const homeTransform = `translate(${homeTranslateX}px, ${homeTranslateY}px) scale(1.5) rotateY(180deg)`;
+      const awayTransform = `translate(${awayTranslateX}px, ${awayTranslateY}px) scale(1.5) rotateY(180deg)`;
+
+      homeCard.style.setProperty('--duel-transform', homeTransform);
+      awayCard.style.setProperty('--duel-transform', awayTransform);
+
+      homeCard.classList.add('is-dueling');
+      awayCard.classList.add('is-dueling');
+      await sleep(50);
+      homeCard.style.transform = homeTransform;
+      awayCard.style.transform = awayTransform;
+      await sleep(800);
+
+      const RATING_IMPACT_FACTOR = 3;
+      const BASE_DRAW_CHANCE = 15;
+      const diff = homePlayer.rating - awayPlayer.rating;
+      let probDraw = Math.max(0, BASE_DRAW_CHANCE - (Math.abs(diff) * 1.5));
+      let probRemaining = 100 - probDraw;
+      let probHomeWin = (probRemaining / 2) + (diff * RATING_IMPACT_FACTOR);
+      probHomeWin = Math.max(0, Math.min(probRemaining, probHomeWin));
+      let probAwayWin = probRemaining - probHomeWin;
+      const duelInfo = document.getElementById('duel-info');
+      duelInfo.innerHTML = `${homePlayer.name} (${probHomeWin.toFixed(1)}%) vs ${awayPlayer.name} (${probAwayWin.toFixed(1)}%)<br>Draw: ${probDraw.toFixed(1)}%`;
+      duelInfo.style.opacity = 1;
+      await sleep(2500);
+      const roll = Math.random() * 100;
+      let resultMessage = ''; 
+      if (roll < probHomeWin) {
+        homeScore++;
+        homeCard.classList.add('duel-winner');
+        awayCard.classList.add('duel-loser');
+        resultMessage = `<strong>${homePlayer.name} scores a goal!</strong>`;
+      } else if (roll < probHomeWin + probAwayWin) {
+        awayScore++;
+        awayCard.classList.add('duel-winner');
+        homeCard.classList.add('duel-loser');
+        resultMessage = `<strong>${awayPlayer.name} scores a goal!</strong>`;
+      } else {
+        resultMessage = `<strong>Duel tied.</strong>`;
+      }
+      duelInfo.innerHTML = resultMessage;
+      scoreboard.textContent = `${homeScore} - ${awayScore}`;
+      await sleep(2000); 
+      duelInfo.style.opacity = 0;
+      homeCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+      awayCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+      homeCard.style.transform = '';
+      awayCard.style.transform = '';
+      await sleep(600);
+    }
+
+    async function handleGoalkeeperPhase() {
+      const keepers = [];
+      const homeGkUniqueId = homeLineup['GK'];
+      const [homeGkPlayerId] = homeGkUniqueId.split('_');
+      const homeGkPlayer = playersDB.find(p => p.id == homeGkPlayerId);
+      const awayGkUniqueId = awayTeam['GK'];
+      const [awayGkPlayerId] = awayGkUniqueId.split('_');
+      const awayGkPlayer = playersDB.find(p => p.id == awayGkPlayerId);
+
+      if (homeScore < awayScore) {
+        keepers.push({ team: 'home', player: homeGkPlayer });
+        keepers.push({ team: 'away', player: awayGkPlayer });
+      } else {
+        keepers.push({ team: 'away', player: awayGkPlayer });
+        keepers.push({ team: 'home', player: homeGkPlayer });
+      }
+
+      for (const { team, player } of keepers) {
+        if ((team === 'home' && awayScore === 0) || (team === 'away' && homeScore === 0)) continue;
+        const card = document.querySelector(`#${team}-team-lineup [data-position="GK"]`);
+        const startRect = card.getBoundingClientRect();
+        const translateX = duelCenterX - (startRect.left + startRect.width / 2);
+        const translateY = duelCenterY - (startRect.top + startRect.height / 2);
+        
+        // ¡CORREGIDO! Añadimos rotateY(180deg) también aquí.
+        const transform = `translate(${translateX}px, ${translateY}px) scale(1.7) rotateY(180deg)`;
+        
+        card.style.setProperty('--duel-transform', transform);
+        card.classList.add('is-dueling');
+        await sleep(50);
+        card.style.transform = transform;
+        await sleep(800);
+        
+        // ... (el resto de la lógica de los porteros no cambia) ...
+        const scoreDiff = (team === 'home' ? homeScore - awayScore : awayScore - homeScore);
+        let modifier = 0;
+        if (scoreDiff === -1) modifier = 20; else if (scoreDiff === 0) modifier = 10; else if (scoreDiff === 1) modifier = -5; else if (scoreDiff < -1) modifier = 5; else if (scoreDiff > 1) modifier = -15;
+        const baseProb = (player.rating - 60) * 1.2;
+        const totalProb = Math.max(0, Math.min(100, baseProb + modifier));
+        const duelInfo = document.getElementById('duel-info');
+        duelInfo.innerHTML = `${player.name} Save Chance: ${totalProb.toFixed(1)}%`;
+        duelInfo.style.opacity = 1;
+        await sleep(2500);
+        const roll = Math.random() * 100;
+        if (roll < totalProb) {
+          duelInfo.innerHTML = `<strong>SAVE!</strong>`;
+          card.classList.add('duel-winner');
+          if (team === 'home' && awayScore > 0) awayScore--; else if (team === 'away' && homeScore > 0) homeScore--;
+          scoreboard.textContent = `${homeScore} - ${awayScore}`;
+        } else {
+         duelInfo.innerHTML = `GOAL STANDS!`;
+         card.classList.add('duel-loser');
+       }
+       await sleep(1500);
+       duelInfo.style.opacity = 0;
+       card.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+       card.style.transform = '';
+       await sleep(600);
+     }
+   }
+   await handleGoalkeeperPhase();
+
+   // ... (la lógica del resultado final no cambia) ...
+   await sleep(1000);
+   const finalResultDiv = document.getElementById('final-result');
+   const finalResultText = document.getElementById('final-result-text');
+   let reward = 0;
+   let result = '';
+   if (homeScore > awayScore) {
+    finalResultText.textContent = "VICTORY";
+    finalResultText.className = "win";
+    reward = ECONOMY_CONFIG.matchRewards.win;
+    result = `VICTORY! You earned ${reward} 💎`;
+  } else if (homeScore < awayScore) {
+    finalResultText.textContent = "DEFEAT";
+    finalResultText.className = "loss";
+    reward = ECONOMY_CONFIG.matchRewards.loss;
+    result = `DEFEAT. You earned ${reward} 💎`;
+  } else {
+    finalResultText.textContent = "DRAW";
+    finalResultText.className = "draw";
+    reward = ECONOMY_CONFIG.matchRewards.draw;
+    result = `DRAW. You earned ${reward} 💎`;
+  }
+  playerCurrency += reward;
+  saveCurrency();
+  updateCurrencyDisplay();
+  showToast(result, 'info', 4000); 
+  finalResultDiv.style.display = 'flex';
+}
+
+// --- NUEVA FUNCIÓN EXCLUSIVA PARA EL HOVER EN PARTIDOS ---
+function addMatchCardHover(cardElement) {
+  // Listener para cuando el ratón se mueve sobre la carta
+  cardElement.addEventListener('mousemove', (e) => {
+    // No hacer nada si la carta está en plena animación de duelo
+    if (cardElement.classList.contains('is-dueling')) return;
+
+    cardElement.classList.add('tilting');
+
+    const rect = cardElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // --- 1. Lógica para el TILT 3D ---
+    const rotateX = ((y / rect.height) - 0.5) * 40; 
+    const rotateY = ((x / rect.width) - 0.5) * 40;
+    
+    // --- 2. Lógica para los EFECTOS REACTIVOS (brillos, etc.) ---
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const posX = (y - centerY) * -0.12;
+    const posY = (x - centerX) * 0.12;
+
+    // Aplicamos las variables CSS para los efectos reactivos
+    cardElement.style.setProperty('--x', posX);
+    cardElement.style.setProperty('--y', posY);
+    
+    // ¡LA CLAVE! Construimos una transformación que INCLUYE el posicionamiento original
+    // para que la carta no salte de su sitio.
+    cardElement.style.transform = `translate(-50%, -50%) rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  });
+
+  // Listener para cuando el ratón sale de la carta
+  cardElement.addEventListener('mouseleave', () => {
+    cardElement.classList.remove('tilting');
+    
+    // Reseteamos las variables de los efectos reactivos
+    cardElement.style.setProperty('--x', 0);
+    cardElement.style.setProperty('--y', 0);
+    
+    // Dejamos la transformación en blanco para que el CSS tome el control de nuevo
+    // y la devuelva a su posición y rotación originales.
+    cardElement.style.transform = '';
+  });
 }
 
 </script>
