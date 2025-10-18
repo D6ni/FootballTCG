@@ -2376,9 +2376,9 @@ h1 img {
   const ECONOMY_CONFIG = {
     baseSellValue: 2, // Valor base en gemas para una carta común, normal y sin variante
     matchRewards: {
-      win: 25,
-      draw: 10,
-      loss: 5
+      win: 50,
+      draw: 25,
+      loss: 10
     },
     raritySellMultipliers: {
       common: 1,
@@ -2400,7 +2400,7 @@ h1 img {
   const packTypes = {
     'common-pack': {
       name: 'Common Pack',
-      cost: 160, // PRECIO PAQUETES
+      cost: 150, // PRECIO PAQUETES
       description: 'A basic pack, 11 cards and at least 1 Rare.',
       size: 11
     },
@@ -3242,24 +3242,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (rematchBtn) {
     rematchBtn.addEventListener('click', () => {
-        // Reutilizamos la misma lógica que el botón principal de "Play Match"
-      const playerLineup = {};
-      for (const position in lineup) {
-        const [playerId] = lineup[position].split('_');
-        playerLineup[position] = playersDB.find(p => p.id == playerId);
-      }
-        // Ocultamos el resultado y volvemos a empezar la simulación
       document.getElementById('final-result').style.display = 'none';
-      simulateMatch(playerLineup);
+      simulateMatch(lineup);
     });
   }
 
   if (backToAlbumBtn) {
     backToAlbumBtn.addEventListener('click', () => {
-        // Ocultamos todo lo relacionado con el partido
       document.getElementById('final-result').style.display = 'none';
       document.getElementById('match-overlay').style.display = 'none';
-        // Y volvemos a mostrar el álbum
       document.getElementById('showcaseBtn').click();
     });
   }
@@ -4586,6 +4577,7 @@ function generateRandomTeam() {
       }
 
 // Pega esta función completa en lugar de la que tienes
+      // Pega esta función completa en lugar de la que tienes
 function createMatchCardElement(uniqueCardId, position) {
     const [playerId, isGoldenStr, variant] = uniqueCardId.split('_');
     const isGolden = isGoldenStr === 'true';
@@ -4599,275 +4591,276 @@ function createMatchCardElement(uniqueCardId, position) {
     
     div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass}`;
     div.dataset.position = position;
+    const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
     div.innerHTML = `
         <div class="side front">
             <img src="${playerData.img}" class="player-image" alt="${playerData.name}" />
+            ${indicatorsHTML} 
             <div class="player-info">
-                <div class="player-rating">${playerData.rating}</div>
-                <div class="player-position">${playerData.position}</div>
+                <!-- La media y la posición se renderizarán dentro del partido, así que las dejamos -->
             </div>
         </div>
         <div class="side back"></div>
     `;
-
-    // ¡EL CAMBIO FINAL! Usamos nuestra nueva función especializada
+    
     addMatchCardHover(div);
     
     return div;
 }
 
-  function renderLineup(team, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    const allPositions = Object.values(lineupPositions).flat();
+      function renderLineup(team, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        const allPositions = Object.values(lineupPositions).flat();
 
-    allPositions.forEach(pos => {
-      if (team[pos]) {
-        const cardElement = createMatchCardElement(team[pos], pos);
-        if (cardElement) container.appendChild(cardElement);
+        allPositions.forEach(pos => {
+          if (team[pos]) {
+            const cardElement = createMatchCardElement(team[pos], pos);
+            if (cardElement) container.appendChild(cardElement);
+          }
+        });
       }
-    });
-  }
 
 // simulacion partido
-  async function simulateMatch(homeLineup) {
-    document.getElementById('match-overlay').style.display = 'flex';
-    document.getElementById('final-result').style.display = 'none';
+      async function simulateMatch(homeLineup) {
+        document.getElementById('match-overlay').style.display = 'flex';
+        document.getElementById('final-result').style.display = 'none';
 
-    const awayTeam = generateRandomTeam();
-    if (!homeLineup || !awayTeam) return;
+        const awayTeam = generateRandomTeam();
+        if (!homeLineup || !awayTeam) return;
 
-    renderLineup(homeLineup, 'home-team-lineup');
-    renderLineup(awayTeam, 'away-team-lineup');
+        renderLineup(homeLineup, 'home-team-lineup');
+        renderLineup(awayTeam, 'away-team-lineup');
 
-    let homeScore = 0;
-    let awayScore = 0;
-    const scoreboard = document.getElementById('scoreboard');
-    scoreboard.textContent = '0 - 0';
+        let homeScore = 0;
+        let awayScore = 0;
+        const scoreboard = document.getElementById('scoreboard');
+        scoreboard.textContent = '0 - 0';
 
-    const duelCenterX = window.innerWidth / 2 - 50;
-    const duelCenterY = window.innerHeight / 2 - 200;
+        const duelCenterX = window.innerWidth / 2 - 50;
+        const duelCenterY = window.innerHeight / 2 - 200;
 
-    await sleep(2000);
+        await sleep(2000);
 
-    for (const position of DUEL_ORDER) {
-      const homeUniqueId = homeLineup[position];
-      const [homePlayerId] = homeUniqueId.split('_');
-      const homePlayer = playersDB.find(p => p.id == homePlayerId);
+        for (const position of DUEL_ORDER) {
+          const homeUniqueId = homeLineup[position];
+          const [homePlayerId] = homeUniqueId.split('_');
+          const homePlayer = playersDB.find(p => p.id == homePlayerId);
 
-      const awayUniqueId = awayTeam[position];
-      const [awayPlayerId] = awayUniqueId.split('_');
-      const awayPlayer = playersDB.find(p => p.id == awayPlayerId);
+          const awayUniqueId = awayTeam[position];
+          const [awayPlayerId] = awayUniqueId.split('_');
+          const awayPlayer = playersDB.find(p => p.id == awayPlayerId);
 
-      const homeCard = document.querySelector(`#home-team-lineup [data-position="${position}"]`);
-      const awayCard = document.querySelector(`#away-team-lineup [data-position="${position}"]`);
+          const homeCard = document.querySelector(`#home-team-lineup [data-position="${position}"]`);
+          const awayCard = document.querySelector(`#away-team-lineup [data-position="${position}"]`);
 
-      const cardGap = 80;
-      const cardWidth = homeCard.offsetWidth;
-      const totalSeparation = cardWidth + cardGap;
-      const homeTargetX = duelCenterX - (totalSeparation / 2);
-      const awayTargetX = duelCenterX + (totalSeparation / 2);
+          const cardGap = 80;
+          const cardWidth = homeCard.offsetWidth;
+          const totalSeparation = cardWidth + cardGap;
+          const homeTargetX = duelCenterX - (totalSeparation / 2);
+          const awayTargetX = duelCenterX + (totalSeparation / 2);
 
-      const homeStartRect = homeCard.getBoundingClientRect();
-      const awayStartRect = awayCard.getBoundingClientRect();
+          const homeStartRect = homeCard.getBoundingClientRect();
+          const awayStartRect = awayCard.getBoundingClientRect();
 
-      const homeTranslateX = homeTargetX - (homeStartRect.left + homeStartRect.width / 2);
-      const homeTranslateY = duelCenterY - (homeStartRect.top + homeStartRect.height / 2);
-      const awayTranslateX = awayTargetX - (awayStartRect.left + awayStartRect.width / 2);
-      const awayTranslateY = duelCenterY - (awayStartRect.top + awayStartRect.height / 2);
+          const homeTranslateX = homeTargetX - (homeStartRect.left + homeStartRect.width / 2);
+          const homeTranslateY = duelCenterY - (homeStartRect.top + homeStartRect.height / 2);
+          const awayTranslateX = awayTargetX - (awayStartRect.left + awayStartRect.width / 2);
+          const awayTranslateY = duelCenterY - (awayStartRect.top + awayStartRect.height / 2);
 
-      const homeTransform = `translate(${homeTranslateX}px, ${homeTranslateY}px) scale(1.5) rotateY(180deg)`;
-      const awayTransform = `translate(${awayTranslateX}px, ${awayTranslateY}px) scale(1.5) rotateY(180deg)`;
+          const homeTransform = `translate(${homeTranslateX}px, ${homeTranslateY}px) scale(1.5) rotateY(180deg)`;
+          const awayTransform = `translate(${awayTranslateX}px, ${awayTranslateY}px) scale(1.5) rotateY(180deg)`;
 
-      homeCard.style.setProperty('--duel-transform', homeTransform);
-      awayCard.style.setProperty('--duel-transform', awayTransform);
+          homeCard.style.setProperty('--duel-transform', homeTransform);
+          awayCard.style.setProperty('--duel-transform', awayTransform);
 
-      homeCard.classList.add('is-dueling');
-      awayCard.classList.add('is-dueling');
-      await sleep(50);
-      homeCard.style.transform = homeTransform;
-      awayCard.style.transform = awayTransform;
-      await sleep(800);
+          homeCard.classList.add('is-dueling');
+          awayCard.classList.add('is-dueling');
+          await sleep(50);
+          homeCard.style.transform = homeTransform;
+          awayCard.style.transform = awayTransform;
+          await sleep(800);
 
-      const RATING_IMPACT_FACTOR = 3;
-      const BASE_DRAW_CHANCE = 15;
-      const diff = homePlayer.rating - awayPlayer.rating;
-      let probDraw = Math.max(0, BASE_DRAW_CHANCE - (Math.abs(diff) * 1.5));
-      let probRemaining = 100 - probDraw;
-      let probHomeWin = (probRemaining / 2) + (diff * RATING_IMPACT_FACTOR);
-      probHomeWin = Math.max(0, Math.min(probRemaining, probHomeWin));
-      let probAwayWin = probRemaining - probHomeWin;
-      const duelInfo = document.getElementById('duel-info');
-      duelInfo.innerHTML = `${homePlayer.name} (${probHomeWin.toFixed(1)}%) vs ${awayPlayer.name} (${probAwayWin.toFixed(1)}%)<br>Draw: ${probDraw.toFixed(1)}%`;
-      duelInfo.style.opacity = 1;
-      await sleep(2500);
-      const roll = Math.random() * 100;
-      let resultMessage = ''; 
-      if (roll < probHomeWin) {
-        homeScore++;
-        homeCard.classList.add('duel-winner');
-        awayCard.classList.add('duel-loser');
-        resultMessage = `<strong>${homePlayer.name} scores a goal!</strong>`;
-      } else if (roll < probHomeWin + probAwayWin) {
-        awayScore++;
-        awayCard.classList.add('duel-winner');
-        homeCard.classList.add('duel-loser');
-        resultMessage = `<strong>${awayPlayer.name} scores a goal!</strong>`;
-      } else {
-        resultMessage = `<strong>Duel tied.</strong>`;
-      }
-      duelInfo.innerHTML = resultMessage;
-      scoreboard.textContent = `${homeScore} - ${awayScore}`;
-      await sleep(2000); 
-      duelInfo.style.opacity = 0;
-      homeCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
-      awayCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
-      homeCard.style.transform = '';
-      awayCard.style.transform = '';
-      await sleep(600);
-    }
-
-    async function handleGoalkeeperPhase() {
-      const keepers = [];
-      const homeGkUniqueId = homeLineup['GK'];
-      const [homeGkPlayerId] = homeGkUniqueId.split('_');
-      const homeGkPlayer = playersDB.find(p => p.id == homeGkPlayerId);
-      const awayGkUniqueId = awayTeam['GK'];
-      const [awayGkPlayerId] = awayGkUniqueId.split('_');
-      const awayGkPlayer = playersDB.find(p => p.id == awayGkPlayerId);
-
-      if (homeScore < awayScore) {
-        keepers.push({ team: 'home', player: homeGkPlayer });
-        keepers.push({ team: 'away', player: awayGkPlayer });
-      } else {
-        keepers.push({ team: 'away', player: awayGkPlayer });
-        keepers.push({ team: 'home', player: homeGkPlayer });
-      }
-
-      for (const { team, player } of keepers) {
-        if ((team === 'home' && awayScore === 0) || (team === 'away' && homeScore === 0)) continue;
-        const card = document.querySelector(`#${team}-team-lineup [data-position="GK"]`);
-        const startRect = card.getBoundingClientRect();
-        const translateX = duelCenterX - (startRect.left + startRect.width / 2);
-        const translateY = duelCenterY - (startRect.top + startRect.height / 2);
-        
-        // ¡CORREGIDO! Añadimos rotateY(180deg) también aquí.
-        const transform = `translate(${translateX}px, ${translateY}px) scale(1.7) rotateY(180deg)`;
-        
-        card.style.setProperty('--duel-transform', transform);
-        card.classList.add('is-dueling');
-        await sleep(50);
-        card.style.transform = transform;
-        await sleep(800);
-        
-        // ... (el resto de la lógica de los porteros no cambia) ...
-        const scoreDiff = (team === 'home' ? homeScore - awayScore : awayScore - homeScore);
-        let modifier = 0;
-        if (scoreDiff === -1) modifier = 20; else if (scoreDiff === 0) modifier = 10; else if (scoreDiff === 1) modifier = -5; else if (scoreDiff < -1) modifier = 5; else if (scoreDiff > 1) modifier = -15;
-        const baseProb = (player.rating - 60) * 1.2;
-        const totalProb = Math.max(0, Math.min(100, baseProb + modifier));
-        const duelInfo = document.getElementById('duel-info');
-        duelInfo.innerHTML = `${player.name} Save Chance: ${totalProb.toFixed(1)}%`;
-        duelInfo.style.opacity = 1;
-        await sleep(2500);
-        const roll = Math.random() * 100;
-        if (roll < totalProb) {
-          duelInfo.innerHTML = `<strong>SAVE!</strong>`;
-          card.classList.add('duel-winner');
-          if (team === 'home' && awayScore > 0) awayScore--; else if (team === 'away' && homeScore > 0) homeScore--;
+          const RATING_IMPACT_FACTOR = 3;
+          const BASE_DRAW_CHANCE = 15;
+          const diff = homePlayer.rating - awayPlayer.rating;
+          let probDraw = Math.max(0, BASE_DRAW_CHANCE - (Math.abs(diff) * 1.5));
+          let probRemaining = 100 - probDraw;
+          let probHomeWin = (probRemaining / 2) + (diff * RATING_IMPACT_FACTOR);
+          probHomeWin = Math.max(0, Math.min(probRemaining, probHomeWin));
+          let probAwayWin = probRemaining - probHomeWin;
+          const duelInfo = document.getElementById('duel-info');
+          duelInfo.innerHTML = `${homePlayer.name} (${probHomeWin.toFixed(1)}%) vs ${awayPlayer.name} (${probAwayWin.toFixed(1)}%)<br>Draw: ${probDraw.toFixed(1)}%`;
+          duelInfo.style.opacity = 1;
+          await sleep(2500);
+          const roll = Math.random() * 100;
+          let resultMessage = ''; 
+          if (roll < probHomeWin) {
+            homeScore++;
+            homeCard.classList.add('duel-winner');
+            awayCard.classList.add('duel-loser');
+            resultMessage = `<strong>${homePlayer.name} scores a goal!</strong>`;
+          } else if (roll < probHomeWin + probAwayWin) {
+            awayScore++;
+            awayCard.classList.add('duel-winner');
+            homeCard.classList.add('duel-loser');
+            resultMessage = `<strong>${awayPlayer.name} scores a goal!</strong>`;
+          } else {
+            resultMessage = `<strong>Duel tied.</strong>`;
+          }
+          duelInfo.innerHTML = resultMessage;
           scoreboard.textContent = `${homeScore} - ${awayScore}`;
-        } else {
-         duelInfo.innerHTML = `GOAL STANDS!`;
-         card.classList.add('duel-loser');
+          await sleep(2000); 
+          duelInfo.style.opacity = 0;
+          homeCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+          awayCard.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+          homeCard.style.transform = '';
+          awayCard.style.transform = '';
+          await sleep(600);
+        }
+
+        async function handleGoalkeeperPhase() {
+          const keepers = [];
+          const homeGkUniqueId = homeLineup['GK'];
+          const [homeGkPlayerId] = homeGkUniqueId.split('_');
+          const homeGkPlayer = playersDB.find(p => p.id == homeGkPlayerId);
+          const awayGkUniqueId = awayTeam['GK'];
+          const [awayGkPlayerId] = awayGkUniqueId.split('_');
+          const awayGkPlayer = playersDB.find(p => p.id == awayGkPlayerId);
+
+          if (homeScore < awayScore) {
+            keepers.push({ team: 'home', player: homeGkPlayer });
+            keepers.push({ team: 'away', player: awayGkPlayer });
+          } else {
+            keepers.push({ team: 'away', player: awayGkPlayer });
+            keepers.push({ team: 'home', player: homeGkPlayer });
+          }
+
+          for (const { team, player } of keepers) {
+            if ((team === 'home' && awayScore === 0) || (team === 'away' && homeScore === 0)) continue;
+            const card = document.querySelector(`#${team}-team-lineup [data-position="GK"]`);
+            const startRect = card.getBoundingClientRect();
+            const translateX = duelCenterX - (startRect.left + startRect.width / 2);
+            const translateY = duelCenterY - (startRect.top + startRect.height / 2);
+
+        // ¡CORREGIDO! Añadimos rotateY(180deg) también aquí.
+            const transform = `translate(${translateX}px, ${translateY}px) scale(1.7) rotateY(180deg)`;
+
+            card.style.setProperty('--duel-transform', transform);
+            card.classList.add('is-dueling');
+            await sleep(50);
+            card.style.transform = transform;
+            await sleep(800);
+
+        // ... (el resto de la lógica de los porteros no cambia) ...
+            const scoreDiff = (team === 'home' ? homeScore - awayScore : awayScore - homeScore);
+            let modifier = 0;
+            if (scoreDiff === -1) modifier = 20; else if (scoreDiff === 0) modifier = 10; else if (scoreDiff === 1) modifier = -5; else if (scoreDiff < -1) modifier = 5; else if (scoreDiff > 1) modifier = -15;
+            const baseProb = (player.rating - 60) * 1.2;
+            const totalProb = Math.max(0, Math.min(100, baseProb + modifier));
+            const duelInfo = document.getElementById('duel-info');
+            duelInfo.innerHTML = `${player.name} Save Chance: ${totalProb.toFixed(1)}%`;
+            duelInfo.style.opacity = 1;
+            await sleep(2500);
+            const roll = Math.random() * 100;
+            if (roll < totalProb) {
+              duelInfo.innerHTML = `<strong>SAVE!</strong>`;
+              card.classList.add('duel-winner');
+              if (team === 'home' && awayScore > 0) awayScore--; else if (team === 'away' && homeScore > 0) homeScore--;
+              scoreboard.textContent = `${homeScore} - ${awayScore}`;
+            } else {
+             duelInfo.innerHTML = `GOAL STANDS!`;
+             card.classList.add('duel-loser');
+           }
+           await sleep(1500);
+           duelInfo.style.opacity = 0;
+           card.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
+           card.style.transform = '';
+           await sleep(600);
+         }
        }
-       await sleep(1500);
-       duelInfo.style.opacity = 0;
-       card.classList.remove('is-dueling', 'duel-winner', 'duel-loser');
-       card.style.transform = '';
-       await sleep(600);
-     }
-   }
-   await handleGoalkeeperPhase();
+       await handleGoalkeeperPhase();
 
    // ... (la lógica del resultado final no cambia) ...
-   await sleep(1000);
-   const finalResultDiv = document.getElementById('final-result');
-   const finalResultText = document.getElementById('final-result-text');
-   let reward = 0;
-   let result = '';
-   if (homeScore > awayScore) {
-    finalResultText.textContent = "VICTORY";
-    finalResultText.className = "win";
-    reward = ECONOMY_CONFIG.matchRewards.win;
-    result = `VICTORY! You earned ${reward} 💎`;
-  } else if (homeScore < awayScore) {
-    finalResultText.textContent = "DEFEAT";
-    finalResultText.className = "loss";
-    reward = ECONOMY_CONFIG.matchRewards.loss;
-    result = `DEFEAT. You earned ${reward} 💎`;
-  } else {
-    finalResultText.textContent = "DRAW";
-    finalResultText.className = "draw";
-    reward = ECONOMY_CONFIG.matchRewards.draw;
-    result = `DRAW. You earned ${reward} 💎`;
-  }
-  playerCurrency += reward;
-  saveCurrency();
-  updateCurrencyDisplay();
-  showToast(result, 'info', 4000); 
-  finalResultDiv.style.display = 'flex';
-}
+       await sleep(1000);
+       const finalResultDiv = document.getElementById('final-result');
+       const finalResultText = document.getElementById('final-result-text');
+       let reward = 0;
+       let result = '';
+       if (homeScore > awayScore) {
+        finalResultText.textContent = "VICTORY";
+        finalResultText.className = "win";
+        reward = ECONOMY_CONFIG.matchRewards.win;
+        result = `VICTORY! You earned ${reward} 💎`;
+      } else if (homeScore < awayScore) {
+        finalResultText.textContent = "DEFEAT";
+        finalResultText.className = "loss";
+        reward = ECONOMY_CONFIG.matchRewards.loss;
+        result = `DEFEAT. You earned ${reward} 💎`;
+      } else {
+        finalResultText.textContent = "DRAW";
+        finalResultText.className = "draw";
+        reward = ECONOMY_CONFIG.matchRewards.draw;
+        result = `DRAW. You earned ${reward} 💎`;
+      }
+      playerCurrency += reward;
+      saveCurrency();
+      updateCurrencyDisplay();
+      showToast(result, 'info', 4000); 
+      finalResultDiv.style.display = 'flex';
+    }
 
-// --- NUEVA FUNCIÓN EXCLUSIVA PARA EL HOVER EN PARTIDOS ---
-function addMatchCardHover(cardElement) {
+// --- FUNCIÓN EXCLUSIVA PARA EL HOVER EN PARTIDOS ---
+    function addMatchCardHover(cardElement) {
   // Listener para cuando el ratón se mueve sobre la carta
-  cardElement.addEventListener('mousemove', (e) => {
-    // No hacer nada si la carta está en plena animación de duelo
-    if (cardElement.classList.contains('is-dueling')) return;
-
-    cardElement.classList.add('tilting');
+      cardElement.addEventListener('mousemove', (e) => {
+    cardElement.classList.add('tilting'); // <-- RE-AÑADIDO: Activa la visibilidad de los efectos
 
     const rect = cardElement.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // --- 1. Lógica para el TILT 3D ---
-    const rotateX = ((y / rect.height) - 0.5) * 40; 
-    const rotateY = ((x / rect.width) - 0.5) * 40;
-    
-    // --- 2. Lógica para los EFECTOS REACTIVOS (brillos, etc.) ---
+    // --- LÓGICA RE-AÑADIDA PARA EFECTOS REACTIVOS ---
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const posX = (y - centerY) * -0.12;
     const posY = (x - centerX) * 0.12;
-
-    // Aplicamos las variables CSS para los efectos reactivos
     cardElement.style.setProperty('--x', posX);
     cardElement.style.setProperty('--y', posY);
-    
-    // ¡LA CLAVE! Construimos una transformación que INCLUYE el posicionamiento original
-    // para que la carta no salte de su sitio.
-    cardElement.style.transform = `translate(-50%, -50%) rotateY(180deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    // --- FIN DE LA LÓGICA RE-AÑADIDA ---
+
+    // Lógica para el TILT 3D (sin teletransporte)
+    const rotateX = ((y / rect.height) - 0.5) * 40; 
+    const rotateY = ((x / rect.width) - 0.5) * 40;
+
+    const baseTransform = cardElement.classList.contains('is-dueling')
+    ? cardElement.style.getPropertyValue('--duel-transform')
+    : 'translate(-50%, -50%) rotateY(180deg)';
+
+    cardElement.style.transform = `${baseTransform} rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
   });
 
   // Listener para cuando el ratón sale de la carta
-  cardElement.addEventListener('mouseleave', () => {
-    cardElement.classList.remove('tilting');
+      cardElement.addEventListener('mouseleave', () => {
+    cardElement.classList.remove('tilting'); // <-- RE-AÑADIDO: Oculta los efectos
     
-    // Reseteamos las variables de los efectos reactivos
+    // --- LÓGICA RE-AÑADIDA PARA RESETEAR EFECTOS ---
     cardElement.style.setProperty('--x', 0);
     cardElement.style.setProperty('--y', 0);
-    
-    // Dejamos la transformación en blanco para que el CSS tome el control de nuevo
-    // y la devuelva a su posición y rotación originales.
-    cardElement.style.transform = '';
+    // --- FIN DE LA LÓGICA RE-AÑADIDA ---
+
+    if (cardElement.classList.contains('is-dueling')) {
+      cardElement.style.transform = cardElement.style.getPropertyValue('--duel-transform');
+    } else {
+      cardElement.style.transform = ''; 
+    }
   });
-}
+    }
 
-</script>
+  </script>
 
-<div id="toast-notification"></div>
+  <div id="toast-notification"></div>
 
 </body>
 </html>
