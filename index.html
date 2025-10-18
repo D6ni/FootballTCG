@@ -4053,6 +4053,7 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
   function renderLineupView() {
     const pitch = document.getElementById('lineup-pitch');
     pitch.innerHTML = '';
+    let lineupWasModified = false; // Bandera para saber si hemos limpiado alguna entrada.
 
     Object.values(lineupPositions).flat().forEach(posId => {
       const slot = document.createElement('div');
@@ -4060,8 +4061,25 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
       slot.className = 'lineup-slot';
 
       const uniqueCardId = lineup[posId];
+      let cardIsValid = false;
+
+      // --- ¡AQUÍ ESTÁ LA VALIDACIÓN CLAVE! ---
       if (uniqueCardId) {
-            // ... (esta parte no cambia)
+        const [playerId, ...variantParts] = uniqueCardId.split('_');
+        const variantKey = variantParts.join('_');
+        // Comprobamos si la carta aún existe en la colección usando optional chaining (?.)
+        if (collection[playerId]?.[variantKey]) {
+          cardIsValid = true;
+        } else {
+          // La carta está en la alineación pero no en la colección. ¡Es inválida!
+          console.warn(`Card ${uniqueCardId} in lineup for ${posId} not found in collection. Removing.`);
+          delete lineup[posId]; // La eliminamos del objeto lineup.
+          lineupWasModified = true; // Marcamos que hemos hecho un cambio.
+        }
+      }
+
+      if (cardIsValid) {
+        // --- Si la carta es válida, la renderizamos como siempre ---
         const [playerId, ...variantParts] = uniqueCardId.split('_');
         const variantKey = variantParts.join('_');
         const playerData = playersDB.find(p => p.id == playerId);
@@ -4069,49 +4087,32 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
         cardElement.onclick = () => removeCardFromLineup(posId);
         slot.appendChild(cardElement);
       } else {
-            // --- LÓGICA PARA HUECOS VACÍOS ---
+        // --- Si la carta NO es válida O el hueco ya estaba vacío, renderizamos el placeholder ---
         const placeholder = document.createElement('div');
         placeholder.className = 'placeholder-slot';
         placeholder.innerHTML = `
-                <div class="placeholder-position">${posId}</div>
-                <div class="placeholder-name">${positionNames[posId]}</div>
-                <div class="placeholder-instruction">${cardToAddFromAlbum ? 'Click to Place' : 'Click to Add'}</div>
+          <div class="placeholder-position">${posId}</div>
+          <div class="placeholder-name">${positionNames[posId]}</div>
+          <div class="placeholder-instruction">${cardToAddFromAlbum ? 'Click to Place' : 'Click to Add'}</div>
         `;
 
         if (cardToAddFromAlbum) {
-                // MODO COLOCACIÓN: El usuario ha elegido una carta.
           const cardPosition = cardToAddFromAlbum.playerData.position;
           const isValidSlot = lineupPositions[cardPosition].includes(posId);
-
           placeholder.classList.add(isValidSlot ? 'valid-placement' : 'invalid-placement');
           if (isValidSlot) {
             slot.onclick = () => placeHeldCardInSlot(posId);
           }
         } else {
-    // MODO NORMAL: El usuario quiere llenar un hueco.
           slot.onclick = () => {
-        // 1. Guardamos el hueco que queremos llenar (como antes)
             targetedLineupSlot = posId;
-
-        // --- INICIO DE LA NUEVA LÓGICA ---
-        // 2. Obtenemos la posición general correspondiente al hueco pulsado
             const generalPosition = getGeneralPosition(posId);
-
             if (generalPosition) {
-            // 3. Actualizamos el estado de los filtros con la posición
               activeFilters.query = generalPosition;
-
-            // 4. Actualizamos también el valor del campo de búsqueda para que sea visible
               const searchInput = document.getElementById('name-search');
-              if (searchInput) {
-                searchInput.value = generalPosition;
-              }
+              if (searchInput) searchInput.value = generalPosition;
             }
-        // --- FIN DE LA NUEVA LÓGICA ---
-
-        // 5. Cerramos la alineación y abrimos el álbum (como antes)
             document.getElementById('lineup-overlay').classList.remove('visible');
-        // Al hacer click, el álbum se renderizará usando el filtro que acabamos de establecer
             document.getElementById('showcaseBtn').click();
           };
         }
@@ -4119,7 +4120,13 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
       }
       pitch.appendChild(slot);
     });
-    validateLineup();
+
+    // Si hemos limpiado alguna carta inválida, guardamos la alineación corregida.
+    if (lineupWasModified) {
+      saveLineup();
+    }
+
+    validateLineup(); // Validamos la alineación al final, como siempre.
   }
 
   function addCardToLineup(playerData, variantKey) {
@@ -4578,22 +4585,22 @@ function generateRandomTeam() {
 
 // Pega esta función completa en lugar de la que tienes
       // Pega esta función completa en lugar de la que tienes
-function createMatchCardElement(uniqueCardId, position) {
-    const [playerId, isGoldenStr, variant] = uniqueCardId.split('_');
-    const isGolden = isGoldenStr === 'true';
-    const playerData = playersDB.find(p => p.id == playerId);
-    if (!playerData) return null;
+      function createMatchCardElement(uniqueCardId, position) {
+        const [playerId, isGoldenStr, variant] = uniqueCardId.split('_');
+        const isGolden = isGoldenStr === 'true';
+        const playerData = playersDB.find(p => p.id == playerId);
+        if (!playerData) return null;
 
-    const variantClass = variant !== 'none' ? `variant-${variant}` : '';
-    const goldenClass = isGolden ? 'golden' : '';
+        const variantClass = variant !== 'none' ? `variant-${variant}` : '';
+        const goldenClass = isGolden ? 'golden' : '';
 
-    const div = document.createElement("div");
-    
-    div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass}`;
-    div.dataset.position = position;
-    const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+        const div = document.createElement("div");
+        
+        div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass}`;
+        div.dataset.position = position;
+        const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
-    div.innerHTML = `
+        div.innerHTML = `
         <div class="side front">
             <img src="${playerData.img}" class="player-image" alt="${playerData.name}" />
             ${indicatorsHTML} 
@@ -4602,12 +4609,12 @@ function createMatchCardElement(uniqueCardId, position) {
             </div>
         </div>
         <div class="side back"></div>
-    `;
-    
-    addMatchCardHover(div);
-    
-    return div;
-}
+        `;
+        
+        addMatchCardHover(div);
+        
+        return div;
+      }
 
       function renderLineup(team, containerId) {
         const container = document.getElementById(containerId);
