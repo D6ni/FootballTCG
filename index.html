@@ -34,7 +34,6 @@
       }
     }
 
-
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
@@ -372,6 +371,7 @@ button:not(:disabled):hover {
 /* 1. Propiedades COMUNES para los 3 botones para no repetir código */
 #openPacksViewBtn,
 #showcaseBtn,
+#roulette-btn,
 button[onclick="resetCollection()"] {
   border: none; /* Quitamos el borde para que no se vea alrededor del PNG */
   color: #FFFFFF; /* Texto blanco para todos */
@@ -395,8 +395,9 @@ button[onclick="resetCollection()"] {
 /* 2. Propiedades de hover COMUNES para los 3 botones */
 #openPacksViewBtn:not(:disabled):hover,
 #showcaseBtn:not(:disabled):hover,
+#roulette-btn:not(:disabled):hover, /* <-- AÑADE ESTA LÍNEA */
 button[onclick="resetCollection()"]:not(:disabled):hover {
-  box-shadow: none; /* MUY IMPORTANTE: Quitamos el 'glow' para que no interfiera con la imagen hover */
+  box-shadow: none;
 }
 
 
@@ -2098,16 +2099,417 @@ h1 img {
   display: none;
 }
 
+/* --- ESTILOS PARA EL JUEGO DE LA RULETA (REDiseñada y Más Grande) --- */
+#roulette-btn {
+  background-color: #d13b9a; /* Color de fallback */
+  background-image: url('images/buttons/btn-normal.png');
+}
+#roulette-btn:hover {
+  background-image: url('images/buttons/btn-hover.png');
+}
+
+#roulette-overlay {
+  position: fixed; inset: 0; background: rgba(10, 12, 20, 0.98); z-index: 1000;
+  display: none; place-items: center; padding: 20px; opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+#roulette-overlay.visible { display: grid; opacity: 1; }
+
+#roulette-modal {
+  background: #1d1f24; border-radius: 15px; padding: 25px 30px;
+  text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1); width: 90%;
+  max-width: 1100px; /* Ancho aumentado considerablemente */
+  position: relative;
+}
+
+#roulette-modal h2 { margin: 0 0 5px 0; color: #eee; font-size: 28px; }
+#roulette-modal p { color: #999; margin-bottom: 20px; font-size: 16px; height: 1.2em; }
+#close-roulette-btn {
+  position: absolute; top: 15px; right: 15px; width: 30px; height: 30px;
+  padding: 0; font-size: 16px; background-color: #ff4d4d; color: #fff;
+  border-radius: 50%; margin-top: 0;
+}
+
+.roulette-game-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px; /* Más espacio */
+  margin-bottom: 25px;
+}
+
+.roulette-container {
+  position: relative; width: 450px; height: 450px; /* ¡MÁS GRANDE! */
+  flex-shrink: 0;
+}
+.roulette-pointer {
+  position: absolute; top: -15px; left: 50%;
+  transform: translateX(-50%); width: 0; height: 0;
+  border-left: 20px solid transparent; border-right: 20px solid transparent;
+  border-top: 35px solid #ffeb3b; z-index: 10;
+  filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+#roulette-wheel {
+  width: 100%; height: 100%; border-radius: 50%; position: relative;
+  border: 12px solid #101830; /* <-- Color de borde actualizado */
+  box-shadow: inset 0 0 25px rgba(5, 238, 255, 0.4), 0 0 25px rgba(0,0,0,0.5); /* <-- Brillo interior azulado */
+  background-color: #1a472a; overflow: hidden; transform: rotate(0deg);
+}
+.roulette-line {
+  position: absolute; top: 0; left: 50%; transform-origin: bottom center;
+  height: 50%; width: 2px; background-color: #243575; /* <-- Color de línea actualizado */
+  transform: translateX(-1px); user-select: none;
+}
+.roulette-number {
+  position: absolute; top: 0; left: 50%; transform-origin: bottom center;
+  height: 50%; width: 1px; transform: translateX(-0.5px); user-select: none;
+}
+.roulette-number span {
+  position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  color: white; font-weight: bold; font-size: 20px; /* Fuente más grande */
+  text-shadow: 0 0 3px black;
+}
+
+/* --- ESTILOS DEL TAPETE DE APUESTAS --- */
+#roulette-betting-table {
+  display: grid;
+  grid-template-areas:
+  "zero numbers"
+  ".    columns"
+  "dozens dozens"
+  "outside outside";
+  grid-template-columns: 60px 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: 5px;
+  background-color: #1a472a;
+  padding: 10px;
+  border-radius: 8px;
+  border: 4px solid #876a4a;
+  width: 100%;
+}
+.bet-slot {
+  display: flex; align-items: center; justify-content: center;
+  background-color: #2b8f49; border: 2px solid #1a472a;
+  color: white; font-weight: bold; cursor: pointer;
+  border-radius: 4px; transition: all 0.2s ease;
+  user-select: none;
+  font-size: 16px; /* Fuente del tapete más grande */
+}
+.bet-slot:not(.disabled):hover {
+  background-color: #3cb862;
+  border-color: #ffeb3b;
+}
+.bet-slot.selected {
+  background-color: #ffeb3b !important;
+  color: #222 !important;
+  border-color: #fff !important;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 235, 59, 0.6);
+}
+.bet-slot.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bet-grid-numbers {
+  grid-area: numbers;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 5px;
+}
+.bet-grid-numbers .bet-slot {
+  aspect-ratio: 1 / 1;
+}
+.bet-grid-numbers .bet-slot.red { background-color: #d13b3b; }
+.bet-grid-numbers .bet-slot.black { background-color: #222; }
+
+.bet-slot.zero {
+  grid-area: zero;
+  grid-row: 1 / 3; /* Hace que el cero ocupe el alto de los números y las columnas */
+}
+.bet-grid-columns {
+  grid-area: columns;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 5px;
+}
+.bet-grid-columns .bet-slot {
+  grid-column: span 4; /* Cada botón de columna ocupa el espacio de 4 números */
+}
+
+.bet-grid-dozens { grid-area: dozens; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.bet-grid-outside { grid-area: outside; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.bet-grid-outside .bet-slot.red { background-color: #d13b3b; }
+.bet-grid-outside .bet-slot.black { background-color: #222; }
+
+#roulette-controls {
+  display: flex; 
+  justify-content: center; 
+  align-items: flex-end; /* <-- ¡LA CLAVE! Alinea por la base de los elementos. */
+  gap: 20px;
+}
+#roulette-controls .control-group { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 5px; 
+}
+#roulette-controls label { 
+  font-size: 16px; 
+  color: #ccc; 
+  font-weight: 600; 
+}
+#roulette-controls label .gem-icon { 
+  color: #4af0e0; 
+  font-size: 14px; 
+}
+#roulette-controls input {
+  width: 180px; 
+  padding: 12px; 
+  text-align: center; 
+  font-size: 22px; /* Más grande */
+  font-weight: bold; 
+  border-radius: 6px; 
+  border: 1px solid #555;
+  background-color: #222; 
+  color: #fff;
+}
+#spin-roulette-btn {
+  background-color: #1f7; 
+  color: #022; 
+  padding: 14px 28px; /* Más grande */
+  font-size: 18px; 
+  margin-top: 0; /* Asegura que no tenga un margen superior que lo descuadre */
+}
+#spin-roulette-btn.free-spin {
+  background-color: #ffc84a; color: #111;
+  box-shadow: 0 0 20px rgba(255, 200, 74, 0.7);
+  animation: free-spin-glow 2s infinite alternate;
+}
+@keyframes free-spin-glow {
+  from { box-shadow: 0 0 10px rgba(255, 200, 74, 0.4); }
+  to { box-shadow: 0 0 30px rgba(255, 200, 74, 0.9); }
+}
+
+#roulette-wheel.spinning {
+  transition: transform 6s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+/* --- AÑADE ESTE BLOQUE COMPLETO A TU CSS --- */
+
+#roulette-rewards-info {
+  position: absolute;
+  right: 100%;
+  margin-right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  width: 240px; 
+  flex-shrink: 0; 
+  color: #aaa;
+}
+
+#roulette-rewards-info h3 {
+  color: #eee;
+  font-size: 20px;
+  margin: 0 0 5px 0;
+  text-align: left;
+  width: 100%;
+}
+
+#roulette-rewards-info p {
+  font-size: 13px;
+  color: #777;
+  margin: 0 0 15px 0;
+  text-align: left;
+  width: 100%;
+  font-style: italic;
+}
+
+#roulette-rewards-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+#roulette-rewards-info li {
+  text-align: left;
+  margin-bottom: 15px;
+  line-height: 1.4;
+  font-size: 14px;
+  border-left: 3px solid #4a5568; /* Una línea sutil para separar */
+  padding-left: 10px;
+}
+
+#roulette-rewards-info li span {
+  display: block; /* Hace que la descripción vaya a una nueva línea */
+}
+
+#roulette-rewards-info li strong {
+  font-weight: 700;
+  color: #ffc84a; /* Color dorado para destacar */
+}
+
+.roulette-wrapper {
+  position: relative;
+}
+
+#daily-rewards-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px; /* Espacio entre los premios */
+  margin-bottom: 25px;
+}
+
+/* Ajustamos el tamaño de los items para que quepan bien */
+#daily-rewards-container .reward-item {
+  width: 150px; /* Más pequeño que el original */
+  margin-bottom: 0; /* Quitamos el margen que ya no es necesario */
+}
+
+/* --- ESTILOS PARA LA VISTA DE ELECCIÓN DE CARTA (MEJORADO) --- */
+#choice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.95);
+  z-index: 1100;
+  display: none;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  padding: 20px;
+}
+
+#choice-overlay.visible {
+  display: grid;
+  opacity: 1;
+}
+
+#choice-modal {
+  text-align: center;
+  color: #fff;
+  width: 100%;
+  max-width: 1500px; /* Un poco más de ancho para la separación */
+}
+
+#choice-modal h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(74, 240, 224, 0.5);
+}
+
+#choice-modal p {
+  font-size: 1.1rem;
+  color: #ccc;
+  margin-bottom: 40px;
+}
+
+#choice-cards-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 60px; /* <-- CAMBIO 1: Aumentamos la separación entre cartas */
+  perspective: 2000px;
+  height: 450px; /* Damos una altura fija para evitar saltos */
+}
+
+/* Redefinimos el tamaño de la carta SÓLO para la vista de elección */
+#choice-cards-container .card {
+  --card-w: 300px;
+  --card-h: 427px;
+  position: relative;
+  top: auto;
+  left: auto;
+  /* CAMBIO 2: La transición ahora es más completa */
+  transition: transform 2.5s ease, box-shadow 0.3s ease-out;
+}
+
+/* CAMBIO 3: Efecto hover mejorado que las trae hacia adelante */
+#choice-cards-container .card:not(.flipped):hover {
+  transform: scale(1.05) translateY(-20px);
+}
+
+/* CAMBIO 4: El efecto hover para la carta YA GIRADA usará el tilt 3D */
+#choice-cards-container .card.flipped {
+  cursor: pointer; /* Cambiamos el cursor para indicar que se puede elegir */
+}
+
+/* --- ESTILO PARA EL INDICADOR DE CARTA POSEÍDA (NUEVO) --- */
+.owned-indicator {
+  opacity: 0.8;
+  position: absolute;
+  bottom: 3px; /* Lo posicionamos en la parte inferior */
+  left: 50%;
+  /* Centramos y rotamos como en tu croquis */
+  transform: translateX(-50%) rotate(-8deg); 
+  z-index: 10; /* Nos aseguramos de que esté por encima de la imagen */
+  
+  font-size: 55px; /* Tamaño de fuente grande y llamativo */
+  font-weight: 900; /* La fuente más gruesa posible */
+  color: #080808; /* Un gris oscuro para el relleno */
+  
+  /* ¡La magia del contorno rojo! */
+  -webkit-text-stroke: 2.5px #B30505; /* Borde rojo (#c0392b es un rojo intenso) */
+  
+  /* Sombra sutil para darle profundidad y separarlo del fondo */
+  text-shadow: 0px 3px 5px rgba(0, 0, 0, 0.6);
+  
+  /* Importante para que no interfiera con los clics en la carta */
+  pointer-events: none; 
+  user-select: none;
+}
+
+/* --- INDICADOR DE CARTA NUEVA EN EL ÁLBUM (POSICIÓN CORREGIDA) --- */
+.album-new-indicator {
+  position: absolute;
+  top: -8px;
+  right: -15px; 
+  z-index: 100;
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffeb3b;
+  transform: rotate(30deg) rotateY(180deg); 
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 
+  -1.5px -1.5px 0 #000,  
+  1.5px -1.5px 0 #000,
+  -1.5px  1.5px 0 #000,
+  1.5px  1.5px 0 #000,
+  0 0 5px rgba(0,0,0,0.5);
+  
+  animation: album-new-fade-in 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes album-new-fade-in {
+  from {
+    opacity: 0;
+    /* También corregimos la rotación en la animación */
+    transform: rotate(45deg) scale(0.8) rotateY(180deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(30deg) scale(1) rotateY(180deg);
+  }
+}
+
 </style>
 </head>
 <body>
   <audio id="flipSound" src="sounds/flip-sound.mp3" preload="auto"></audio>
   <audio id="buttonClickSound" src="sounds/button-click.mp3" preload="auto"></audio>
+  <audio id="rouletteSpinSound" src="sounds/roulette.mp3" preload="auto"></audio>
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
   <div id="player-currency-display" class="player-currency">0 💎</div>
   <div class="button-container">
     <button id="openPacksViewBtn">BUY / OPEN PACKS</button>
     <button id="showcaseBtn">MY ALBUM</button>
+    <button id="roulette-btn">ROULETTE GAME</button>
     <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>
   </div>
 
@@ -2241,10 +2643,17 @@ h1 img {
   <div id="daily-reward-modal">
     <button id="close-reward-btn">X</button>
     <h2>Daily Reward!</h2>
-    <p>Your free packs for today have arrived!</p>
-    <div class="reward-item">
-      <img src="packs/packs/common-pack.png" alt="Common Pack">
-      <span class="reward-quantity">x3</span>
+    <p>Your daily rewards have arrived! Claim your packs and a free spin for the roulette.</p>
+    <div id="daily-rewards-container">
+      <div class="reward-item">
+        <img src="packs/packs/common-pack.png" alt="Common Pack">
+        <span class="reward-quantity">x3</span>
+      </div>
+      <div class="reward-item">
+        <!-- NOTA: Deberás crear o encontrar una imagen para esto -->
+        <img src="images/icons/roulette-spin.png" alt="Free Roulette Spin"> 
+        <span class="reward-quantity" style="color: #4af0e0;">x1</span>
+      </div>
     </div>
     <button id="claim-reward-btn">Claim</button>
   </div>
@@ -2262,108 +2671,100 @@ h1 img {
   </div>
 </div>
 
+<!-- ============= VISTA DE LA RULETA =============== -->
+<div id="roulette-overlay">
+  <div class="roulette-wrapper">
+    <div id="roulette-rewards-info">
+      <h3>Jackpot Prizes</h3>
+      <p>(When you hit the specific number)</p>
+      <ul>
+        <li>
+          <strong>Bet 10-99 💎</strong>
+          <span>Win 35x your bet in Gems.</span>
+        </li>
+        <li>
+          <strong>Bet 100-999 💎</strong>
+          <span>Win 20x your bet + a <strong>Collectors Pack!</strong></span>
+        </li>
+        <li>
+          <strong>Bet 1000+ 💎</strong>
+          <span>Win 15x your bet + <strong>THREE</strong> Collectors Packs!</span>
+        </li>
+        <li>
+          <strong>Bet 1000+ on ZERO 💎</strong>
+          <span>Win 10x your bet + a special <strong>Roulette Pack!</strong></span>
+        </li>
+        <li>
+          <strong>Free Daily Spin</strong>
+          <span>Win a guaranteed <strong>Roulette Pack!</strong></span>
+        </li>
+      </ul>
+    </div>
+    <div id="roulette-modal">
+      <button id="close-roulette-btn">X</button>
+      <h2>High Stakes Roulette</h2>
+      <p id="roulette-status-text">Place your bet on the table below.</p>
+
+      <div class="roulette-game-area">
+        <div class="roulette-container">
+          <div class="roulette-pointer"></div>
+          <div id="roulette-wheel"></div>
+        </div>
+
+        <div id="roulette-betting-table">
+          <div class="bet-slot zero" data-bet-type="number" data-bet-value="0">0</div>
+          <div class="bet-grid-numbers">
+            <!-- Los números del 1 al 36 se generarán aquí con JS -->
+          </div>
+          <div class="bet-grid-columns">
+            <div class="bet-slot" data-bet-type="column" data-bet-value="1">1 to 34 Line</div>
+            <div class="bet-slot" data-bet-type="column" data-bet-value="2">2 to 35 Line</div>
+            <div class="bet-slot" data-bet-type="column" data-bet-value="3">3 to 36 Line</div>
+          </div>
+          <div class="bet-grid-dozens">
+            <div class="bet-slot" data-bet-type="dozen" data-bet-value="1">1st 12</div>
+            <div class="bet-slot" data-bet-type="dozen" data-bet-value="2">2nd 12</div>
+            <div class="bet-slot" data-bet-type="dozen" data-bet-value="3">3rd 12</div>
+          </div>
+          <div class="bet-grid-outside">
+            <div class="bet-slot" data-bet-type="low" data-bet-value="low">1-18</div>
+            <div class="bet-slot" data-bet-type="even" data-bet-value="even">EVEN</div>
+            <div class="bet-slot red" data-bet-type="color" data-bet-value="red"></div>
+            <div class="bet-slot black" data-bet-type="color" data-bet-value="black"></div>
+            <div class="bet-slot" data-bet-type="odd" data-bet-value="odd">ODD</div>
+            <div class="bet-slot" data-bet-type="high" data-bet-value="high">19-36</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="roulette-controls">
+        <div class="control-group">
+          <label for="roulette-bet-input">Your Bet ( <span class="gem-icon">💎</span> )</label>
+          <input type="number" id="roulette-bet-input" value="10" min="10">
+        </div>
+        <button id="spin-roulette-btn">SPIN THE WHEEL!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== VISTA DE ELECCIÓN DE CARTA (NUEVO) =============== -->
+<div id="choice-overlay">
+  <div id="choice-modal">
+    <h2>Choose Your Relic!</h2>
+    <p>Select one of the three cards below to add to your collection.</p>
+    <div id="choice-cards-container">
+      <!-- Las 3 cartas de elección se generarán aquí con JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script src="database.js"></script>
+
 <script>
-    const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
-    const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
-  const playersDB = [
-    /* RELIC (12 Jugadores) */
-    { id: 1, name: "Lionel Messi", position: "ATK", rating: 99, rarity: "relic", img: "images/lionelmessi.png", teams: ["Inter Miami","FC Barcelona"], country: "Argentina" },
-    { id: 2, name: "Pelé", position: "ATK", rating: 98, rarity: "relic", img: "images/pele.png", teams: ["Retired"], country: "Brazil" },
-    { id: 3, name: "Diego Maradona", position: "ATK", rating: 97, rarity: "relic", img: "images/diegomaradona.png", teams: ["Retired"], country: "Argentina" },
-    { id: 4, name: "Cristiano Ronaldo", position: "ATK", rating: 95, rarity: "relic", img: "images/cristianoronaldo.png", teams: ["Al Nassr","Real Madrid"], country: "Portugal" },
-    { id: 5, name: "Johan Cruyff", position: "MID", rating: 97, rarity: "relic", img: "images/johancruyff.png", teams: ["Retired","Ajax","FC Barcelona"], country: "Netherlands" },
-    { id: 6, name: "Zinedine Zidane", position: "MID", rating: 95, rarity: "relic", img: "images/zinedinezidane.png", teams: ["Retired"], country: "France" },
-    { id: 7, name: "Ronaldo Nazário", position: "ATK", rating: 95, rarity: "relic", img: "images/ronaldonazario.png", teams: ["Retired","FC Barcelona","Real Madrid"], country: "Brazil" },
-    { id: 8, name: "Ronaldinho", position: "ATK", rating: 96, rarity: "relic", img: "images/ronaldinho.png", teams: ["Retired","FC Barcelona"], country: "Brazil" },
-    { id: 9, name: "Andrés Iniesta", position: "MID", rating: 95, rarity: "relic", img: "images/andresiniesta.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
-    { id: 10, name: "Xavi Hernández", position: "MID", rating: 96, rarity: "relic", img: "images/xavihernandez.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
-    { id: 11, name: "Carles Puyol", position: "DEF", rating: 92, rarity: "relic", img: "images/carlespuyol.png", teams: ["Retired","FC Barcelona"], country: "Spain" },
-    { id: 12, name: "Oliver Khan", position: "GK", rating: 92, rarity: "relic", img: "images/oliverkhan.png", teams: ["Retired"], country: "Germany" },
+  const TEST_MODE_FILL_ALBUM = true; /*PRUEBA ALBUM LLENO*/
+  const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
 
-    /* LEGENDARY (17 Jugadores) */
-    { id: 13, name: "Kylian Mbappé", position: "ATK", rating: 94, rarity: "legendary", img: "images/kylianmbappe.png", teams: ["Real Madrid"], country: "France" },
-    { id: 14, name: "Erling Haaland", position: "ATK", rating: 93, rarity: "legendary", img: "images/erlinghaaland.png", teams: ["Manchester City"], country: "Norway" },
-    { id: 15, name: "Nemanja Vidic", position: "DEF", rating: 93, rarity: "legendary", img: "images/nemanjavidic.png", teams: ["Retired"], country: "Serbia" },
-    { id: 16, name: "Thierry Henry", position: "ATK", rating: 94, rarity: "legendary", img: "images/thierryhenry.png", teams: ["Retired","FC Barcelona","Arsenal"], country: "France" },
-    { id: 17, name: "Kevin De Bruyne", position: "MID", rating: 92, rarity: "legendary", img: "images/kevindebruyne.png", teams: ["Manchester City"], country: "Belgium" },
-    { id: 18, name: "Hristo Stoichkov", position: "ATK", rating: 92, rarity: "legendary", img: "images/hristostoichkov.png", teams: ["Retired","FC Barcelona"], country: "Bulgaria" },
-    { id: 19, name: "Sergio Busquets", position: "MID", rating: 93, rarity: "legendary", img: "images/sergiobusquets.png", teams: ["Inter Miami","FC Barcelona"], country: "Spain" },
-    { id: 20, name: "Zlatan Ibrahimovic", position: "ATK", rating: 91, rarity: "legendary", img: "images/zlatanibrahimovic.png", teams: ["Retired"], country: "Sweden" },
-    { id: 21, name: "Neymar Jr.", position: "ATK", rating: 93, rarity: "legendary", img: "images/neymarjr.png", teams: ["Santos","FC Barcelona"], country: "Brazil" },
-    { id: 22, name: "Virgil van Dijk", position: "DEF", rating: 91, rarity: "legendary", img: "images/virgilvandijk.png", teams: ["Liverpool"], country: "Netherlands" },
-    { id: 23, name: "Gennaro Gattuso", position: "MID", rating: 91, rarity: "legendary", img: "images/gennarogattuso.png", teams: ["Retired"], country: "Italy" },
-    { id: 24, name: "Robert Lewandowski", position: "ATK", rating: 91, rarity: "legendary", img: "images/robertlewandowski.png", teams: ["FC Barcelona"], country: "Poland" },
-    { id: 25, name: "Sergio Ramos", position: "DEF", rating: 90, rarity: "legendary", img: "images/sergioramos.png", teams: ["Sevilla"], country: "Spain" },
-    { id: 26, name: "Thibaut Courtois", position: "GK", rating: 90, rarity: "legendary", img: "images/thibautcourtois.png", teams: ["Real Madrid"], country: "Belgium" },
-    { id: 27, name: "Mohamed Salah", position: "ATK", rating: 91, rarity: "legendary", img: "images/mohamedsalah.png", teams: ["Liverpool"], country: "Egypt" },
-    { id: 28, name: "Paolo Maldini", position: "DEF", rating: 94, rarity: "legendary", img: "images/paolomaldini.png", teams: ["Retired"], country: "Italy" },
-    { id: 54, name: "Lamine Yamal", position: "ATK", rating: 94, rarity: "legendary", img: "images/lamineyamal.png", teams: ["FC Barcelona"], country: "Spain" },
-
-    /* EPIC (17 Jugadores) */
-    { id: 29, name: "Jude Bellingham", position: "MID", rating: 88, rarity: "epic", img: "images/judebellingham.png", teams: ["Real Madrid"], country: "England" },
-    { id: 30, name: "Harry Kane", position: "ATK", rating: 90, rarity: "epic", img: "images/harrykane.png", teams: ["Bayern Munich"], country: "England" },
-    { id: 31, name: "Rodri", position: "MID", rating: 89, rarity: "epic", img: "images/rodri.png", teams: ["Manchester City"], country: "Spain" },
-    { id: 32, name: "Alisson Becker", position: "GK", rating: 89, rarity: "epic", img: "images/alissonbecker.png", teams: ["Liverpool"], country: "Brazil" },
-    { id: 33, name: "Pedri", position: "MID", rating: 90, rarity: "epic", img: "images/pedri.png", teams: ["FC Barcelona"], country: "Spain" },
-    { id: 34, name: "Lautaro Martínez", position: "ATK", rating: 88, rarity: "epic", img: "images/lautaromartinez.png", teams: ["Inter Milan"], country: "Argentina" },
-    { id: 35, name: "Bukayo Saka", position: "ATK", rating: 88, rarity: "epic", img: "images/bukayosaka.png", teams: ["Arsenal"], country: "England" },
-    { id: 36, name: "Jamal Musiala", position: "MID", rating: 88, rarity: "epic", img: "images/jamalmusiala.png", teams: ["Bayern Munich"], country: "Germany" },
-    { id: 37, name: "Julián Álvarez", position: "ATK", rating: 87, rarity: "epic", img: "images/julianalvarez.png", teams: ["Manchester City"], country: "Argentina" },
-    { id: 38, name: "Frenkie de Jong", position: "MID", rating: 89, rarity: "epic", img: "images/frenkiedejong.png", teams: ["FC Barcelona"], country: "Netherlands" },
-    { id: 39, name: "William Saliba", position: "DEF", rating: 87, rarity: "epic", img: "images/williamsaliba.png", teams: ["Arsenal"], country: "France" },
-    { id: 40, name: "Viktor Gyokeres", position: "ATK", rating: 87, rarity: "epic", img: "images/viktorgyokeres.png", teams: ["Sporting CP"], country: "Sweden" },
-    { id: 41, name: "Rúben Dias", position: "DEF", rating: 87, rarity: "epic", img: "images/rubendias.png", teams: ["Manchester City"], country: "Portugal" },
-    { id: 42, name: "Son Heung-min", position: "ATK", rating: 87, rarity: "epic", img: "images/sonheungmin.png", teams: ["Tottenham Hotspur"], country: "South Korea" },
-    { id: 43, name: "Gavi", position: "MID", rating: 86, rarity: "epic", img: "images/gavi.png", teams: ["FC Barcelona"], country: "Spain" },
-    { id: 44, name: "Marc-André ter Stegen", position: "GK", rating: 86, rarity: "epic", img: "images/terstegen.png", teams: ["FC Barcelona"], country: "Germany" },
-    { id: 45, name: "Joan Garcia", position: "GK", rating: 86, rarity: "epic", img: "images/joangarcia.png", teams: ["FC Barcelona"], country: "Spain" },
-
-    /* RARE (18 Jugadores) */
-    { id: 46, name: "Martin Ødegaard", position: "MID", rating: 85, rarity: "rare", img: "images/martinodegaard.png", teams: ["Arsenal"], country: "Norway" },
-    { id: 47, name: "Declan Rice", position: "MID", rating: 85, rarity: "rare", img: "images/declanrice.png", teams: ["Arsenal"], country: "England" },
-    { id: 48, name: "Eric Garcia", position: "DEF", rating: 85, rarity: "rare", img: "images/ericgarcia.png", teams: ["FC Barcelona"], country: "Spain" },
-    { id: 49, name: "Jackson Irvine", position: "MID", rating: 85, rarity: "rare", img: "images/jacksonirvine.png", teams: ["FC St. Pauli"], country: "Australia" },
-    { id: 50, name: "Alexis Mac Allister", position: "MID", rating: 84, rarity: "rare", img: "images/alexismacallister.png", teams: ["Liverpool"], country: "Argentina" },
-    { id: 51, name: "Alejandro Grimaldo", position: "DEF", rating: 84, rarity: "rare", img: "images/alejandrogrimaldo.png", teams: ["Bayer Leverkusen"], country: "Spain" },
-    { id: 52, name: "Theo Hernández", position: "DEF", rating: 84, rarity: "rare", img: "images/theohernandez.png", teams: ["AC Milan"], country: "France" },
-    { id: 53, name: "Takefusa Kubo", position: "ATK", rating: 83, rarity: "rare", img: "images/takefusakubo.png", teams: ["Real Sociedad"], country: "Japan" },
-    { id: 55, name: "Darwin Núñez", position: "ATK", rating: 81, rarity: "rare", img: "images/darwinnunez.png", teams: ["Liverpool"], country: "Uruguay" },
-    { id: 56, name: "Christopher Nkunku", position: "MID", rating: 82, rarity: "rare", img: "images/christophernkunku.png", teams: ["Chelsea"], country: "France" },
-    { id: 57, name: "Unai Simón", position: "GK", rating: 81, rarity: "rare", img: "images/unaisimon.png", teams: ["Athletic Bilbao"], country: "Spain" },
-    { id: 58, name: "Nicolò Barella", position: "MID", rating: 81, rarity: "rare", img: "images/nicolobarella.png", teams: ["Inter Milan"], country: "Italy" },
-    { id: 59, name: "Alexander Isak", position: "ATK", rating: 84, rarity: "rare", img: "images/alexanderisak.png", teams: ["Newcastle United"], country: "Sweden" },
-    { id: 60, name: "Alphonso Davies", position: "DEF", rating: 81, rarity: "rare", img: "images/alphonsodavies.png", teams: ["Bayern Munich"], country: "Canada" },
-    { id: 61, name: "Ollie Watkins", position: "ATK", rating: 81, rarity: "rare", img: "images/olliewatkins.png", teams: ["Aston Villa"], country: "England" },
-    { id: 62, name: "Mikel Merino", position: "ATK", rating: 81, rarity: "rare", img: "images/mikelmerino.png", teams: ["Real Sociedad"], country: "Spain" },
-    { id: 63, name: "Federico Chiesa", position: "ATK", rating: 81, rarity: "rare", img: "images/federicochiesa.png", teams: ["Juventus"], country: "Italy" },
-
-    /* COMMON (25 Jugadores) */
-    { id: 64, name: "Enzo Fernández", position: "MID", rating: 82, rarity: "common", img: "images/enzofernandez.png", teams: ["Chelsea"], country: "Argentina" },
-    { id: 65, name: "Josko Gvardiol", position: "DEF", rating: 82, rarity: "common", img: "images/joskogvardiol.png", teams: ["Manchester City"], country: "Croatia" },
-    { id: 66, name: "Bruno Guimarães", position: "MID", rating: 82, rarity: "common", img: "images/brunoguimaraes.png", teams: ["Newcastle United"], country: "Brazil" },
-    { id: 67, name: "Dominik Szoboszlai", position: "MID", rating: 82, rarity: "common", img: "images/dominikszoboszlai.png", teams: ["Liverpool"], country: "Hungary" },
-    { id: 68, name: "Lisandro Martínez", position: "DEF", rating: 82, rarity: "common", img: "images/lisandromartinez.png", teams: ["Manchester United"], country: "Argentina" },
-    { id: 69, name: "Pau Torres", position: "DEF", rating: 81, rarity: "common", img: "images/pautorres.png", teams: ["Aston Villa"], country: "Spain" },
-    { id: 70, name: "Lucas Paquetá", position: "MID", rating: 81, rarity: "common", img: "images/lucaspaqueta.png", teams: ["West Ham United"], country: "Brazil" },
-    { id: 71, name: "Nico Williams", position: "ATK", rating: 80, rarity: "common", img: "images/nicowilliams.png", teams: ["Athletic Bilbao"], country: "Spain" },
-    { id: 72, name: "André Onana", position: "GK", rating: 78, rarity: "common", img: "images/andreonana.png", teams: ["Manchester United"], country: "Cameroon" },
-    { id: 73, name: "Iñaki Williams", position: "ATK", rating: 78, rarity: "common", img: "images/inakiwilliams.png", teams: ["Athletic Bilbao"], country: "Ghana" },
-    { id: 74, name: "João Palhinha", position: "MID", rating: 80, rarity: "common", img: "images/joaopalhinha.png", teams: ["Fulham"], country: "Portugal" },
-    { id: 75, name: "Jeremie Frimpong", position: "DEF", rating: 80, rarity: "common", img: "images/jeremiefrimpong.png", teams: ["Bayer Leverkusen"], country: "Netherlands" },
-    { id: 76, name: "Sandro Tonali", position: "MID", rating: 80, rarity: "common", img: "images/sandrotonali.png", teams: ["Newcastle United"], country: "Italy" },
-    { id: 77, name: "Ferran Jutgla", position: "ATK", rating: 79, rarity: "common", img: "images/ferranjutgla.png", teams: ["Club Brugge"], country: "Spain" },
-    { id: 78, name: "Moisés Caicedo", position: "MID", rating: 79, rarity: "common", img: "images/moisescaicedo.png", teams: ["Chelsea"], country: "Ecuador" },
-    { id: 79, name: "Pau Cubarsí", position: "DEF", rating: 81, rarity: "common", img: "images/paucubarsi.png", teams: ["FC Barcelona"], country: "Spain" },
-    { id: 80, name: "Kaoru Mitoma", position: "ATK", rating: 79, rarity: "common", img: "images/kaorumitoma.png", teams: ["Brighton & Hove Albion"], country: "Japan" },
-    { id: 81, name: "Guido Rodríguez", position: "MID", rating: 79, rarity: "common", img: "images/guidorodriguez.png", teams: ["Real Betis"], country: "Argentina" },
-    { id: 82, name: "Álex Baena", position: "MID", rating: 78, rarity: "common", img: "images/alexbaena.png", teams: ["Villarreal"], country: "Spain" },
-    { id: 83, name: "Conor Gallagher", position: "MID", rating: 78, rarity: "common", img: "images/conorgallagher.png", teams: ["Chelsea"], country: "England" },
-    { id: 84, name: "Manuel Ugarte", position: "MID", rating: 78, rarity: "common", img: "images/manuelugarte.png", teams: ["Paris Saint-Germain"], country: "Uruguay" },
-    { id: 85, name: "Giorgi Mamardashvili", position: "GK", rating: 78, rarity: "common", img: "images/mamardashvili.png", teams: ["Valencia"], country: "Georgia" },
-    { id: 86, name: "Santiago Giménez", position: "ATK", rating: 78, rarity: "common", img: "images/santiagogimenez.png", teams: ["Feyenoord"], country: "Mexico" },
-    { id: 87, name: "Alejandro Balde", position: "DEF", rating: 80, rarity: "common", img: "images/alejandrobalde.png", teams: ["FC Barcelona"], country: "Spain" },
-    { id: 88, name: "Anthony Gordon", position: "ATK", rating: 77, rarity: "common", img: "images/anthonygordon.png", teams: ["Newcastle United"], country: "England" }
-  ];
 
   const CONFIG = {
     packSize: 11,
@@ -2400,35 +2801,29 @@ h1 img {
   const packTypes = {
     'common-pack': {
       name: 'Common Pack',
-      cost: 150, // PRECIO PAQUETES
+      cost: 150, // PRECIO
       description: 'A basic pack, 11 cards and at least 1 Rare.',
       size: 11
     },
     'rare-pack': {
       name: 'Common Pack',
-      cost: 400, // PRECIO PAQUETES
+      cost: 400, // PRECIO
       description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
       size: 5
     },
     'collectors-pack': {
       name: 'Collectors Pack',
-      cost: 1200, // PRECIO ACTUALIZADO
+      cost: 1200, // PRECIO
       description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
       size: 3
-    }/*,
-    'barça-pack': {
-      name: 'Barça Pack',
-      cost: 0, // PRECIO ACTUALIZADO
-      description: 'NOT IMPLEMENTED, just placeholder',
-      size: 11
     },
-    'holo-pack': {
-      name: 'Holo Pack',
-      cost: 0, // PRECIO ACTUALIZADO
-      description: 'NOT IMPLEMENTED, just placeholder',
-      size: 11
-    }*/
-    };
+    'roulette-pack': {
+      name: 'Roulette Pack',
+    cost: 0, // No se puede comprar
+    description: 'A special pack won only from the roulette jackpot!',
+    size: 3 // O el tamaño que prefieras
+  }
+};
 
   // --- Cálculo del total de cartas posibles en el juego ---
 const totalPossibleCards = playersDB.length * Object.keys(CONFIG.variants).length * 2; // x2 para Normal y Golden
@@ -2483,6 +2878,26 @@ let currentRatingSort = 'none';
 let flippedCardsInPack = 0;
 let currentPackContentSize = 0;
 let packOpeningState = null;
+let newCards = new Set(); // Usamos un Set para evitar duplicados fácilmente
+
+// --- NUEVAS FUNCIONES PARA CARGAR Y GUARDAR LAS CARTAS NUEVAS ---
+function loadNewCards() {
+  const saved = localStorage.getItem('newlyAcquiredCards');
+  if (saved) {
+    // Convertimos el array guardado de vuelta a un Set
+    newCards = new Set(JSON.parse(saved));
+  }
+}
+
+function saveNewCards() {
+  // Convertimos el Set a un Array para poder guardarlo en localStorage
+  localStorage.setItem('newlyAcquiredCards', JSON.stringify([...newCards]));
+}
+
+// Función de ayuda para obtener un ID único y consistente para cada carta
+function getUniqueCardId(cardObj) {
+  return `${cardObj.playerData.id}_${cardObj.golden}_${cardObj.variant}`;
+}
 
 // --- NUEVAS VARIABLES PARA LA ALINEACIÓN ---
 let lineup = {}; // Objeto para guardar la alineación: { GK: 'card_unique_id', LB: '...', ... }
@@ -2629,6 +3044,22 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
   currentPackContentSize = packInfo.size;
 
   switch (packId) {
+  case 'roulette-pack':
+    console.log("Generando 3 opciones Relic para el Roulette Pack...");
+
+      // Llamamos 3 veces a nuestra nueva función para crear las opciones
+    const cardOptions = [
+      generateRelicChoice(),
+      generateRelicChoice(),
+      generateRelicChoice()
+    ];
+
+      // En lugar de renderizar cartas, mostramos nuestro nuevo modal de elección
+    showChoiceView(cardOptions);
+
+      // Detenemos la ejecución de openPack aquí para no renderizar nada en el escenario principal
+    return; 
+
   case 'collectors-pack':
     console.log("Opening a Collectors Pack with Weighted New Card logic.");
 
@@ -2660,41 +3091,41 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
     console.log("Opening a Rare Pack with 'Transferred Probability' logic.");
     while (pack.length < currentPackContentSize) {
       pack.push(generateTransferredProbCard());
-      } // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN! La llave que faltaba.
-      break;
+    }
+    break;
 
-    default:
-      console.log("Opening a standard pack.");
-      for (let i = 0; i < currentPackContentSize; i++) {
-        pack.push(generateCard());
-      }
-
-      if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-        const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
-        if (rarePlayers.length > 0) {
-          pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
-        }
-      }
-      break;
+  default:
+    console.log("Opening a standard pack.");
+    for (let i = 0; i < currentPackContentSize; i++) {
+      pack.push(generateCard());
     }
 
+    if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
+      const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+      if (rarePlayers.length > 0) {
+        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+      }
+    }
+    break;
+  }
+
   // El resto de la función (que renderiza las cartas) no cambia.
-    pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
+  pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
 
-    pack.forEach((cardObj, i) => {
-      const div = document.createElement("div");
-      const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-      div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
-      div.style.zIndex = pack.length - i;
-      div.dataset.rarity = cardObj.rarity;
-      div.dataset.golden = cardObj.golden;
-      div.dataset.variant = cardObj.variant;
-      div.dataset.index = i;
-      div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
+  pack.forEach((cardObj, i) => {
+    const div = document.createElement("div");
+    const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+    div.style.zIndex = pack.length - i;
+    div.dataset.rarity = cardObj.rarity;
+    div.dataset.golden = cardObj.golden;
+    div.dataset.variant = cardObj.variant;
+    div.dataset.index = i;
+    div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
 
-      const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+    const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
-      div.innerHTML = `
+    div.innerHTML = `
       <div class="side front">
         <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
         ${indicatorsHTML}
@@ -2702,45 +3133,45 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
         </div>
       </div>
       <div class="side back">⚽</div>
-      `;
+    `;
 
-      div.cardData = cardObj;
-      div.onclick = () => flipCard(div, i);
-      container.appendChild(div);
-    });
-  }
-
-
+    div.cardData = cardObj;
+    div.onclick = () => flipCard(div, i);
+    container.appendChild(div);
+  });
+}
 
 
-  function playSpecialCardSound(cardData) {
-    const { rarity, golden, variant } = cardData;
+
+
+function playSpecialCardSound(cardData) {
+  const { rarity, golden, variant } = cardData;
 
   // 1. No hacemos nada si la carta es común
-    if (rarity === 'common') {
-      return;
-    }
+  if (rarity === 'common') {
+    return;
+  }
 
   // 2. Construimos el nombre del archivo de sonido basado en las propiedades de la carta
-    let filename = rarity;
-    
-    if (golden) {
-      filename += '-golden';
-    }
-    
-    if (variant !== 'none') {
-      filename += `-${variant}`;
-    }
-    
-    filename += '.mp3';
+  let filename = rarity;
+
+  if (golden) {
+    filename += '-golden';
+  }
+
+  if (variant !== 'none') {
+    filename += `-${variant}`;
+  }
+
+  filename += '.mp3';
 
   // 3. Construimos la ruta completa
-    const soundPath = `sounds/${rarity}/${filename}`;
+  const soundPath = `sounds/${rarity}/${filename}`;
 
   // 4. Creamos un nuevo objeto de Audio y lo reproducimos
   //    Esto nos permite reproducir sonidos sin necesidad de tener un <audio> tag para cada uno.
-    try {
-      const specialSound = new Audio(soundPath);
+  try {
+    const specialSound = new Audio(soundPath);
     specialSound.volume = 0.4; // Puedes ajustar el volumen aquí
     specialSound.play().catch(error => {
         // Esta línea es útil para depuración. Si un sonido no se encuentra, lo verás en la consola.
@@ -2755,24 +3186,14 @@ function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
-  // --- ¡EL CAMBIO MÁS IMPORTANTE ESTÁ AQUÍ! ---
-  // Ahora comprueba contra el tamaño del sobre actual, no contra el valor fijo 11.
-  // Dentro de la función flipCard, reemplaza este bloque:
-
   if (flippedCardsInPack === currentPackContentSize) {
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
     
-    // --- ¡LA SOLUCIÓN! ---
-    // 1. Mostramos SIEMPRE el contenedor de controles (con el botón "Back to Store").
-    //    Esto ahora es incondicional y ya no depende de si quedan más sobres.
     openingControls.style.display = 'flex';
     
-    // 2. Limpiamos el contenedor de los "siguientes sobres" por si acaso.
     nextPackContainer.innerHTML = ''; 
 
-    // 3. Ahora, de forma separada, llenamos el contenedor de los siguientes sobres
-    //    SOLAMENTE si quedan más en el inventario.
     for (const packId in packInventory) {
       if (packInventory[packId] > 0) {
         const pack = packTypes[packId];
@@ -2800,7 +3221,6 @@ function flipCard(card, index) {
         addInteractiveTiltToPack(packEl);
       }
     }
-    // Ya no necesitamos la variable 'hasAnyPack' para los controles.
 
     const openPacksViewBtn = document.getElementById('openPacksViewBtn');
     if (openPacksViewBtn) openPacksViewBtn.disabled = false;
@@ -2843,6 +3263,10 @@ function flipCard(card, index) {
     collection[playerId][variantKey].count++;
   }
 
+  const uniqueId = getUniqueCardId(cardObj);
+  newCards.add(uniqueId); 
+  saveNewCards();        
+
   localStorage.setItem('myFootballCollection', JSON.stringify(collection));
 
   const rarity = card.dataset.rarity;
@@ -2865,7 +3289,7 @@ function flipCard(card, index) {
   }
 
   const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
-  const cardSpacing = containerWidth / currentPackContentSize; // Usamos el tamaño actual para el espaciado
+  const cardSpacing = containerWidth / currentPackContentSize;
   const spread = (containerWidth - cardSpacing) / 2;
 
   card.style.left = `${-spread + index * cardSpacing}px`;
@@ -2964,6 +3388,25 @@ function createShowcase() {
                 ${duplicateCounterHTML}
                 <div class="player-info"></div>
             </div>`;
+
+            // 1. Comprobar si esta carta específica está en nuestra lista de nuevas.
+            const uniqueId = getUniqueCardId(cardData);
+            if (newCards.has(uniqueId)) {
+
+              // 2. Si es nueva, creamos y añadimos el indicador visual.
+              const newIndicator = document.createElement('div');
+              newIndicator.className = 'album-new-indicator'; // Usamos la nueva clase CSS
+              newIndicator.textContent = 'NEW';
+              div.appendChild(newIndicator);
+
+              // 3. Añadimos el listener para que se elimine al pasar el ratón por encima.
+              div.addEventListener('mouseenter', () => {
+                newIndicator.remove(); // Elimina el elemento visual
+                newCards.delete(uniqueId); // Elimina la carta de nuestra lista de "nuevas"
+                saveNewCards(); // Guarda la lista actualizada para que no vuelva a aparecer
+              }, { once: true }); // { once: true } es crucial: asegura que esto solo se ejecute una vez.
+            }
+
             variantsGrid.appendChild(div);
             addInteractiveTilt(div);
             addReactiveEffects(div);
@@ -2993,12 +3436,12 @@ function createShowcase() {
         grid.appendChild(playerEntry);
       }
     });
-    if (rowHasVisiblePlayers) {
-      row.innerHTML = `<h2>${capitalize(rarityKey)}</h2>`;
-      row.appendChild(grid);
-      container.appendChild(row);
-    }
-  });
+if (rowHasVisiblePlayers) {
+  row.innerHTML = `<h2>${capitalize(rarityKey)}</h2>`;
+  row.appendChild(grid);
+  container.appendChild(row);
+}
+});
 
 if (isFiltering && !anyContentWasDisplayed) {
   container.innerHTML = `<div class="no-results-message">You don't have any cards with that combination.</div>`;
@@ -3023,6 +3466,7 @@ closeShowcaseBtn.addEventListener('click', () => {
 
 // --- NUEVOS LISTENERS PARA LOS FILTROS ---
 document.addEventListener('DOMContentLoaded', () => {
+  loadNewCards();
   updateCurrencyDisplay();
   loadLineup();
 
@@ -3650,6 +4094,7 @@ function buildFilterUI() {
   // Renderizar los packs disponibles en la tienda
    // Renderizar los packs disponibles en la tienda
     for (const packId in packTypes) {
+      if (packId === 'roulette-pack') continue; // Saltamos este sobre para que no aparezca en la tienda
       const pack = packTypes[packId];
       const packEl = document.createElement('div');
       packEl.className = 'pack-item';
@@ -3783,7 +4228,7 @@ function openOwnedPack(packId) {
 function updateCurrencyDisplay() {
   const currencyEl = document.getElementById('player-currency-display');
   if (currencyEl) {
-    currencyEl.innerHTML = `${playerCurrency} 💎`;
+    currencyEl.innerHTML = `${playerCurrency.toLocaleString()} 💎`;
   }
 }
 
@@ -3918,7 +4363,7 @@ function showToast(message, type = 'info', duration = 3000) {
   clearTimeout(toastTimeout);
 
   // Configura el mensaje y el estilo
-  toast.textContent = message;
+  toast.innerHTML = message;
   // Reseteamos las clases de tipo antes de añadir la nueva
   toast.className = ''; 
   toast.classList.add(type);
@@ -4865,11 +5310,580 @@ function generateRandomTeam() {
   });
     }
 
-  </script>
+// --- LÓGICA DEL MINIJUEGO DE RULETA (V.3 - TAPETE DE APUESTAS) ---
 
-  <div id="toast-notification"></div>
+// Definimos el orden y los colores de una ruleta europea real
+    const ROULETTE_NUMBERS = [
+      { num: 0, color: 'green' }, { num: 32, color: 'red' }, { num: 15, color: 'black' },
+      { num: 19, color: 'red' }, { num: 4, color: 'black' }, { num: 21, color: 'red' },
+      { num: 2, color: 'black' }, { num: 25, color: 'red' }, { num: 17, color: 'black' },
+      { num: 34, color: 'red' }, { num: 6, color: 'black' }, { num: 27, color: 'red' },
+      { num: 13, color: 'black' }, { num: 36, color: 'red' }, { num: 11, color: 'black' },
+      { num: 30, color: 'red' }, { num: 8, color: 'black' }, { num: 23, color: 'red' },
+      { num: 10, color: 'black' }, { num: 5, color: 'red' }, { num: 24, color: 'black' },
+      { num: 16, color: 'red' }, { num: 33, color: 'black' }, { num: 1, color: 'red' },
+      { num: 20, color: 'black' }, { num: 14, color: 'red' }, { num: 31, color: 'black' },
+      { num: 9, color: 'red' }, { num: 22, color: 'black' }, { num: 18, color: 'red' },
+      { num: 29, color: 'black' }, { num: 7, color: 'red' }, { num: 28, color: 'black' },
+      { num: 12, color: 'red' }, { num: 35, color: 'black' }, { num: 3, color: 'red' },
+      { num: 26, color: 'black' }
+    ];
+    const ROULETTE_TOTAL_NUMBERS = ROULETTE_NUMBERS.length;
+    const ROULETTE_SEGMENT_ANGLE = 360 / ROULETTE_TOTAL_NUMBERS;
+    let currentBet = { type: null, value: null };
+    let isFreeSpin = false;
+
+    function initRoulette() {
+      initRouletteWheel();
+      initBettingTable();
+      checkFreeSpin();
+    }
+
+    function initRouletteWheel() {
+      const wheel = document.getElementById('roulette-wheel');
+      if (!wheel) return;
+
+      wheel.innerHTML = '';
+      const gradientStops = ROULETTE_NUMBERS.map((data, index) => {
+        const colorHex = data.color === 'green' ? '#2b8f49' : (data.color === 'red' ? '#d13b3b' : '#222');
+        const startAngle = index * ROULETTE_SEGMENT_ANGLE;
+        const endAngle = (index + 1) * ROULETTE_SEGMENT_ANGLE;
+        return `${colorHex} ${startAngle}deg ${endAngle}deg`;
+      });
+      wheel.style.backgroundImage = `conic-gradient(${gradientStops.join(', ')})`;
+
+      ROULETTE_NUMBERS.forEach((data, index) => {
+        const line = document.createElement('div');
+        line.className = 'roulette-line';
+        const lineRotation = index * ROULETTE_SEGMENT_ANGLE;
+        line.style.transform = `translateX(-1px) rotate(${lineRotation}deg)`;
+        wheel.appendChild(line);
+
+        const numberContainer = document.createElement('div');
+        numberContainer.className = 'roulette-number';
+        const numberRotation = (index * ROULETTE_SEGMENT_ANGLE) + (ROULETTE_SEGMENT_ANGLE / 2);
+        numberContainer.style.transform = `translateX(-0.5px) rotate(${numberRotation}deg)`;
+        const numberSpan = document.createElement('span');
+        numberSpan.textContent = data.num;
+        numberContainer.appendChild(numberSpan);
+        wheel.appendChild(numberContainer);
+      });
+    }
+
+    function initBettingTable() {
+      const grid = document.querySelector('.bet-grid-numbers');
+    grid.innerHTML = ''; // Limpiar por si acaso
+
+    // Creamos un array temporal para ordenar los números antes de añadirlos al DOM
+    const numberSlots = new Array(36);
+    for (let i = 1; i <= 36; i++) {
+        // Calculamos la posición correcta en una rejilla de 12x3
+      const row = 2 - ((i - 1) % 3);
+      const col = Math.floor((i - 1) / 3);
+        const index = row * 12 + col; // Convertimos coordenadas (fila, col) a un índice único
+
+        const slot = document.createElement('div');
+        slot.className = 'bet-slot';
+        slot.dataset.betType = 'number';
+        slot.dataset.betValue = i;
+        slot.textContent = i;
+        const numData = ROULETTE_NUMBERS.find(n => n.num === i);
+        if (numData) slot.classList.add(numData.color);
+
+        numberSlots[index] = slot;
+      }
+
+    // Añadimos todos los slots ordenados al tapete
+      numberSlots.forEach(slot => grid.appendChild(slot));
+
+    // Asignamos el evento de click a TODOS los slots del tapete (números, columnas, etc.)
+      const allSlots = document.querySelectorAll('#roulette-betting-table .bet-slot');
+      allSlots.forEach(slot => {
+        slot.addEventListener('click', () => selectBet(slot));
+      });
+    }
+
+    function selectBet(selectedSlot) {
+      if (selectedSlot.classList.contains('disabled')) return;
+
+    // Quitar selección previa
+      document.querySelectorAll('.bet-slot.selected').forEach(s => s.classList.remove('selected'));
+
+    // Seleccionar el nuevo
+      selectedSlot.classList.add('selected');
+
+      currentBet.type = selectedSlot.dataset.betType;
+      currentBet.value = selectedSlot.dataset.betValue;
+    }
+
+    function checkFreeSpin() {
+      const lastFreeSpin = localStorage.getItem('lastFreeRouletteSpin');
+      const now = new Date().getTime();
+      const cooldown = 24 * 60 * 60 * 1000;
+      const betInput = document.getElementById('roulette-bet-input');
+      const spinBtn = document.getElementById('spin-roulette-btn');
+      const statusText = document.getElementById('roulette-status-text');
+
+      if (!lastFreeSpin || (now - lastFreeSpin > cooldown)) {
+        isFreeSpin = true;
+        betInput.value = 'FREE';
+        betInput.disabled = true;
+        spinBtn.classList.add('free-spin');
+        spinBtn.textContent = "FREE SPIN!";
+        statusText.textContent = "You have a free spin for today! Place a bet to use it.";
+      } else {
+        isFreeSpin = false;
+        if (betInput.value === 'FREE') {
+          betInput.value = '10';
+        }
+        
+        betInput.disabled = false;
+        spinBtn.classList.remove('free-spin');
+        spinBtn.textContent = "SPIN THE WHEEL!";
+        statusText.textContent = "Place your bet on the table below.";
+      }
+    }
+
+    function grantRelicCard() {
+    // ... (esta función no necesita cambios, la mantenemos como está)
+    }
+
+    function spinWheel() {
+      const betInput = document.getElementById('roulette-bet-input');
+      const wheel = document.getElementById('roulette-wheel');
+
+      if (!currentBet.type) {
+        return showToast("Please select a bet on the table first.", 'error');
+      }
+
+      const betAmount = isFreeSpin ? 0 : parseInt(betInput.value, 10);
+
+      if (!isFreeSpin) {
+        if (isNaN(betAmount) || betAmount < 10) { return showToast("Minimum bet is 10 💎.", 'error'); }
+        if (betAmount > playerCurrency) { return showToast("You don't have enough 💎 for that bet.", 'error'); }
+      }
+
+      if (!isFreeSpin) {
+        playerCurrency -= betAmount;
+        updateCurrencyDisplay();
+        saveCurrency();
+      }
+
+  setTableState(true); // Deshabilitar tapete
+
+  const spinSound = document.getElementById('rouletteSpinSound');
+  if (spinSound) {
+    spinSound.currentTime = 0;
+    spinSound.volume = 0.5;
+    spinSound.play().catch(e => {});
+  }
+  
+  wheel.style.transition = '';
+
+  const winningIndex = Math.floor(Math.random() * ROULETTE_TOTAL_NUMBERS);
+  const winningData = ROULETTE_NUMBERS[winningIndex];
+
+  // --- INICIO DE LA MODIFICACIÓN CLAVE ---
+  // --- Ajuste visual para que el centro del número ganador quede justo bajo el puntero ---
+const ALIGNMENT_OFFSET = -3; // Si el puntero está arriba (como una flecha ↑)
+
+// Calculamos el ángulo del centro del segmento ganador
+const winningAngle = (winningIndex * ROULETTE_SEGMENT_ANGLE) + (ROULETTE_SEGMENT_ANGLE / 2);
+
+// Aplicamos la rotación para que ese centro quede alineado con la flecha ↑
+const targetAngle = 360 - winningAngle + ALIGNMENT_OFFSET;
+
+// Añadimos vueltas y un pequeño margen corrector
+const correction = ROULETTE_SEGMENT_ANGLE * 0.02;
+const finalAngle = (360 * 10) + targetAngle + correction;
+
+
+  // --- FIN DE LA MODIFICACIÓN CLAVE ---
+
+requestAnimationFrame(() => {
+  wheel.classList.add('spinning');
+  wheel.style.transform = `rotate(${finalAngle}deg)`;
+});
+
+wheel.addEventListener('transitionend', () => {
+  handleRouletteResult(winningData, betAmount, finalAngle);
+}, { once: true });
+}
+
+  // --- REEMPLAZA ESTA FUNCIÓN ENTERA ---
+  /**
+ * Genera un mensaje de derrota específico basado en la apuesta perdida.
+ * @param {object} winningData - El objeto del número ganador.
+ * @param {object} lostBet - El objeto de la apuesta que se hizo.
+ * @returns {string} - Un mensaje de derrota descriptivo.
+ */
+function getLosingMessage(winningData, lostBet) {
+  const { num, color } = winningData;
+    let message = `The number was ${num}. Better luck next time.`; // Mensaje por defecto
+
+    switch (lostBet.type) {
+    case 'color':
+      message = `It landed on ${color}, not ${lostBet.value}.`;
+      break;
+    case 'even':
+    case 'odd':
+      message = `The number was ${num % 2 === 0 ? 'Even' : 'Odd'}, not ${lostBet.value}.`;
+      break;
+    case 'low':
+    case 'high':
+      message = `The number ${num} is in the ${num >= 1 && num <= 18 ? '1-18' : '19-36'} range.`;
+      break;
+    case 'dozen':
+      let dozenNum = Math.ceil(num / 12);
+      message = `It landed in the ${dozenNum === 1 ? '1st' : (dozenNum === 2 ? '2nd' : '3rd')} dozen.`;
+      break;
+    case 'column':
+     let colNum = num % 3;
+     if(colNum === 0) colNum = 3;
+     message = `It landed in the ${colNum === 1 ? '1st' : (colNum === 2 ? '2nd' : '3rd')} Line.`;
+     break;
+   }
+   return message;
+ }
+
+/**
+ * Procesa el resultado de un giro de ruleta, calcula premios y muestra feedback.
+ */
+ /**
+ * Procesa el resultado de un giro de ruleta, calcula premios y muestra feedback.
+ */
+ function handleRouletteResult(winningData, betAmount, finalAngle) {
+  const wheel = document.getElementById('roulette-wheel');
+  const statusText = document.getElementById('roulette-status-text');
+  const simplifiedRotation = finalAngle % 360;
+
+  wheel.classList.remove('spinning');
+  wheel.style.transition = 'none';
+  wheel.style.transform = `rotate(${simplifiedRotation}deg)`;
+
+  const winningNumber = winningData.num;
+  let gemWinnings = 0;
+  let prizeWon = false;
+  let customMessage = '';
+
+  // --- INICIO DE LA MODIFICACIÓN CLAVE ---
+  // 1. Comprobamos primero el caso especial del CERO
+  if (winningNumber === 0 && currentBet.type !== 'number') {
+    prizeWon = false; // Confirmamos que es una derrota
+    customMessage = 'Landed on 0. The house wins.';
+    showToast(customMessage, 'error');
+  } else {
+    // 2. Si no es el caso del cero, procedemos con la lógica normal
+    // Determinar si la apuesta fue ganadora
+    switch (currentBet.type) {
+    case 'number':
+      if (winningNumber == currentBet.value) prizeWon = true;
+      break;
+    case 'color':
+      if (winningData.color === currentBet.value) { prizeWon = true; gemWinnings = betAmount * 2; }
+      break;
+    case 'even':
+      if (winningNumber !== 0 && winningNumber % 2 === 0) { prizeWon = true; gemWinnings = betAmount * 2; }
+      break;
+    case 'odd':
+      if (winningNumber % 2 !== 0) { prizeWon = true; gemWinnings = betAmount * 2; }
+      break;
+    case 'low':
+      if (winningNumber >= 1 && winningNumber <= 18) { prizeWon = true; gemWinnings = betAmount * 2; }
+      break;
+    case 'high':
+      if (winningNumber >= 19 && winningNumber <= 36) { prizeWon = true; gemWinnings = betAmount * 2; }
+      break;
+    case 'dozen':
+      const dozen = parseInt(currentBet.value, 10);
+      if (winningNumber >= ((dozen - 1) * 12 + 1) && winningNumber <= (dozen * 12)) { prizeWon = true; gemWinnings = betAmount * 3; }
+      break;
+    case 'column':
+      const column = parseInt(currentBet.value, 10);
+      if (winningNumber !== 0 && (winningNumber % 3 === (column === 3 ? 0 : column))) { prizeWon = true; gemWinnings = betAmount * 3; }
+      break;
+    }
+
+    // Procesar el resultado (ganador o perdedor)
+    if (prizeWon) {
+      let packMessage = '';
+      if (currentBet.type === 'number') {
+        if (isFreeSpin) {
+          packInventory['roulette-pack'] = (packInventory['roulette-pack'] || 0) + 1;
+          packMessage = 'You won a <strong>Roulette Pack!</strong>';
+        } else if (betAmount >= 1000 && currentBet.value == '0') {
+          packInventory['roulette-pack'] = (packInventory['roulette-pack'] || 0) + 1;
+          packMessage = 'You won a special <strong>Roulette Pack!</strong>';
+          gemWinnings = betAmount * 10;
+        } else if (betAmount >= 1000) {
+          packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 3;
+          packMessage = 'You won <strong>THREE</strong> Collectors Packs!';
+          gemWinnings = betAmount * 15;
+        } else if (betAmount >= 100) {
+          packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 1;
+          packMessage = 'You won a <strong>Collectors Pack!</strong>';
+          gemWinnings = betAmount * 20;
+        } else {
+          gemWinnings = betAmount * 35;
+        }
+      }
+      customMessage = "WIN! ";
+      if (gemWinnings > 0) customMessage += `You get ${gemWinnings} 💎.`;
+      if (packMessage) customMessage += (gemWinnings > 0 ? " <br>PLUS: " : "") + packMessage;
+      showToast(customMessage, 'success', 5000);
+    } else {
+      customMessage = getLosingMessage(winningData, currentBet);
+      showToast(customMessage, 'error');
+    }
+  }
+  // --- FIN DE LA MODIFICACIÓN CLAVE ---
+
+  // El resto de la función para actualizar la UI no cambia
+  if (gemWinnings > 0) {
+    playerCurrency += gemWinnings;
+  }
+  savePackInventory();
+  saveCurrency();
+  updateCurrencyDisplay();
+
+  if (isFreeSpin) {
+    localStorage.setItem('lastFreeRouletteSpin', new Date().getTime());
+  }
+
+  setTimeout(() => {
+    setTableState(false);
+    checkFreeSpin();
+    statusText.textContent = "Place your bet on the table below.";
+  }, 700);
+}
+
+function setTableState(disabled) {
+  document.getElementById('spin-roulette-btn').disabled = disabled;
+  document.querySelectorAll('#roulette-betting-table .bet-slot').forEach(slot => {
+    slot.classList.toggle('disabled', disabled);
+  });
+  if (!isFreeSpin) {
+    document.getElementById('roulette-bet-input').disabled = disabled;
+  }
+}
+
+// --- EVENT LISTENERS PARA LA RULETA ---
+document.addEventListener('DOMContentLoaded', () => {
+  const rouletteBtn = document.getElementById('roulette-btn');
+  const rouletteOverlay = document.getElementById('roulette-overlay');
+  const closeRouletteBtn = document.getElementById('close-roulette-btn');
+  const spinRouletteBtn = document.getElementById('spin-roulette-btn');
+
+  if (rouletteBtn) {
+    rouletteBtn.addEventListener('click', () => {
+            initRoulette(); // Inicializa y comprueba la tirada gratis cada vez que se abre
+            rouletteOverlay.classList.add('visible');
+          });
+  }
+  if (closeRouletteBtn) {
+    closeRouletteBtn.addEventListener('click', () => rouletteOverlay.classList.remove('visible'));
+  }
+  if (spinRouletteBtn) {
+    spinRouletteBtn.addEventListener('click', spinWheel);
+  }
+});
+
+
+      //giro ruletta con space
+document.addEventListener('keydown', (event) => {
+    // Si no es la barra espaciadora, o si estamos escribiendo en un input, no hacemos nada.
+  if (event.code !== 'Space' || event.target.tagName === 'INPUT') {
+    return;
+  }
+
+    // Comprobamos si la ventana de la ruleta está visible
+  const rouletteOverlay = document.getElementById('roulette-overlay');
+  if (rouletteOverlay && rouletteOverlay.classList.contains('visible')) {
+
+        // Prevenimos el comportamiento por defecto del espacio (scroll de la página)
+    event.preventDefault();
+
+        // Buscamos el botón de girar y comprobamos si está habilitado
+    const spinBtn = document.getElementById('spin-roulette-btn');
+
+        // Solo giramos si hay una apuesta seleccionada Y el botón no está deshabilitado (es decir, no está ya girando)
+    if (currentBet.type && !spinBtn.disabled) {
+      spinWheel();
+    }
+  }
+});
+
+
+/**
+ * Genera una única carta Relic para la vista de elección del Roulette Pack.
+ * Las probabilidades de Golden y Variante se ponderan basándose en las
+ * probabilidades base definidas en CONFIG, aplicadas solo al pool de Relics.
+ * @returns {object} Un objeto de carta completo con rareza 'relic'.
+ */
+function generateRelicChoice() {
+  const rarity = 'relic';
+
+  // 1. Elegir un jugador Relic al azar
+  const relicPlayers = playersDB.filter(p => p.rarity === rarity);
+  if (relicPlayers.length === 0) {
+    console.error("No se encontraron jugadores 'Relic' en la base de datos.");
+    // Como fallback, generamos una carta legendaria para no romper el juego.
+    const legendaryPlayers = playersDB.filter(p => p.rarity === 'legendary');
+    return { playerData: legendaryPlayers[0], rarity: 'legendary', golden: false, variant: 'none' };
+  }
+  const chosenPlayer = relicPlayers[Math.floor(Math.random() * relicPlayers.length)];
+
+  // 2. Calcular probabilidad de ser Golden (Ponderada)
+  // Probabilidad de ser Golden DADO QUE ya es una Relic.
+  const pGoldenRelic = CONFIG.rarities.relic.p_golden || 0;
+  const pNormalRelic = CONFIG.rarities.relic.p || 0;
+  const totalRelicProb = pGoldenRelic + pNormalRelic;
+  
+  // Si no hay probabilidades definidas, no puede ser dorada.
+  const isGolden = totalRelicProb > 0 ? (Math.random() < (pGoldenRelic / totalRelicProb)) : false;
+
+  // 3. Calcular probabilidad de tener una Variante (Ponderada)
+  // Decidimos una probabilidad base aumentada para que las Relics tengan variantes más a menudo.
+  const RELIC_BASE_VARIANT_CHANCE = 0.40; // 40% de probabilidad de que una Relic tenga variante.
+  let variant = 'none';
+
+  if (Math.random() < RELIC_BASE_VARIANT_CHANCE) {
+    // Si tiene variante, usamos la función pickByProb para decidir CUÁL,
+    // respetando las proporciones originales.
+    variant = pickByProb(variantProbs).v;
+  }
+  
+  return { playerData: chosenPlayer, rarity, golden: isGolden, variant };
+}
+
+
+/**
+ * Muestra el modal de elección. Las cartas se giran y el sonido especial
+ * se reproduce con un ligero retraso DESPUÉS de que la animación de giro ha terminado.
+ */
+function showChoiceView(cardOptions) {
+  const choiceOverlay = document.getElementById('choice-overlay');
+  const container = document.getElementById('choice-cards-container');
+  container.innerHTML = '';
+
+  cardOptions.forEach(cardObj => {
+    const div = document.createElement("div");
+    const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
+    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+    
+    div.cardData = cardObj; 
+
+    const isOwned = isCardOwned(cardObj);
+    const ownedIndicatorHTML = isOwned ? `<div class="owned-indicator">OWNED</div>` : '';
+    const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
+
+    div.innerHTML = `
+      <div class="side front">
+        <img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
+        ${indicatorsHTML}
+        <div class="player-info"></div>
+        ${ownedIndicatorHTML} 
+      </div>
+      <div class="side back"></div>
+    `;
+
+    div.onclick = () => {
+      if (div.classList.contains('flipped')) {
+        selectCardFromChoice(div.cardData);
+        return;
+      }
+      
+      const flipSound = document.getElementById('flipSound');
+      if (flipSound) {
+        flipSound.currentTime = 0;
+        flipSound.volume = 0.25;
+        flipSound.play();
+      }
+
+      div.addEventListener('transitionend', () => {
+
+        setTimeout(() => {
+          console.log("Delay finished, playing special sound and activating effects.");
+          
+          playSpecialCardSound(div.cardData);
+          addInteractiveTilt(div);
+          addReactiveEffects(div);
+          
+        }, 550);
+        
+      }, { once: true });
+
+      div.classList.add('flipped');
+    };
+    
+    container.appendChild(div);
+  });
+
+  document.querySelector('#choice-modal p').textContent = "Click a card to reveal it, then click your choice to claim it.";
+  choiceOverlay.classList.add('visible');
+}
+
+/**
+ * Se ejecuta cuando el jugador elige una carta del modal de elección.
+ * Añade la carta a la colección, anima la salida y cierra el modal.
+ */
+function selectCardFromChoice(chosenCard) {
+  // --- INICIO DE LA MEJORA VISUAL ---
+
+  // Deshabilitamos los clics para evitar acciones duplicadas
+  const allChoiceCards = document.querySelectorAll('#choice-cards-container .card');
+  allChoiceCards.forEach(card => card.onclick = null);
+
+  allChoiceCards.forEach(card => {
+    // Si la carta NO es la elegida...
+    if (card.cardData.playerData.id !== chosenCard.playerData.id) {
+      card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      card.style.opacity = '0.2';
+      card.style.transform += ' scale(0.9)'; // La hacemos un poco más pequeña
+    } else {
+      // La carta elegida "salta" un poco para confirmación
+      card.style.transform += ' scale(1.1)';
+    }
+  });
+  
+  // --- FIN DE LA MEJORA VISUAL ---
+
+  // Esperamos a que la animación termine antes de continuar
+  setTimeout(() => {
+    // 1. Añadir la carta elegida a la colección
+    const playerId = chosenCard.playerData.id;
+    const variantKey = `${chosenCard.golden}_${chosenCard.variant}`;
+
+    if (!collection[playerId]) {
+      collection[playerId] = {};
+    }
+    if (!collection[playerId][variantKey]) {
+      collection[playerId][variantKey] = { count: 1, cardData: chosenCard };
+    } else {
+      collection[playerId][variantKey].count++;
+    }
+    
+    // 2. Guardar la colección y actualizar UI
+    saveCollection();
+    showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
+    
+    // 3. Ocultar y limpiar el modal
+    const choiceOverlay = document.getElementById('choice-overlay');
+    choiceOverlay.classList.remove('visible');
+    document.getElementById('choice-cards-container').innerHTML = '';
+
+    // 4. Habilitar de nuevo el botón de abrir sobres y volver a la tienda
+    const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+    if (openPacksViewBtn) openPacksViewBtn.disabled = false;
+    
+    const backToStoreBtn = document.getElementById('back-to-store-btn');
+    if (backToStoreBtn) backToStoreBtn.click();
+  }, 800); // 800ms de espera
+}
+
+</script>
+
+<div id="toast-notification"></div>
 
 </body>
 </html>
-
-
