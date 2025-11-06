@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Football TCG - Player DB Editor</title>
+  
+  <!-- Carga automática de la base de datos -->
+  <script src="database.js" onerror="window.dbFileLoaded = false;"></script>
+
+  <style>
+    :root {
+      --bg-color: #1a1c20;
+      --card-bg: #2a2d34;
+      --border-color: #444;
+      --primary-color: #4a7dff;
+      --danger-color: #e74c3c;
+      --success-color: #27ae60;
+      --text-color: #f0f0f0;
+      --text-muted: #888;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+    .container { max-width: 1400px; margin: auto; }
+    h1 { text-align: center; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+    #search-input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1em; min-width: 200px; }
+    .button-group { display: flex; gap: 10px; }
+    button { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+    button:hover { transform: scale(1.05); }
+    .btn-add { background-color: var(--success-color); color: white; }
+    .btn-generate { background-color: var(--primary-color); color: white; }
+    .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .player-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s, border-color 0.3s; }
+    .player-card.rarity-common { background-color: rgba(138, 138, 138, 0.15); border-color: rgba(138, 138, 138, 0.4); }
+    .player-card.rarity-rare { background-color: rgba(74, 125, 255, 0.15); border-color: rgba(74, 125, 255, 0.4); }
+    .player-card.rarity-epic { background-color: rgba(160, 83, 222, 0.15); border-color: rgba(160, 83, 222, 0.4); }
+    .player-card.rarity-legendary { background-color: rgba(255, 200, 74, 0.15); border-color: rgba(255, 200, 74, 0.4); }
+    .player-card.rarity-relic { background-color: rgba(74, 240, 224, 0.15); border-color: rgba(74, 240, 224, 0.4); }
+    .player-card-header { display: flex; gap: 15px; align-items: center; }
+    .player-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border-color); background-color: #111; }
+    .player-card-info h3 { margin: 0; font-size: 1.1em; }
+    .player-card-info p { margin: 0; color: var(--text-muted); font-size: 0.9em; }
+    .player-card-details { font-size: 0.9em; }
+    .player-card-actions { margin-top: auto; display: flex; gap: 10px; }
+    .btn-edit { background-color: #f39c12; color: white; }
+    .btn-delete { background-color: var(--danger-color); color: white; }
+    #edit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; place-items: center; z-index: 1000; }
+    #edit-modal.visible { display: grid; }
+    #player-form { background: var(--card-bg); padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
+    #player-form h2 { margin-top: 0; text-align: center; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-weight: bold; font-size: 0.9em; color: var(--text-muted); }
+    .form-group input, .form-group select { padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1em; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .btn-save { background-color: var(--success-color); color: white; }
+    .btn-cancel { background-color: #7f8c8d; color: white; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--success-color); color: white; padding: 12px 25px; border-radius: 25px; font-weight: bold; opacity: 0; transition: opacity 0.3s, bottom 0.3s; pointer-events: none; z-index: 2000; }
+    #toast.show { opacity: 1; bottom: 30px; }
+    #toast.error { background-color: var(--danger-color); }
+    .info-box { background-color: rgba(74, 125, 255, 0.1); border: 1px solid rgba(74, 125, 255, 0.4); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Football TCG - Player DB Editor</h1>
+
+    <div class="info-box">
+        <strong>Workflow:</strong>
+        <ol>
+            <li>This editor automatically loads your <code>database.js</code> file.</li>
+            <li>Make your changes using the interface below.</li>
+            <li>Click <strong>"Generate & Download database.js"</strong>.</li>
+            <li>Save the downloaded file in your project folder, replacing the old one.</li>
+            <li>Reload your game page (<code>index.html</code>) to see the changes.</li>
+        </ol>
+    </div>
+    
+    <div class="controls">
+      <input type="search" id="search-input" placeholder="Search by name or team...">
+      <div class="button-group">
+        <button id="add-player-btn" class="btn-add">Add Player</button>
+        <button id="generate-db-btn" class="btn-generate">Generate & Download database.js</button>
+      </div>
+    </div>
+    
+    <div id="player-list" class="player-grid"></div>
+  </div>
+
+  <!-- Add/Edit Modal (sin cambios) -->
+  <div id="edit-modal"> <form id="player-form"> <h2 id="modal-title">Edit Player</h2> <input type="hidden" id="player-id"> <div class="form-group"> <label for="player-name">Name</label> <input type="text" id="player-name" required> </div> <div class="form-group"> <label for="player-position">Position</label> <select id="player-position" required> <option value="ATK">ATK</option> <option value="MID">MID</option> <option value="DEF">DEF</option> <option value="GK">GK</option> </select> </div> <div class="form-group"> <label for="player-rating">Rating</label> <input type="number" id="player-rating" min="1" max="99" required> </div> <div class="form-group"> <label for="player-rarity">Rarity</label> <select id="player-rarity" required> <option value="common">Common</option> <option value="rare">Rare</option> <option value="epic">Epic</option> <option value="legendary">Legendary</option> <option value="relic">Relic</option> </select> </div> <div class="form-group"> <label for="player-img">Image Path (auto-generated)</label> <input type="text" id="player-img" required> </div> <div class="form-group"> <label for="player-teams">Teams (comma-separated)</label> <input type="text" id="player-teams" required> </div> <div class="form-group"> <label for="player-country">Country</label> <input type="text" id="player-country" required> </div> <div class="form-actions"> <button type="button" id="cancel-btn" class="btn-cancel">Cancel</button> <button type="submit" class="btn-save">Save</button> </div> </form> </div>
+
+  <div id="toast"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      const toast = document.getElementById('toast');
+      
+      // <<< LA CORRECCIÓN ESTÁ AQUÍ >>>
+      // Se define showToast ANTES de ser usada.
+      const showToast = (message, type = 'success') => {
+          toast.textContent = message;
+          toast.className = type; // Asigna la clase de tipo
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 3000);
+      };
+
+      // Comprueba si la DB se cargó o si falló.
+      if (typeof playersDB === 'undefined' || window.dbFileLoaded === false) {
+        console.warn("`database.js` not found or failed to load. Using fallback data.");
+        window.playersDB = [
+          { id: 1, name: "Example Player", position: "ATK", rating: 80, rarity: "rare", img: "images/example.png", teams: ["Sample FC"], country: "Sampleland" },
+        ];
+        showToast("Error: `database.js` not found. Loading example data.", "error");
+      } else {
+        console.log("Successfully loaded `database.js`.");
+        showToast("`database.js` loaded successfully!");
+      }
+
+      // El resto del código es el mismo, ya que ahora 'playersDB' siempre estará definido.
+      const playerList = document.getElementById('player-list');
+      const addPlayerBtn = document.getElementById('add-player-btn');
+      const generateDbBtn = document.getElementById('generate-db-btn');
+      const modal = document.getElementById('edit-modal');
+      const form = document.getElementById('player-form');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const playerNameInput = document.getElementById('player-name');
+      const playerImgInput = document.getElementById('player-img');
+      const searchInput = document.getElementById('search-input');
+
+      const sanitizeNameForImagePath = (name) => { if (!name) return ''; return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n').replace(/\s+/g, '').replace(/[^a-z0-9]/g, ''); };
+      const renderPlayerList = () => { const searchTerm = searchInput.value.toLowerCase().trim(); playerList.innerHTML = ''; let playersToRender = playersDB; if (searchTerm) { playersToRender = playersDB.filter(player => { const nameMatch = player.name.toLowerCase().includes(searchTerm); const teamMatch = player.teams.some(team => team.toLowerCase().includes(searchTerm)); return nameMatch || teamMatch; }); } playersToRender.sort((a,b) => a.id - b.id).forEach(player => { const card = document.createElement('div'); card.className = `player-card rarity-${player.rarity}`; card.innerHTML = `<div class="player-card-header"><img src="${player.img}" alt="${player.name}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"><div class="player-card-info"><h3>${player.name} (ID: ${player.id})</h3><p>Rating: ${player.rating} | Rarity: ${player.rarity.toUpperCase()}</p></div></div><div class="player-card-details"><strong>Position:</strong> ${player.position}<br><strong>Country:</strong> ${player.country}<br><strong>Teams:</strong> ${player.teams.join(', ')}</div><div class="player-card-actions"><button class="btn-edit" data-id="${player.id}">Edit</button><button class="btn-delete" data-id="${player.id}">Delete</button></div>`; playerList.appendChild(card); }); };
+      const getNextAvailableId = () => { const existingIds = playersDB.map(p => p.id).sort((a, b) => a - b); let nextId = 1; for (const id of existingIds) { if (id === nextId) { nextId++; } else { return nextId; } } return nextId; };
+      const openModal = (player = null) => { form.reset(); if (player) { document.getElementById('modal-title').textContent = 'Edit Player'; document.getElementById('player-id').value = player.id; document.getElementById('player-name').value = player.name; document.getElementById('player-position').value = player.position; document.getElementById('player-rating').value = player.rating; document.getElementById('player-rarity').value = player.rarity; document.getElementById('player-img').value = player.img; document.getElementById('player-teams').value = player.teams.join(','); document.getElementById('player-country').value = player.country; } else { document.getElementById('modal-title').textContent = 'Add New Player'; document.getElementById('player-id').value = ''; document.getElementById('player-img').value = ''; } modal.classList.add('visible'); };
+      const closeModal = () => { modal.classList.remove('visible'); };
+      
+      searchInput.addEventListener('input', renderPlayerList);
+      playerNameInput.addEventListener('input', () => { const name = playerNameInput.value; if (name.trim() === '') { playerImgInput.value = ''; return; } const sanitized = sanitizeNameForImagePath(name); playerImgInput.value = `images/${sanitized}.png`; });
+      addPlayerBtn.addEventListener('click', () => openModal());
+      cancelBtn.addEventListener('click', closeModal);
+      playerList.addEventListener('click', (e) => { if (e.target.matches('.btn-edit')) { const playerId = parseInt(e.target.dataset.id, 10); const player = playersDB.find(p => p.id === playerId); openModal(player); } if (e.target.matches('.btn-delete')) { const playerId = parseInt(e.target.dataset.id, 10); const player = playersDB.find(p => p.id === playerId); if (confirm(`Are you sure you want to delete ${player.name}?`)) { window.playersDB = playersDB.filter(p => p.id !== playerId); renderPlayerList(); } } });
+      form.addEventListener('submit', (e) => { e.preventDefault(); const id = document.getElementById('player-id').value; const teams = document.getElementById('player-teams').value.split(',').map(team => team.trim()); const playerData = { name: document.getElementById('player-name').value, position: document.getElementById('player-position').value, rating: parseInt(document.getElementById('player-rating').value, 10), rarity: document.getElementById('player-rarity').value, img: document.getElementById('player-img').value, teams: teams, country: document.getElementById('player-country').value, }; if (id) { const playerIndex = playersDB.findIndex(p => p.id === parseInt(id, 10)); playersDB[playerIndex] = { ...playersDB[playerIndex], ...playerData }; } else { playerData.id = getNextAvailableId(); playersDB.push(playerData); } closeModal(); renderPlayerList(); });
+
+      generateDbBtn.addEventListener('click', () => {
+        let outputString = "const playersDB = [\n";
+        playersDB.sort((a,b) => a.id - b.id).forEach(p => {
+            const teamsString = p.teams.map(t => `"${t}"`).join(',');
+            outputString += `  { id: ${p.id}, name: "${p.name}", position: "${p.position}", rating: ${p.rating}, rarity: "${p.rarity}", img: "${p.img}", teams: [${teamsString}], country: "${p.country}" },\n`;
+        });
+        outputString += "];\n";
+
+        const blob = new Blob([outputString], { type: 'application/javascript' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'database.js';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        showToast("Downloading database.js...");
+      });
+
+      // Render inicial
+      renderPlayerList();
+    });
+  </script>
+</body>
+</html>
