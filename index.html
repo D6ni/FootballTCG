@@ -2535,6 +2535,10 @@ h1 img {
         <input type="checkbox" id="show-owned-checkbox">
         Show owned cards
       </label>
+      <label for="show-new-checkbox" class="checkbox-label">
+        <input type="checkbox" id="show-new-checkbox">
+        Show new cards
+      </label>
       <label for="show-missing-checkbox" class="checkbox-label">
         <input type="checkbox" id="show-missing-checkbox">
         Show missing cards
@@ -2762,7 +2766,7 @@ h1 img {
 <script src="database.js"></script>
 
 <script>
-  const TEST_MODE_FILL_ALBUM = true; /*PRUEBA ALBUM LLENO*/
+  const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
   const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
 
 
@@ -2845,23 +2849,67 @@ function buildProbLists(config) {
 
 const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
-    // 1. Intentamos cargar la colección guardada desde localStorage.
-const savedCollection = localStorage.getItem('myFootballCollection');
+    // --- INICIALIZACIÓN DE DATOS DE JUGADOR (MODO TEST O NORMAL) ---
 
-    // 2. Si había algo guardado, lo convertimos de texto a objeto.
-    //    Si no había nada (la primera vez que se visita), empezamos con una colección vacía.
-let collection = savedCollection ? JSON.parse(savedCollection) : {};
+let collection;
+let packInventory;
+let playerCurrency;
 
-    // --- NUEVAS VARIABLES PARA LA TIENDA DE PACKS ---
-const savedPacks = localStorage.getItem('myFootballPacks');
-let packInventory = savedPacks ? JSON.parse(savedPacks) : {
-  'common-pack': 3 
-}; //Paquetes iniciales
+if (TEST_MODE_FILL_ALBUM) {
+  // --- MODO TEST ACTIVO ---
+  // Rellenamos todo con valores de prueba y NO cargamos nada guardado.
+  console.warn("--- TEST MODE ACTIVE: Rellenando el álbum, dinero y packs. ---");
+  
+  collection = {};
+  playersDB.forEach(player => {
+    const playerId = player.id;
+    collection[playerId] = {};
+    [false, true].forEach(isGolden => {
+      Object.keys(CONFIG.variants).forEach(variantName => {
+        const variantKey = `${isGolden}_${variantName}`;
+        const cardDataObject = {
+          playerData: player,
+          rarity: player.rarity,
+          golden: isGolden,
+          variant: variantName
+        };
+        collection[playerId][variantKey] = {
+          count: 99,
+          cardData: cardDataObject
+        };
+      });
+    });
+  });
 
-  // --- Lógica para el dinero del jugador ---
-const savedCurrency = localStorage.getItem('myPlayerCurrency');
-// Si no hay dinero guardado (primera vez que juega), empieza con 50.
-let playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 200; //DINERO INICIAL
+  playerCurrency = 999999;
+  packInventory = {
+    'common-pack': 99,
+    'rare-pack': 99,
+    'collectors-pack': 99,
+    'roulette-pack': 99
+  };  
+  
+  console.warn("--- TEST MODE: Relleno completado. ---");
+
+} else {
+  // --- MODO NORMAL ---
+  // Cargamos los datos guardados del jugador desde localStorage.
+  console.log("--- MODO NORMAL: Cargando datos guardados. ---");
+
+  // Cargar colección
+  const savedCollection = localStorage.getItem('myFootballCollection');
+  collection = savedCollection ? JSON.parse(savedCollection) : {};
+
+  // Cargar inventario de sobres
+  const savedPacks = localStorage.getItem('myFootballPacks');
+  packInventory = savedPacks ? JSON.parse(savedPacks) : {
+    'common-pack': 3 
+  };
+
+  // Cargar dinero del jugador
+  const savedCurrency = localStorage.getItem('myPlayerCurrency');
+  playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 200;
+}
 
 
   // --- NUEVAS VARIABLES GLOBALES PARA FILTROS ---
@@ -2871,7 +2919,8 @@ let activeFilters = {
   golden: null,
   query: '',
   showMissing: false,
-  showOwned: false
+  showOwned: false,
+  showNew: false
 };
 let filtersInitialized = false;
 let currentRatingSort = 'none';
@@ -3249,6 +3298,11 @@ function flipCard(card, index) {
     setTimeout(() => {
       newIndicator.remove();
     }, 4200);
+
+    const uniqueId = getUniqueCardId(cardObj);
+    newCards.add(uniqueId); 
+    saveNewCards(); 
+
   }
 
   if (!collection[playerId]) {
@@ -3263,9 +3317,6 @@ function flipCard(card, index) {
     collection[playerId][variantKey].count++;
   }
 
-  const uniqueId = getUniqueCardId(cardObj);
-  newCards.add(uniqueId); 
-  saveNewCards();        
 
   localStorage.setItem('myFootballCollection', JSON.stringify(collection));
 
@@ -3322,7 +3373,7 @@ function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
   const query = activeFilters.query.toLowerCase().trim();
-  const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '';
+  const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '' || activeFilters.showNew;
   let anyContentWasDisplayed = false;
   const raritiesInOrder = Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order);
   const variantKeys = Object.keys(CONFIG.variants);
@@ -3371,6 +3422,10 @@ function createShowcase() {
         if (activeFilters.golden !== null && isGolden !== activeFilters.golden) continue;
         for (const variantKey of variantKeys) {
           if (activeFilters.variant && variantKey !== activeFilters.variant) continue;
+
+          const uniqueId = `${player.id}_${isGolden}_${variantKey}`;
+          if (activeFilters.showNew && !newCards.has(uniqueId)) continue;
+
           const lookupKey = `${isGolden}_${variantKey}`;
           const collectedVersion = collection[player.id]?.[lookupKey];
 
@@ -3419,7 +3474,7 @@ function createShowcase() {
               }
             });
 
-          } else if (!activeFilters.showOwned && (!isFiltering || (isFiltering && activeFilters.showMissing))) {
+          } else if (!activeFilters.showNew && !activeFilters.showOwned && (!isFiltering || (isFiltering && activeFilters.showMissing))) {
             playerHasVisibleSlots = true;
             anyContentWasDisplayed = true;
             const placeholder = document.createElement('div');
@@ -3495,6 +3550,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
   const packsOverlay = document.getElementById('packs-overlay');
   const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+
+  const showNewCheckbox = document.getElementById('show-new-checkbox');
+  if(showNewCheckbox) {
+    showNewCheckbox.addEventListener('change', () => {
+      activeFilters.showNew = showNewCheckbox.checked;
+      updateFilterUI(); // Actualiza la visibilidad de los otros checkboxes
+      createShowcase(); // Vuelve a renderizar el álbum
+    });
+  }
 
   if(showOwnedCheckbox) {
     showOwnedCheckbox.addEventListener('change', () => {
@@ -3593,12 +3657,13 @@ document.addEventListener('DOMContentLoaded', () => {
         buttonSound.play();
       }
       // Resetea todos los filtros, incluyendo el nuevo
-      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false  };
+      activeFilters = { rarity: null, variant: null, golden: null, query: '', showMissing: false, showOwned: false, showNew: false };
       currentRatingSort = 'none';
       updateSortButtonUI();
       searchInput.value = '';
       showMissingCheckbox.checked = false;
       showOwnedCheckbox.checked = false;
+      document.getElementById('show-new-checkbox').checked = false;
       updateFilterUI();
       createShowcase();
     });
@@ -3849,51 +3914,56 @@ function buildFilterUI() {
     createShowcase(); // Volvemos a renderizar el álbum con los filtros aplicados
   }
 
+  // REEMPLAZA LA FUNCIÓN updateFilterUI ENTERA CON ESTO
   function updateFilterUI() {
-    // 1. Obtenemos las ETIQUETAS de los checkboxes para poder ocultarlas por completo.
     const showOwnedLabel = document.querySelector('label[for="show-owned-checkbox"]');
     const showMissingLabel = document.querySelector('label[for="show-missing-checkbox"]');
     const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
     const showMissingCheckbox = document.getElementById('show-missing-checkbox');
 
-    // 2. La variable 'isFiltering' sigue siendo nuestra clave.
-    const isFiltering = 
-    activeFilters.rarity !== null || 
-    activeFilters.variant !== null || 
-    activeFilters.golden === true || 
-    activeFilters.query.trim() !== '';
-
-    // 3. LA LÓGICA DE INTERCAMBIO
-    if (isFiltering) {
-      // ESTAMOS FILTRANDO -> Mostramos "Show Missing", ocultamos "Show Owned"
+    if (activeFilters.showNew) {
+        // Si filtramos por "NUEVO", ocultamos los otros dos.
       if (showOwnedLabel) showOwnedLabel.style.display = 'none';
-      if (showMissingLabel) showMissingLabel.style.display = 'flex';
+      if (showMissingLabel) showMissingLabel.style.display = 'none';
 
-      // Reseteamos el estado de "Show Owned" para evitar conflictos
+        // Reseteamos su estado para evitar conflictos
       if (activeFilters.showOwned) {
         activeFilters.showOwned = false;
-        showOwnedCheckbox.checked = false;
+        if (showOwnedCheckbox) showOwnedCheckbox.checked = false;
       }
-      
-      // El checkbox "Show Missing" ahora está habilitado
-      showMissingCheckbox.disabled = false;
-
-    } else {
-      // NO ESTAMOS FILTRANDO -> Mostramos "Show Owned", ocultamos "Show Missing"
-      if (showOwnedLabel) showOwnedLabel.style.display = 'flex';
-      if (showMissingLabel) showMissingLabel.style.display = 'none';
-      
-      // Reseteamos el estado de "Show Missing"
       if (activeFilters.showMissing) {
         activeFilters.showMissing = false;
-        showMissingCheckbox.checked = false;
+        if (showMissingCheckbox) showMissingCheckbox.checked = false;
       }
-      
-      // Deshabilitamos "Show Missing" ya que no es relevante ahora
-      showMissingCheckbox.disabled = true;
+
+    } else {
+        // Si NO filtramos por "NUEVO", usamos la lógica anterior.
+      const isFiltering =
+      activeFilters.rarity !== null ||
+      activeFilters.variant !== null ||
+      activeFilters.golden === true ||
+      activeFilters.query.trim() !== '';
+
+      if (isFiltering) {
+        if (showOwnedLabel) showOwnedLabel.style.display = 'none';
+        if (showMissingLabel) showMissingLabel.style.display = 'flex';
+        if (activeFilters.showOwned) {
+          activeFilters.showOwned = false;
+          if (showOwnedCheckbox) showOwnedCheckbox.checked = false;
+        }
+        if (showMissingCheckbox) showMissingCheckbox.disabled = false;
+      } else {
+        if (showOwnedLabel) showOwnedLabel.style.display = 'flex';
+        if (showMissingLabel) showMissingLabel.style.display = 'none';
+        if (activeFilters.showMissing) {
+          activeFilters.showMissing = false;
+          if (showMissingCheckbox) showMissingCheckbox.checked = false;
+        }
+        if (showMissingCheckbox) showMissingCheckbox.disabled = true;
+      }
     }
 
-    // 4. La lógica para los botones de rareza/variante no cambia
+    // El resto de la lógica para los botones de rareza/variante no cambia
     const rarityBtns = document.querySelectorAll('.rarity-filter');
     rarityBtns.forEach(btn => {
       const value = btn.dataset.filterValue;
@@ -3907,7 +3977,7 @@ function buildFilterUI() {
       btn.classList.toggle('active', activeFilters.variant === value);
       btn.disabled = activeFilters.variant !== null && activeFilters.variant !== value;
     });
-    
+
     const goldenBtn = document.querySelector('.filter-btn[data-filter-type="golden"]');
     if (goldenBtn) {
       goldenBtn.classList.toggle('active', activeFilters.golden === true);
