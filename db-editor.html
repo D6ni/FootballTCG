@@ -63,7 +63,56 @@
     #toast.show { opacity: 1; bottom: 30px; }
     #toast.error { background-color: var(--danger-color); }
     .info-box { background-color: rgba(74, 125, 255, 0.1); border: 1px solid rgba(74, 125, 255, 0.4); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.6; }
-  </style>
+
+
+    /* Estilo para la casilla de selección en la tarjeta */
+    .player-card {
+      position: relative; /* Necesario para posicionar el checkbox */
+    }
+    .player-select-checkbox {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+/* Estilo visual para una tarjeta seleccionada */
+.player-card.selected {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 10px var(--danger-color);
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Estilos para el nuevo modal de confirmación (reutilizando estilos existentes) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  place-items: center;
+  z-index: 1000;
+}
+.modal-overlay.visible {
+  display: grid;
+}
+.modal-content {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+}
+.modal-content h2 { margin-top: 0; }
+.modal-content p { margin-bottom: 25px; line-height: 1.6; }
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+</style>
 </head>
 <body>
 
@@ -71,20 +120,21 @@
     <h1>Football TCG - Player DB Editor</h1>
 
     <div class="info-box">
-        <strong>Workflow:</strong>
-        <ol>
-            <li>This editor automatically loads your <code>database.js</code> file.</li>
-            <li>Make your changes using the interface below.</li>
-            <li>Click <strong>"Generate & Download database.js"</strong>.</li>
-            <li>Save the downloaded file in your project folder, replacing the old one.</li>
-            <li>Reload your game page (<code>index.html</code>) to see the changes.</li>
-        </ol>
+      <strong>Workflow:</strong>
+      <ol>
+        <li>This editor automatically loads your <code>database.js</code> file.</li>
+        <li>Make your changes using the interface below.</li>
+        <li>Click <strong>"Generate & Download database.js"</strong>.</li>
+        <li>Save the downloaded file in your project folder, replacing the old one.</li>
+        <li>Reload your game page (<code>index.html</code>) to see the changes.</li>
+      </ol>
     </div>
     
     <div class="controls">
       <input type="search" id="search-input" placeholder="Search by name or team...">
       <div class="button-group">
         <button id="add-player-btn" class="btn-add">Add Player</button>
+        <button id="delete-selected-btn" class="btn-delete" style="display: none;">Delete Selected</button>
         <button id="generate-db-btn" class="btn-generate">Generate & Download database.js</button>
       </div>
     </div>
@@ -92,69 +142,334 @@
     <div id="player-list" class="player-grid"></div>
   </div>
 
-  <!-- Add/Edit Modal (sin cambios) -->
-  <div id="edit-modal"> <form id="player-form"> <h2 id="modal-title">Edit Player</h2> <input type="hidden" id="player-id"> <div class="form-group"> <label for="player-name">Name</label> <input type="text" id="player-name" required> </div> <div class="form-group"> <label for="player-position">Position</label> <select id="player-position" required> <option value="ATK">ATK</option> <option value="MID">MID</option> <option value="DEF">DEF</option> <option value="GK">GK</option> </select> </div> <div class="form-group"> <label for="player-rating">Rating</label> <input type="number" id="player-rating" min="1" max="99" required> </div> <div class="form-group"> <label for="player-rarity">Rarity</label> <select id="player-rarity" required> <option value="common">Common</option> <option value="rare">Rare</option> <option value="epic">Epic</option> <option value="legendary">Legendary</option> <option value="relic">Relic</option> </select> </div> <div class="form-group"> <label for="player-img">Image Path (auto-generated)</label> <input type="text" id="player-img" required> </div> <div class="form-group"> <label for="player-teams">Teams (comma-separated)</label> <input type="text" id="player-teams" required> </div> <div class="form-group"> <label for="player-country">Country</label> <input type="text" id="player-country" required> </div> <div class="form-actions"> <button type="button" id="cancel-btn" class="btn-cancel">Cancel</button> <button type="submit" class="btn-save">Save</button> </div> </form> </div>
+  <!-- Add/Edit Modal -->
+  <div id="edit-modal">
+    <form id="player-form">
+      <h2 id="modal-title">Edit Player</h2>
+      <input type="hidden" id="player-id">
+
+      <div class="form-group">
+        <label for="player-name">Name</label>
+        <input type="text" id="player-name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="player-position">Position</label>
+        <select id="player-position" required>
+          <option value="ATK">ATK</option>
+          <option value="MID">MID</option>
+          <option value="DEF">DEF</option>
+          <option value="GK">GK</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="player-rating">Rating</label>
+        <input type="number" id="player-rating" min="1" max="99" required>
+      </div>
+
+      <div class="form-group">
+  <label for="player-tcg-rating">TCG Rating (Opcional, para la rareza)</label>
+  <input type="number" id="player-tcg-rating" min="1" max="99" placeholder="Usa este para anular el rating normal">
+</div>
+
+      <div class="form-group">
+        <label for="player-rarity">Rarity</label>
+        <select id="player-rarity" required>
+          <option value="common">Common</option>
+          <option value="rare">Rare</option>
+          <option value="epic">Epic</option>
+          <option value="legendary">Legendary</option>
+          <option value="relic">Relic</option>
+        </select>
+      </div>
+
+      <!-- === INICIO DE LOS CAMPOS MODIFICADOS Y AÑADIDOS === -->
+
+      <div class="form-group">
+        <label for="player-league">League</label>
+        <input type="text" id="player-league" list="leagues-list" required placeholder="e.g., La Liga, Premier League...">
+        <datalist id="leagues-list"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="player-teams">Primary Team (for folder path)</label>
+        <input type="text" id="player-teams" list="teams-list" required placeholder="e.g., FC Barcelona, Manchester City...">
+        <datalist id="teams-list"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="player-img">Image Path (auto-generated)</label>
+        <!-- Cambiado a readonly para que no se pueda editar manualmente -->
+        <input type="text" id="player-img" required readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="player-all-teams">All Teams (comma-separated, for display)</label>
+        <input type="text" id="player-all-teams" required placeholder="e.g., Inter Miami, FC Barcelona, Retired...">
+      </div>
+
+      <!-- === FIN DE LOS CAMPOS MODIFICADOS Y AÑADIDOS === -->
+
+      <div class="form-group">
+        <label for="player-country">Country</label>
+        <input type="text" id="player-country" required>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="cancel-btn" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </div>
 
   <div id="toast"></div>
 
+  <div id="confirm-delete-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Confirm Deletion</h2>
+      <p id="confirm-delete-msg">Are you sure you want to delete these players?</p>
+      <div class="modal-actions">
+        <button id="cancel-delete-btn" class="btn-cancel">Cancel</button>
+        <button id="confirm-delete-btn" class="btn-delete">Confirm Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      
-      const toast = document.getElementById('toast');
-      
-      // <<< LA CORRECCIÓN ESTÁ AQUÍ >>>
-      // Se define showToast ANTES de ser usada.
-      const showToast = (message, type = 'success') => {
-          toast.textContent = message;
-          toast.className = type; // Asigna la clase de tipo
-          toast.classList.add('show');
-          setTimeout(() => toast.classList.remove('show'), 3000);
-      };
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- ESTADO GLOBAL PARA LA SELECCIÓN ---
+    let selectedPlayerIds = new Set();
+    
+    // --- REFERENCIAS A ELEMENTOS DEL DOM ---
+    const playerList = document.getElementById('player-list');
+    const addPlayerBtn = document.getElementById('add-player-btn');
+    const generateDbBtn = document.getElementById('generate-db-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const modal = document.getElementById('edit-modal');
+    const form = document.getElementById('player-form');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const searchInput = document.getElementById('search-input');
+    const toast = document.getElementById('toast');
 
-      // Comprueba si la DB se cargó o si falló.
-      if (typeof playersDB === 'undefined' || window.dbFileLoaded === false) {
-        console.warn("`database.js` not found or failed to load. Using fallback data.");
-        window.playersDB = [
-          { id: 1, name: "Example Player", position: "ATK", rating: 80, rarity: "rare", img: "images/example.png", teams: ["Sample FC"], country: "Sampleland" },
-        ];
+    // Referencias a los inputs del formulario
+    const playerNameInput = document.getElementById('player-name');
+    const playerLeagueInput = document.getElementById('player-league');
+    const playerTeamsInput = document.getElementById('player-teams');
+    const playerAllTeamsInput = document.getElementById('player-all-teams');
+    const playerImgInput = document.getElementById('player-img');
+
+    // Referencias al modal de confirmación
+    const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+    const confirmDeleteMsg = document.getElementById('confirm-delete-msg');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    
+    // --- LÓGICA DE LA APLICACIÓN ---
+
+    const showToast = (message, type = 'success') => {
+        toast.textContent = message;
+        toast.className = type;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    };
+
+    if (typeof playersDB === 'undefined' || window.dbFileLoaded === false) {
+        window.playersDB = [{ id: 1, name: "Example Player", position: "ATK", rating: 80, rarity: "rare", img: "images/example.png", teams: ["Sample FC"], country: "Sampleland" }];
         showToast("Error: `database.js` not found. Loading example data.", "error");
-      } else {
-        console.log("Successfully loaded `database.js`.");
+    } else {
         showToast("`database.js` loaded successfully!");
-      }
+    }
+    
+    const sanitizeForPath = (str) => str ? str.toLowerCase().replace(/[\s_.]+/g, '-').replace(/[^a-z0-9-]/g, '') : '';
+    const sanitizeNameForImagePath = (name) => name ? name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n').replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') : '';
 
-      // El resto del código es el mismo, ya que ahora 'playersDB' siempre estará definido.
-      const playerList = document.getElementById('player-list');
-      const addPlayerBtn = document.getElementById('add-player-btn');
-      const generateDbBtn = document.getElementById('generate-db-btn');
-      const modal = document.getElementById('edit-modal');
-      const form = document.getElementById('player-form');
-      const cancelBtn = document.getElementById('cancel-btn');
-      const playerNameInput = document.getElementById('player-name');
-      const playerImgInput = document.getElementById('player-img');
-      const searchInput = document.getElementById('search-input');
+    const populateDatalists = () => {
+        const allTeams = new Set();
+        const allLeagues = new Set();
+        playersDB.forEach(p => {
+            p.teams.forEach(team => allTeams.add(team));
+            const pathParts = p.img.split('/');
+            if (pathParts.length > 3 && pathParts[1] === 'cards') {
+                allLeagues.add(pathParts[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+            }
+        });
+        const teamsDatalist = document.getElementById('teams-list');
+        const leaguesDatalist = document.getElementById('leagues-list');
+        if (teamsDatalist) teamsDatalist.innerHTML = [...allTeams].sort().map(team => `<option value="${team}"></option>`).join('');
+        if (leaguesDatalist) leaguesDatalist.innerHTML = [...allLeagues].sort().map(league => `<option value="${league}"></option>`).join('');
+    };
 
-      const sanitizeNameForImagePath = (name) => { if (!name) return ''; return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n').replace(/\s+/g, '').replace(/[^a-z0-9]/g, ''); };
-      const renderPlayerList = () => { const searchTerm = searchInput.value.toLowerCase().trim(); playerList.innerHTML = ''; let playersToRender = playersDB; if (searchTerm) { playersToRender = playersDB.filter(player => { const nameMatch = player.name.toLowerCase().includes(searchTerm); const teamMatch = player.teams.some(team => team.toLowerCase().includes(searchTerm)); return nameMatch || teamMatch; }); } playersToRender.sort((a,b) => a.id - b.id).forEach(player => { const card = document.createElement('div'); card.className = `player-card rarity-${player.rarity}`; card.innerHTML = `<div class="player-card-header"><img src="${player.img}" alt="${player.name}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"><div class="player-card-info"><h3>${player.name} (ID: ${player.id})</h3><p>Rating: ${player.rating} | Rarity: ${player.rarity.toUpperCase()}</p></div></div><div class="player-card-details"><strong>Position:</strong> ${player.position}<br><strong>Country:</strong> ${player.country}<br><strong>Teams:</strong> ${player.teams.join(', ')}</div><div class="player-card-actions"><button class="btn-edit" data-id="${player.id}">Edit</button><button class="btn-delete" data-id="${player.id}">Delete</button></div>`; playerList.appendChild(card); }); };
-      const getNextAvailableId = () => { const existingIds = playersDB.map(p => p.id).sort((a, b) => a - b); let nextId = 1; for (const id of existingIds) { if (id === nextId) { nextId++; } else { return nextId; } } return nextId; };
-      const openModal = (player = null) => { form.reset(); if (player) { document.getElementById('modal-title').textContent = 'Edit Player'; document.getElementById('player-id').value = player.id; document.getElementById('player-name').value = player.name; document.getElementById('player-position').value = player.position; document.getElementById('player-rating').value = player.rating; document.getElementById('player-rarity').value = player.rarity; document.getElementById('player-img').value = player.img; document.getElementById('player-teams').value = player.teams.join(','); document.getElementById('player-country').value = player.country; } else { document.getElementById('modal-title').textContent = 'Add New Player'; document.getElementById('player-id').value = ''; document.getElementById('player-img').value = ''; } modal.classList.add('visible'); };
-      const closeModal = () => { modal.classList.remove('visible'); };
-      
-      searchInput.addEventListener('input', renderPlayerList);
-      playerNameInput.addEventListener('input', () => { const name = playerNameInput.value; if (name.trim() === '') { playerImgInput.value = ''; return; } const sanitized = sanitizeNameForImagePath(name); playerImgInput.value = `images/${sanitized}.png`; });
-      addPlayerBtn.addEventListener('click', () => openModal());
-      cancelBtn.addEventListener('click', closeModal);
-      playerList.addEventListener('click', (e) => { if (e.target.matches('.btn-edit')) { const playerId = parseInt(e.target.dataset.id, 10); const player = playersDB.find(p => p.id === playerId); openModal(player); } if (e.target.matches('.btn-delete')) { const playerId = parseInt(e.target.dataset.id, 10); const player = playersDB.find(p => p.id === playerId); if (confirm(`Are you sure you want to delete ${player.name}?`)) { window.playersDB = playersDB.filter(p => p.id !== playerId); renderPlayerList(); } } });
-      form.addEventListener('submit', (e) => { e.preventDefault(); const id = document.getElementById('player-id').value; const teams = document.getElementById('player-teams').value.split(',').map(team => team.trim()); const playerData = { name: document.getElementById('player-name').value, position: document.getElementById('player-position').value, rating: parseInt(document.getElementById('player-rating').value, 10), rarity: document.getElementById('player-rarity').value, img: document.getElementById('player-img').value, teams: teams, country: document.getElementById('player-country').value, }; if (id) { const playerIndex = playersDB.findIndex(p => p.id === parseInt(id, 10)); playersDB[playerIndex] = { ...playersDB[playerIndex], ...playerData }; } else { playerData.id = getNextAvailableId(); playersDB.push(playerData); } closeModal(); renderPlayerList(); });
+    const updateImagePath = () => {
+        const name = playerNameInput.value.trim();
+        const league = playerLeagueInput.value.trim();
+        const primaryTeam = playerTeamsInput.value.trim();
+        if (!name || !league || !primaryTeam) {
+            playerImgInput.value = '';
+            return;
+        }
+        const sanitizedLeague = sanitizeForPath(league);
+        const sanitizedTeam = sanitizeForPath(primaryTeam);
+        const sanitizedPlayer = sanitizeNameForImagePath(name);
+        playerImgInput.value = `images/cards/${sanitizedLeague}/${sanitizedTeam}/${sanitizedPlayer}.png`;
+        if (playerAllTeamsInput.value.trim() === '') {
+            playerAllTeamsInput.value = primaryTeam;
+        }
+    };
 
-      generateDbBtn.addEventListener('click', () => {
-        let outputString = "const playersDB = [\n";
+    const updateDeleteButtonState = () => {
+        if (selectedPlayerIds.size > 0) {
+            deleteSelectedBtn.style.display = 'inline-block';
+            deleteSelectedBtn.textContent = `Delete Selected (${selectedPlayerIds.size})`;
+        } else {
+            deleteSelectedBtn.style.display = 'none';
+        }
+    };
+    
+    const renderPlayerList = () => {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        playerList.innerHTML = '';
+        let playersToRender = playersDB;
+        if (searchTerm) {
+            playersToRender = playersDB.filter(p => p.name.toLowerCase().includes(searchTerm) || p.teams.some(t => t.toLowerCase().includes(searchTerm)));
+        }
+        playersToRender.sort((a, b) => a.id - b.id).forEach(player => {
+            const card = document.createElement('div');
+            const isSelected = selectedPlayerIds.has(player.id);
+            card.className = `player-card rarity-${player.rarity} ${isSelected ? 'selected' : ''}`;
+            card.innerHTML = `
+                <input type="checkbox" class="player-select-checkbox" data-id="${player.id}" ${isSelected ? 'checked' : ''}>
+                <div class="player-card-header"><img src="${player.img}" alt="${player.name}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"><div class="player-card-info"><h3>${player.name} (ID: ${player.id})</h3><p>Rating: ${player.rating} | Rarity: ${player.rarity.toUpperCase()}</p></div></div>
+                <div class="player-card-details"><strong>Position:</strong> ${player.position}<br><strong>Country:</strong> ${player.country}<br><strong>Teams:</strong> ${player.teams.join(', ')}</div>
+                <div class="player-card-actions"><button class="btn-edit" data-id="${player.id}">Edit</button></div>`;
+            playerList.appendChild(card);
+        });
+    };
+
+    const getNextAvailableId = () => {
+        const ids = playersDB.map(p => p.id);
+        let nextId = 1;
+        while (ids.includes(nextId)) {
+            nextId++;
+        }
+        return nextId;
+    };
+
+    const openModal = (player = null) => {
+        form.reset();
+        if (player) {
+            document.getElementById('modal-title').textContent = 'Edit Player';
+            document.getElementById('player-id').value = player.id;
+            playerNameInput.value = player.name;
+            document.getElementById('player-position').value = player.position;
+            document.getElementById('player-rating').value = player.rating;
+            document.getElementById('player-rarity').value = player.rarity;
+            playerImgInput.value = player.img;
+            playerAllTeamsInput.value = player.teams.join(',');
+            document.getElementById('player-country').value = player.country;
+            const pathParts = player.img.split('/');
+            if (pathParts.length > 3 && pathParts[1] === 'cards') {
+                playerLeagueInput.value = pathParts[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                playerTeamsInput.value = player.teams[0];
+            }
+        } else {
+            document.getElementById('modal-title').textContent = 'Add New Player';
+            document.getElementById('player-id').value = '';
+        }
+        modal.classList.add('visible');
+    };
+
+    const closeModal = () => modal.classList.remove('visible');
+    
+    const showDeleteConfirmation = () => {
+        confirmDeleteMsg.textContent = `You are about to permanently delete ${selectedPlayerIds.size} player(s). This action cannot be undone.`;
+        confirmDeleteModal.classList.add('visible');
+    };
+    
+    const hideDeleteConfirmation = () => confirmDeleteModal.classList.remove('visible');
+
+    // --> ESTA ES LA FUNCIÓN CORREGIDA
+    const performDeletion = () => {
+        // Se reasigna la variable 'playersDB' directamente. Funciona gracias al 'let' en database.js
+        playersDB = playersDB.filter(p => !selectedPlayerIds.has(p.id));
+        
+        const count = selectedPlayerIds.size;
+        selectedPlayerIds.clear();
+        
+        hideDeleteConfirmation();
+        renderPlayerList();
+        updateDeleteButtonState();
+        populateDatalists();
+        showToast(`Successfully deleted ${count} player(s).`, 'success');
+    };
+    
+    // --- MANEJADORES DE EVENTOS ---
+    
+    searchInput.addEventListener('input', renderPlayerList);
+    addPlayerBtn.addEventListener('click', () => openModal());
+    cancelBtn.addEventListener('click', closeModal);
+    deleteSelectedBtn.addEventListener('click', showDeleteConfirmation);
+    cancelDeleteBtn.addEventListener('click', hideDeleteConfirmation);
+    confirmDeleteBtn.addEventListener('click', performDeletion);
+
+    playerNameInput.addEventListener('input', updateImagePath);
+    playerLeagueInput.addEventListener('input', updateImagePath);
+    playerTeamsInput.addEventListener('input', updateImagePath);
+
+    playerList.addEventListener('click', (e) => {
+        if (e.target.matches('.btn-edit')) {
+            const player = playersDB.find(p => p.id === parseInt(e.target.dataset.id));
+            openModal(player);
+            return;
+        }
+        if (e.target.matches('.player-select-checkbox')) {
+            const checkbox = e.target;
+            const playerId = parseInt(checkbox.dataset.id);
+            const card = checkbox.closest('.player-card');
+            if (checkbox.checked) {
+                selectedPlayerIds.add(playerId);
+                card.classList.add('selected');
+            } else {
+                selectedPlayerIds.delete(playerId);
+                card.classList.remove('selected');
+            }
+            updateDeleteButtonState();
+        }
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('player-id').value;
+        const teams = playerAllTeamsInput.value.split(',').map(t => t.trim());
+        const playerData = {
+            name: playerNameInput.value,
+            position: document.getElementById('player-position').value,
+            rating: parseInt(document.getElementById('player-rating').value),
+            rarity: document.getElementById('player-rarity').value,
+            img: playerImgInput.value,
+            teams: teams,
+            country: document.getElementById('player-country').value,
+        };
+        if (id) {
+            const index = playersDB.findIndex(p => p.id === parseInt(id));
+            playersDB[index] = { ...playersDB[index], ...playerData };
+        } else {
+            playerData.id = getNextAvailableId();
+            playersDB.push(playerData);
+        }
+        closeModal();
+        renderPlayerList();
+        populateDatalists();
+    });
+
+    generateDbBtn.addEventListener('click', () => {
+        let outputString = "let playersDB = [\n";
         playersDB.sort((a,b) => a.id - b.id).forEach(p => {
             const teamsString = p.teams.map(t => `"${t}"`).join(',');
             outputString += `  { id: ${p.id}, name: "${p.name}", position: "${p.position}", rating: ${p.rating}, rarity: "${p.rarity}", img: "${p.img}", teams: [${teamsString}], country: "${p.country}" },\n`;
         });
         outputString += "];\n";
-
         const blob = new Blob([outputString], { type: 'application/javascript' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -163,13 +478,37 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
-
         showToast("Downloading database.js...");
-      });
-
-      // Render inicial
-      renderPlayerList();
     });
-  </script>
+    
+    // --- INICIALIZACIÓN ---
+    renderPlayerList();
+    populateDatalists();
+});
+
+
+const ratingInput = document.getElementById('player-rating');
+const tcgRatingInput = document.getElementById('player-tcg-rating');
+const raritySelect = document.getElementById('player-rarity');
+
+const autoSetRarity = () => {
+    const tcgRating = parseInt(tcgRatingInput.value, 10);
+    const regularRating = parseInt(ratingInput.value, 10);
+
+    // Usa el TCG Rating si existe, si no, el rating normal
+    const effectiveRating = !isNaN(tcgRating) && tcgRating > 0 ? tcgRating : regularRating;
+
+    if (isNaN(effectiveRating)) return;
+
+    if (effectiveRating >= 96) raritySelect.value = 'relic';
+    else if (effectiveRating >= 91) raritySelect.value = 'legendary';
+    else if (effectiveRating >= 87) raritySelect.value = 'epic';
+    else if (effectiveRating >= 83) raritySelect.value = 'rare';
+    else raritySelect.value = 'common';
+};
+
+ratingInput.addEventListener('input', autoSetRarity);
+tcgRatingInput.addEventListener('input', autoSetRarity);
+</script>
 </body>
 </html>
