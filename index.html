@@ -2682,9 +2682,11 @@ h1 img {
 /* 1. ESTILOS PARA LA VISTA DE RESULTADO (LAYOUT) */
 #grading-result-view {
   display: grid;
-  place-content: center;
+  justify-items: center; /* <-- LA SOLUCIÓN: Centra cada item horizontalmente */
+  align-content: center;   /* <-- Mantiene el centrado vertical del bloque */
   height: 100%;
   gap: 30px;
+  width: 100%;
 }
 
 /* 2. ESTILOS PARA EL SLAB (Contenedor) - Sin cambios, pero lo incluimos por completitud */
@@ -2912,6 +2914,32 @@ h1 img {
   padding: 20px;
 }
 
+/*boton vuelta a grading*/
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px; /* Espacio para separar los botones del slab */
+}
+
+/* Estilo para el botón de "Continuar" (verde) */
+#grade-another-btn {
+  background-color: #27ae60;
+  color: #fff;
+}
+#grade-another-btn:hover {
+  box-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
+}
+
+/* Estilo para el botón de "Ir al Álbum" (azul, como el del menú) */
+#go-to-graded-album-btn {
+  background-color: #3b68d1;
+  color: #fff;
+}
+#go-to-graded-album-btn:hover {
+  box-shadow: 0 0 15px rgba(59, 104, 209, 0.6);
+}
+
 </style>
 </head>
 <body>
@@ -3004,7 +3032,12 @@ h1 img {
       <div id="graded-result-slab-container">
         <!-- El slab con la carta graduada aparecerá aquí -->
       </div>
-      <button id="finish-grading-btn">Back to Album</button>
+      
+      <!-- Contenedor para los nuevos botones -->
+      <div class="result-actions">
+        <button id="go-to-graded-album-btn">Graded Cards Album</button>
+        <button id="grade-another-btn">Grade Another Card</button>
+      </div>
     </div>
 
   </div>
@@ -4325,12 +4358,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // El botón "Back" te devuelve a la selección de cartas
     cancelGradeBtn.addEventListener('click', openGradingView);
   }
-  if (finishGradingBtn) {
-        // Cierra el overlay y abre el álbum para que veas tu colección
-    finishGradingBtn.addEventListener('click', () => {
+  // 2. AÑADE estas nuevas variables y listeners en su lugar:
+  const gradeAnotherBtn = document.getElementById('grade-another-btn');
+  const goToGradedAlbumBtn = document.getElementById('go-to-graded-album-btn');
+
+// Listener para el botón "Graded Cards Album"
+  if (goToGradedAlbumBtn) {
+    goToGradedAlbumBtn.addEventListener('click', () => {
+        // 1. Establece el filtro para que el álbum sepa qué mostrar
+      activeFilters.showGraded = true;
+      
+        // 2. Cierra el overlay de grading
       gradingOverlay.classList.remove('visible');
-            showcaseBtn.click(); // Simula un clic en el botón del álbum
-          });
+      
+        // 3. Simula un clic en el botón del álbum para abrirlo en el modo correcto
+      showcaseBtn.click();
+    });
+  }
+
+// Listener para el botón "Grade Another Card"
+  if (gradeAnotherBtn) {
+    // Esta es la parte fácil: simplemente llamamos a la función que muestra la selección
+    gradeAnotherBtn.addEventListener('click', openGradingView);
   }
 
 }); //FIN DEL DOM
@@ -6923,4 +6972,3 @@ function executeGrading(playerId, variantKey, quantity) {
 
 </body>
 </html>
-
