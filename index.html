@@ -372,6 +372,7 @@ button:not(:disabled):hover {
 #openPacksViewBtn,
 #showcaseBtn,
 #roulette-btn,
+#grade-cards-btn,
 button[onclick="resetCollection()"] {
   border: none; /* Quitamos el borde para que no se vea alrededor del PNG */
   color: #FFFFFF; /* Texto blanco para todos */
@@ -395,7 +396,8 @@ button[onclick="resetCollection()"] {
 /* 2. Propiedades de hover COMUNES para los 3 botones */
 #openPacksViewBtn:not(:disabled):hover,
 #showcaseBtn:not(:disabled):hover,
-#roulette-btn:not(:disabled):hover, /* <-- AÑADE ESTA LÍNEA */
+#roulette-btn:not(:disabled):hover,
+#grade-cards-btn:not(:disabled):hover,
 button[onclick="resetCollection()"]:not(:disabled):hover {
   box-shadow: none;
 }
@@ -2498,6 +2500,418 @@ h1 img {
   }
 }
 
+/* --- ESTILOS PARA EL NUEVO PANEL DE PAGOS DE LA RULETA --- */
+
+/* 1. Posicionamos el nuevo panel a la derecha */
+#roulette-payouts-info {
+  position: absolute;
+  left: 100%; /* Lo pegamos al borde derecho del contenedor central */
+  margin-left: 50px; /* Le damos el mismo espacio que al panel izquierdo */
+  top: 50%;
+  transform: translateY(-50%);
+  
+  /* Copiamos las propiedades de estilo del panel izquierdo para que sea idéntico */
+  display: flex;
+  flex-direction: column;
+  width: 240px; 
+  flex-shrink: 0; 
+  color: #aaa;
+}
+
+/* 2. Agrupamos los selectores para que AMBOS paneles compartan el mismo estilo interno */
+#roulette-rewards-info h3, 
+#roulette-payouts-info h3 {
+  color: #eee;
+  font-size: 20px;
+  margin: 0 0 5px 0;
+  text-align: left;
+  width: 100%;
+}
+
+#roulette-rewards-info p, 
+#roulette-payouts-info p {
+  font-size: 13px;
+  color: #777;
+  margin: 0 0 15px 0;
+  text-align: left;
+  width: 100%;
+  font-style: italic;
+}
+
+#roulette-rewards-info ul, 
+#roulette-payouts-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+#roulette-rewards-info li, 
+#roulette-payouts-info li {
+  text-align: left;
+  margin-bottom: 15px;
+  line-height: 1.4;
+  font-size: 14px;
+  border-left: 3px solid #4a5568;
+  padding-left: 10px;
+}
+
+#roulette-rewards-info li span, 
+#roulette-payouts-info li span {
+  display: block;
+}
+
+#roulette-rewards-info li strong, 
+#roulette-payouts-info li strong {
+  font-weight: 700;
+  color: #ffc84a;
+}
+
+/* --- ESTILOS PARA EL OVERLAY DE GRADING --- */
+#grading-overlay {
+  position: fixed; inset: 0; background: rgba(10, 12, 20, 0.95);
+  z-index: 1100; display: none; place-items: center;
+  padding: 20px;
+}
+#grading-overlay.visible { display: grid; }
+
+#grading-modal {
+  background: #1d1f24; border-radius: 15px; padding: 25px 30px;
+  text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 90%; max-width: 1600px; height: 90vh;
+  display: flex; flex-direction: column;
+}
+
+#grading-modal h2 { margin: 0 0 10px 0; color: #eee; }
+#grading-modal p { color: #ccc; margin-bottom: 20px; }
+
+#gradable-cards-grid {
+  overflow-y: auto; height: calc(85vh - 120px);
+  /* Usamos la clase que ya tienes para el grid del álbum */
+}
+
+#close-grading-btn {
+  position: fixed; top: 20px; right: 20px; width: 40px; height: 40px;
+  padding: 0; font-size: 20px; background-color: #ff4d4d; color: #fff;
+}
+
+/* Estilos para la vista de confirmación */
+#confirm-card-display {
+  display: flex; justify-content: center; margin-bottom: 20px;
+}
+.confirm-actions {
+  display: flex; justify-content: center; gap: 20px;
+}
+#confirm-grade-btn { background-color: #1f7; color: #022; }
+#cancel-grade-btn { background-color: #c0392b; color: #fff; }
+
+/* Estilos para el botón de Grade Cards */
+#grade-cards-btn {
+  background-color: #9b59b6; /* Un color púrpura distintivo */
+  background-image: url('images/buttons/btn-normal.png');
+}
+#grade-cards-btn:hover {
+  background-image: url('images/buttons/btn-hover.png');
+}
+
+/* 2. ESTILOS PARA EL SLAB (Contenedor) - Sin cambios, pero lo incluimos por completitud */
+.slab-container {
+  position: relative; padding: 80px 15px 15px 15px; background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px);
+  cursor: pointer; transform-style: preserve-3d; transition: transform 0.1s linear;
+  perspective: 2000px;
+}
+
+/* ---> NUEVO: ESTILOS PARA EL DESGASTE DE LA CARTA POR CAPAS <--- */
+
+/* 1. Variables CSS para controlar la opacidad de cada capa de daño */
+.card {
+  --wear-borders-opacity: 0;
+  --wear-rips-opacity: 0;
+  --wear-dirt-opacity: 0;
+  --wear-heavy-damage-opacity: 0;
+}
+
+.wear-layer-borders, .wear-layer-rips, .wear-layer-dirt, .wear-layer-heavy-damage {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.5s ease-out;
+  will-change: opacity;
+}
+
+/* Capa de DAÑO EXTREMO (Heavy Damage) */
+.wear-layer-heavy-damage {
+  background-image: url('images/damaged1.png');
+  z-index: 11; /* El z-index más alto para que esté encima de todo */
+  opacity: var(--wear-heavy-damage-opacity);
+}
+
+/* Capa de BORDES DAÑADOS */
+.wear-layer-borders {
+  background-image: url('images/damagedborders.png');
+  z-index: 10; /* La capa más superficial */
+  opacity: var(--wear-borders-opacity);
+}
+
+/* Capa de ROTURAS (Rips) */
+.wear-layer-rips {
+  background-image: url('images/ripped.png');
+  mix-blend-mode: screen; /* Como solicitaste */
+  z-index: 9;
+  opacity: var(--wear-rips-opacity);
+}
+
+/* Capa de SUCIEDAD (Dirt) */
+.wear-layer-dirt {
+  background-image: url('images/dirt.png');
+  mix-blend-mode: screen; /* Como solicitaste */
+  z-index: 8;
+  opacity: var(--wear-dirt-opacity);
+}
+
+
+/* --- AÑADE/REEMPLAZA ESTE BLOQUE COMPLETO EN TU CSS DE INDEX.HTML --- */
+
+/* 1. ESTILOS PARA LA VISTA DE RESULTADO (LAYOUT) */
+#grading-result-view {
+  display: grid;
+  place-content: center;
+  height: 100%;
+  gap: 30px;
+}
+
+/* 2. ESTILOS PARA EL SLAB (Contenedor) - Sin cambios, pero lo incluimos por completitud */
+.slab-container {
+  position: relative; padding: 80px 15px 15px 15px; background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px);
+  cursor: pointer; transform-style: preserve-3d; transition: transform 0.1s linear;
+  perspective: 2000px;
+}
+.slab-label {
+  position: absolute; top: 0; left: 0; right: 0; padding: 10px 15px;
+  background: linear-gradient(180deg, #1f2937, #111827);
+  border-bottom: 3px solid var(--rarity-color); border-radius: 17px 17px 0 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  height: 55px; box-sizing: border-box; transform: translateZ(20px); z-index: 10;
+}
+.slab-container #graded-card-container { transform: translateZ(-5px); }
+.grade-container { display: flex; align-items: center; gap: 10px; }
+.grade-container #grade-score { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+.grade-container #grade-name { font-size: 1rem; font-weight: 700; text-transform: uppercase; }
+.player-label-info { text-align: right; }
+.player-label-info span { display: block; }
+#label-metadata { position: absolute; bottom: 5px; right: 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.7rem; color: #666; display: flex; gap: 15px; transform: translateZ(20px); }
+.slab-container::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background-image: url('images/slab-texture.png'); mix-blend-mode: overlay;
+  opacity: 0.5; transform: translateZ(10px); z-index: 5; pointer-events: none; 
+}
+
+/* 3. ¡LA CLAVE! ESTILOS INDEPENDIENTES PARA LA CARTA GRADUADA */
+.graded-card {
+  --card-w: 260px; /* Tamaño grande del prototipo */
+  --card-h: 370px;
+  width: var(--card-w); height: var(--card-h); border-radius: 12px;
+  position: relative; transform-style: preserve-3d; user-select: none;
+  
+  /* Variables de desgaste */
+  --wear-borders-opacity: 0; --wear-rips-opacity: 0;
+  --wear-dirt-opacity: 0; --wear-heavy-damage-opacity: 0;
+}
+.graded-card .side {
+  position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: 700; color: #fff; overflow: hidden;
+}
+.graded-card .front {
+  transform: rotateY(180deg);
+  box-shadow: 0 0 15px 5px var(--rarity-color);
+}
+.graded-card .player-image {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 10px; z-index: 1; opacity: 0.85;
+}
+.graded-card .player-info {
+  z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex;
+  flex-direction: column; position: relative; width: 100%; height: 100%;
+}
+
+/* Fondos y efectos de variante para .graded-card */
+.graded-card.common .front { background: linear-gradient(170deg, #8a8a8a, #505050); }
+.graded-card.rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); }
+.graded-card.epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
+.graded-card.legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
+.graded-card.relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
+.graded-card.golden .front::after { content: ''; position: absolute; inset: 0; border-radius: 12px; z-index: 4; pointer-events: none; background-image: linear-gradient( 120deg, transparent 25%, rgba(255, 235, 150, 0.5) 50%, transparent 65% ), radial-gradient( ellipse at 50% 50%, rgba(255, 215, 0, 0.55), rgba(200, 140, 40, 0.75) ); background-size: 300% 100%, 100% 100%; background-position: 0% 50%, 0 0; mix-blend-mode: overlay; animation: subtle-gold-shine 6.5s ease-in-out infinite alternate; }
+.graded-card.variant-foil .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: radial-gradient(ellipse at center, rgba(220, 230, 255, 0.33) 0%, rgba(220, 230, 255, 0.15) 20%, transparent 60%); background-size: 200% 200%; background-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: color-dodge; opacity: 0; transition: opacity 0.4s ease-out; will-change: background-position, opacity; }
+.graded-card.variant-foil.tilting .front::before { opacity: 1; }
+.graded-card.variant-holo .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: url('images/holoeffect.png'); background-size: cover; mask-image: radial-gradient(ellipse at center, white 25%, transparent 60%); mask-size: 200% 200%; mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: overlay; opacity: 0; transition: opacity 0.8s ease-out; will-change: mask-position, opacity; }
+.graded-card.variant-holo.tilting .front::before { opacity: 1; transition: opacity 0.3s ease-in; }
+
+/* Capas de Desgaste (aplicadas a .graded-card) */
+.graded-card .wear-layer-borders, .graded-card .wear-layer-rips, .graded-card .wear-layer-dirt, .graded-card .wear-layer-heavy-damage {
+  position: absolute; inset: 0; border-radius: 12px; pointer-events: none;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  transition: opacity 0.5s ease-out; will-change: opacity;
+}
+.graded-card .wear-layer-heavy-damage { background-image: url('images/damaged1.png'); z-index: 11; opacity: var(--wear-heavy-damage-opacity); }
+.graded-card .wear-layer-borders { background-image: url('images/damagedborders.png'); z-index: 10; opacity: var(--wear-borders-opacity); }
+.graded-card .wear-layer-rips { background-image: url('images/ripped.png'); mix-blend-mode: screen; z-index: 9; opacity: var(--wear-rips-opacity); }
+.graded-card .wear-layer-dirt { background-image: url('images/dirt.png'); mix-blend-mode: screen; z-index: 8; opacity: var(--wear-dirt-opacity); }
+
+/* Efectos Pristine+ (sin cambios) */
+@keyframes pearlescent-shine { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.pristine-plus-effect { background-image: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba); background-size: 300% auto; background-clip: text; -webkit-background-clip: text; color: transparent; animation: pearlescent-shine 5s linear infinite alternate; font-weight: 700; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5); text-shadow: 0 0 4px rgba(255, 255, 255, 0.7), 0 0 12px rgba(220, 180, 255, 0.5); }
+@keyframes pearlescent-shine-border { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.slab-container.pristine-plus-slab { position: relative; border: 3px solid transparent; }
+.slab-container.pristine-plus-slab::before { content: ''; position: absolute; inset: -3px; border-radius: 18px; background: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba); background-size: 300% auto; animation: pearlescent-shine-border 5s linear infinite alternate; z-index: -1; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; padding: 3px; }
+
+/* 1. ESTILOS PARA LA VISTA DE RESULTADO (LAYOUT) */
+#grading-result-view {
+  display: grid;
+  place-content: center;
+  height: 100%;
+  gap: 30px;
+}
+
+/* 2. ESTILOS PARA EL SLAB (Contenedor) - Sin cambios, pero lo incluimos por completitud */
+.slab-container {
+  position: relative; padding: 80px 15px 15px 15px; background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px);
+  cursor: pointer; transform-style: preserve-3d; transition: transform 0.1s linear;
+  perspective: 2000px;
+}
+.slab-label {
+  position: absolute; top: 0; left: 0; right: 0; padding: 10px 15px;
+  background: linear-gradient(180deg, #1f2937, #111827);
+  border-bottom: 3px solid var(--rarity-color); border-radius: 17px 17px 0 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  height: 55px; box-sizing: border-box; transform: translateZ(20px); z-index: 10;
+}
+.slab-container #graded-card-container { transform: translateZ(-5px); }
+.grade-container { display: flex; align-items: center; gap: 10px; }
+.grade-container #grade-score { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+.grade-container #grade-name { font-size: 1rem; font-weight: 700; text-transform: uppercase; }
+.player-label-info { text-align: right; }
+.player-label-info span { display: block; }
+#label-metadata { position: absolute; bottom: 5px; right: 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.7rem; color: #666; display: flex; gap: 15px; transform: translateZ(20px); }
+.slab-container::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background-image: url('images/slab-texture.png'); mix-blend-mode: overlay;
+  opacity: 0.5; transform: translateZ(10px); z-index: 5; pointer-events: none; 
+}
+
+/* 3. ¡LA CLAVE! ESTILOS INDEPENDIENTES PARA LA CARTA GRADUADA */
+.graded-card {
+  --card-w: 260px; /* Tamaño grande del prototipo */
+  --card-h: 370px;
+  width: var(--card-w); height: var(--card-h); border-radius: 12px;
+  position: relative; transform-style: preserve-3d; user-select: none;
+  
+  /* Variables de desgaste */
+  --wear-borders-opacity: 0; --wear-rips-opacity: 0;
+  --wear-dirt-opacity: 0; --wear-heavy-damage-opacity: 0;
+}
+.graded-card .side {
+  position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: 700; color: #fff; overflow: hidden;
+}
+.graded-card .front {
+  transform: rotateY(180deg);
+  box-shadow: 0 0 15px 5px var(--rarity-color);
+}
+.graded-card .player-image {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 10px; z-index: 1; opacity: 0.85;
+}
+.graded-card .player-info {
+  z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex;
+  flex-direction: column; position: relative; width: 100%; height: 100%;
+}
+
+/* Fondos y efectos de variante para .graded-card */
+.graded-card.common .front { background: linear-gradient(170deg, #8a8a8a, #505050); }
+.graded-card.rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); }
+.graded-card.epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
+.graded-card.legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
+.graded-card.relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
+.graded-card.golden .front::after { content: ''; position: absolute; inset: 0; border-radius: 12px; z-index: 4; pointer-events: none; background-image: linear-gradient( 120deg, transparent 25%, rgba(255, 235, 150, 0.5) 50%, transparent 65% ), radial-gradient( ellipse at 50% 50%, rgba(255, 215, 0, 0.55), rgba(200, 140, 40, 0.75) ); background-size: 300% 100%, 100% 100%; background-position: 0% 50%, 0 0; mix-blend-mode: overlay; animation: subtle-gold-shine 6.5s ease-in-out infinite alternate; }
+.graded-card.variant-foil .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: radial-gradient(ellipse at center, rgba(220, 230, 255, 0.33) 0%, rgba(220, 230, 255, 0.15) 20%, transparent 60%); background-size: 200% 200%; background-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: color-dodge; opacity: 0; transition: opacity 0.4s ease-out; will-change: background-position, opacity; }
+.graded-card.variant-foil.tilting .front::before { opacity: 1; }
+.graded-card.variant-holo .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: url('images/holoeffect.png'); background-size: cover; mask-image: radial-gradient(ellipse at center, white 25%, transparent 60%); mask-size: 200% 200%; mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: overlay; opacity: 0; transition: opacity 0.8s ease-out; will-change: mask-position, opacity; }
+.graded-card.variant-holo.tilting .front::before { opacity: 1; transition: opacity 0.3s ease-in; }
+
+/* Capas de Desgaste (aplicadas a .graded-card) */
+.graded-card .wear-layer-borders, .graded-card .wear-layer-rips, .graded-card .wear-layer-dirt, .graded-card .wear-layer-heavy-damage {
+  position: absolute; inset: 0; border-radius: 12px; pointer-events: none;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  transition: opacity 0.5s ease-out; will-change: opacity;
+}
+.graded-card .wear-layer-heavy-damage { background-image: url('images/damaged1.png'); z-index: 11; opacity: var(--wear-heavy-damage-opacity); }
+.graded-card .wear-layer-borders { background-image: url('images/damagedborders.png'); z-index: 10; opacity: var(--wear-borders-opacity); }
+.graded-card .wear-layer-rips { background-image: url('images/ripped.png'); mix-blend-mode: screen; z-index: 9; opacity: var(--wear-rips-opacity); }
+.graded-card .wear-layer-dirt { background-image: url('images/dirt.png'); mix-blend-mode: screen; z-index: 8; opacity: var(--wear-dirt-opacity); }
+
+/* Efectos Pristine+ (sin cambios) */
+@keyframes pearlescent-shine { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.pristine-plus-effect { background-image: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba); background-size: 300% auto; background-clip: text; -webkit-background-clip: text; color: transparent; animation: pearlescent-shine 5s linear infinite alternate; font-weight: 700; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5); text-shadow: 0 0 4px rgba(255, 255, 255, 0.7), 0 0 12px rgba(220, 180, 255, 0.5); }
+@keyframes pearlescent-shine-border { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.slab-container.pristine-plus-slab { position: relative; border: 3px solid transparent; }
+.slab-container.pristine-plus-slab::before { content: ''; position: absolute; inset: -3px; border-radius: 18px; background: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba); background-size: 300% auto; animation: pearlescent-shine-border 5s linear infinite alternate; z-index: -1; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; padding: 3px; }
+
+/* 1. ¡LA CORRECCIÓN MÁS IMPORTANTE! Fuerza a la carta graduada a ser relativa */
+.slab-container .graded-card {
+  position: relative !important; /* Anula el 'position: absolute' de la clase .card */
+  top: auto;
+  left: auto;
+}
+
+/* --- AÑADE ESTE BLOQUE A TU CSS --- */
+
+.grading-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.grading-controls label {
+  font-weight: bold;
+  color: #ccc;
+}
+#grade-quantity-input {
+  width: 100px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #fff;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.graded-showcase-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: center;
+  padding: 20px;
+}
+
 </style>
 </head>
 <body>
@@ -2509,6 +2923,7 @@ h1 img {
   <div class="button-container">
     <button id="openPacksViewBtn">BUY / OPEN PACKS</button>
     <button id="showcaseBtn">MY ALBUM</button>
+    <button id="grade-cards-btn">GRADE CARDS</button> 
     <button id="roulette-btn">ROULETTE GAME</button>
     <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>
   </div>
@@ -2549,6 +2964,51 @@ h1 img {
   </div>
   <div id="showcase-content"></div>
   <button id="closeShowcaseBtn">X</button>
+</div>
+
+<!-- ============= VISTA DE GRADING DE CARTAS =============== -->
+<div id="grading-overlay">
+  <div id="grading-modal">
+
+    <!-- Fase 1: Selección de la carta a graduar -->
+    <div id="grading-selection-view">
+      <h2>Select a Card to Grade</h2>
+      <p>Choose a card from your collection. Only cards you own will appear.</p>
+      <div id="gradable-cards-grid" class="showcase-grid">
+        <!-- Las cartas para graduar se generarán aquí -->
+      </div>
+    </div>
+
+    <!-- Fase 2: Confirmación (la haremos más compleja después) -->
+    <div id="grading-confirm-view" style="display: none;">
+      <h2>Select Quantity</h2>
+      <div id="confirm-card-display">
+        <!-- La carta seleccionada aparecerá aquí -->
+      </div>
+
+      <div class="grading-controls">
+        <p>Select how many copies to grade. The best result will be kept.</p>
+        <label for="grade-quantity-input">Copies to use (Max: <span id="max-copies-info">1</span>):</label>
+        <input type="number" id="grade-quantity-input" min="1" value="1">
+      </div>
+
+      <div class="confirm-actions">
+        <button id="cancel-grade-btn">Back</button>
+        <button id="confirm-grade-btn">Grade Card(s)</button>
+      </div>
+    </div>
+
+    <!-- Fase 3: Resultado de la graduación -->
+    <div id="grading-result-view" style="display: none;">
+      <h2>Grading Complete!</h2>
+      <div id="graded-result-slab-container">
+        <!-- El slab con la carta graduada aparecerá aquí -->
+      </div>
+      <button id="finish-grading-btn">Back to Album</button>
+    </div>
+
+  </div>
+  <button id="close-grading-btn">X</button>
 </div>
 
 <!-- =========  VISTA DE LA TIENDA DE PACKS  ========== -->
@@ -2678,30 +3138,38 @@ h1 img {
 <!-- ============= VISTA DE LA RULETA =============== -->
 <div id="roulette-overlay">
   <div class="roulette-wrapper">
+
     <div id="roulette-rewards-info">
-      <h3>Jackpot Prizes</h3>
-      <p>(When you hit the specific number)</p>
+      <!-- Recompensas para apuestas con Gemas (visible por defecto) -->
+      <div id="gem-bet-rewards">
+        <h3>Jackpot Prizes (Gem Bets)</h3>
+        <p>(When you hit the specific number)</p>
+        <ul>
+          <li><strong>Bet 10-99 💎</strong><span>Win <strong>35x</strong> your bet in Gems.</span></li>
+          <li><strong>Bet 100-999 💎</strong><span>Win <strong>35x</strong> your bet + a <strong>Collectors Pack!</strong></span></li>
+          <li><strong>Bet 1000+ 💎</strong><span>Win <strong>35x</strong> your bet + <strong>THREE</strong> Collectors Packs!</span></li>
+          <li><strong>Bet 1000+ on ZERO 💎</strong><span>Win <strong>35x</strong> your bet + a special <strong>Roulette Pack!</strong></span></li>
+        </ul>
+      </div>
+
+      <!-- Recompensas para la Tirada Gratis (oculto por defecto) -->
+      <div id="free-spin-rewards" style="display: none;">
+        <h3>Jackpot Prizes (Free Spin)</h3>
+        <p>(Use your free spin to win prizes!)</p>
+        <ul>
+          <li><strong>Hit a Specific Number</strong><span>Win a <strong>Roulette Pack!</strong></span></li>
+          <li><strong>Win on a Dozen/Column</strong><span>Win <strong>3 Common Packs!</strong></span></li>
+          <li><strong>Win on an Outside Bet</strong><span>(Red/Black, Even/Odd, etc.)<br>Win <strong>1 Common Pack!</strong></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="roulette-payouts-info">
+      <h3>Bet Payouts</h3>
+      <p>(For bets made with Gems 💎)</p>
       <ul>
-        <li>
-          <strong>Bet 10-99 💎</strong>
-          <span>Win 35x your bet in Gems.</span>
-        </li>
-        <li>
-          <strong>Bet 100-999 💎</strong>
-          <span>Win 20x your bet + a <strong>Collectors Pack!</strong></span>
-        </li>
-        <li>
-          <strong>Bet 1000+ 💎</strong>
-          <span>Win 15x your bet + <strong>THREE</strong> Collectors Packs!</span>
-        </li>
-        <li>
-          <strong>Bet 1000+ on ZERO 💎</strong>
-          <span>Win 10x your bet + a special <strong>Roulette Pack!</strong></span>
-        </li>
-        <li>
-          <strong>Free Daily Spin</strong>
-          <span>Win a guaranteed <strong>Roulette Pack!</strong></span>
-        </li>
+        <li><strong>Dozens & Columns</strong><span>(e.g., 1st 12, 1 to 34 Line)<br>Win <strong>3x</strong> your bet.</span></li>
+        <li><strong>Outside Bets</strong><span>(Red/Black, Even/Odd, 1-18/19-36)<br>Win <strong>2x</strong> your bet.</span></li>
       </ul>
     </div>
     <div id="roulette-modal">
@@ -2766,7 +3234,7 @@ h1 img {
 <script src="database.js"></script>
 
 <script>
-  const TEST_MODE_FILL_ALBUM = false; /*PRUEBA ALBUM LLENO*/
+  const TEST_MODE_FILL_ALBUM = true; /*PRUEBA ALBUM LLENO*/
   const ALLOW_GOLDEN_CARDS = true; /*DESHABILITAR DORADAS*/
 
 
@@ -2854,6 +3322,36 @@ const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 let collection;
 let packInventory;
 let playerCurrency;
+let gradedCollection;
+
+const gradingScale = [
+  { threshold: 0.005, score: "10+", name: "PRISTINE +" }, 
+  { threshold: 0.07,  score: "10",  name: "PRISTINE" },
+  { threshold: 0.15,  score: "10",  name: "GEM MINT" },
+  { threshold: 0.30,  score: "9",   name: "MINT" },
+  { threshold: 0.50,  score: "8",   name: "NEAR MINT" },
+  { threshold: 0.70,  score: "7",   name: "EXCELLENT" }, 
+  { threshold: 0.82,  score: "6",   name: "VERY GOOD" },
+  { threshold: 0.90,  score: "5",   name: "GOOD" },
+  { threshold: 0.95,  score: "4",   name: "FAIR" },
+  { threshold: 0.98,  score: "3",   name: "POOR" },
+  { threshold: 0.995, score: "2",   name: "DAMAGED" },
+  { threshold: 1.00,  score: "1",   name: "HEAVY DAMAGE" }
+];
+
+const GRADING_CONFIG = {
+  limitsByRarity: {
+    common: 15,
+    rare: 10,
+    epic: 7,
+    legendary: 5,
+    relic: 3
+  }
+};
+
+// Y en la sección de carga de datos:
+const savedGradedCollection = localStorage.getItem('myGradedCollection');
+gradedCollection = savedGradedCollection ? JSON.parse(savedGradedCollection) : [];
 
 if (TEST_MODE_FILL_ALBUM) {
   // --- MODO TEST ACTIVO ---
@@ -2920,10 +3418,12 @@ let activeFilters = {
   query: '',
   showMissing: false,
   showOwned: false,
-  showNew: false
+  showNew: false,
+  showGraded: false
 };
 let filtersInitialized = false;
 let currentRatingSort = 'none';
+let currentGradeSort = 'none';
 let flippedCardsInPack = 0;
 let currentPackContentSize = 0;
 let packOpeningState = null;
@@ -3372,6 +3872,38 @@ function updateCounter() {
 function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
+
+  if (activeFilters.showGraded) {
+    if (gradedCollection.length === 0) {
+      container.innerHTML = `<div class="no-results-message">You have no graded cards yet.</div>`;
+      return;
+    }
+
+    // --- ¡NUEVA LÓGICA DE ORDENACIÓN! ---
+    // Creamos una copia para no modificar el array original
+    let sortedGradedCollection = [...gradedCollection];
+    
+    if (currentGradeSort === 'asc') { // Mejor primero
+      sortedGradedCollection.sort((a, b) => parseFloat(a.gradeData.condition) - parseFloat(b.gradeData.condition));
+    } else if (currentGradeSort === 'desc') { // Peor primero
+      sortedGradedCollection.sort((a, b) => parseFloat(b.gradeData.condition) - parseFloat(a.gradeData.condition));
+    }
+    // Si es 'none', no hacemos nada y usamos el orden por defecto.
+
+    const grid = document.createElement('div');
+    grid.className = 'graded-showcase-grid';
+
+    // Usamos la colección ordenada para crear los slabs
+    sortedGradedCollection.forEach(gradedCard => {
+      const slabEl = createSlabElement(gradedCard);
+      if (slabEl) {
+        grid.appendChild(slabEl);
+      }
+    });
+    container.appendChild(grid);
+    return;
+  }
+
   const query = activeFilters.query.toLowerCase().trim();
   const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || query !== '' || activeFilters.showNew;
   let anyContentWasDisplayed = false;
@@ -3716,7 +4248,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const sortBtn = document.getElementById('sort-by-ovr-btn');
   if (sortBtn) {
     sortBtn.addEventListener('click', () => {
-      // Lógica del ciclo de 3 estados
+    // Comprueba en qué modo estamos
+      if (activeFilters.showGraded) {
+      // MODO GRADED: Ciclamos el estado de 'currentGradeSort'
+        if (currentGradeSort === 'none') {
+        currentGradeSort = 'asc'; // Mejor primero (condición más baja)
+      } else if (currentGradeSort === 'asc') {
+        currentGradeSort = 'desc'; // Peor primero
+      } else {
+        currentGradeSort = 'none'; // Sin orden
+      }
+    } else {
+      // MODO NORMAL: Lógica de siempre para 'currentRatingSort'
       if (currentRatingSort === 'none') {
         currentRatingSort = 'desc';
       } else if (currentRatingSort === 'desc') {
@@ -3724,10 +4267,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         currentRatingSort = 'none';
       }
-      
-      updateSortButtonUI(); // Actualiza el texto y estilo del botón
-      createShowcase(); // Vuelve a dibujar el álbum con la nueva ordenación
-    });
+    }
+    
+    updateSortButtonUI(); // Actualiza el texto y estilo del botón
+    createShowcase();     // Vuelve a dibujar el álbum con la nueva ordenación
+  });
   }
 
 
@@ -3762,6 +4306,31 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('match-overlay').style.display = 'none';
       document.getElementById('showcaseBtn').click();
     });
+  }
+
+  // --- LISTENERS PARA EL NUEVO FLUJO DE GRADING ---
+  const gradeCardsBtn = document.getElementById('grade-cards-btn');
+  const gradingOverlay = document.getElementById('grading-overlay');
+  const closeGradingBtn = document.getElementById('close-grading-btn');
+  const cancelGradeBtn = document.getElementById('cancel-grade-btn');
+  const finishGradingBtn = document.getElementById('finish-grading-btn');
+
+  if (gradeCardsBtn) {
+    gradeCardsBtn.addEventListener('click', openGradingView);
+  }
+  if (closeGradingBtn) {
+    closeGradingBtn.addEventListener('click', () => gradingOverlay.classList.remove('visible'));
+  }
+  if (cancelGradeBtn) {
+        // El botón "Back" te devuelve a la selección de cartas
+    cancelGradeBtn.addEventListener('click', openGradingView);
+  }
+  if (finishGradingBtn) {
+        // Cierra el overlay y abre el álbum para que veas tu colección
+    finishGradingBtn.addEventListener('click', () => {
+      gradingOverlay.classList.remove('visible');
+            showcaseBtn.click(); // Simula un clic en el botón del álbum
+          });
   }
 
 }); //FIN DEL DOM
@@ -3850,43 +4419,53 @@ function resetCollection() {
     localStorage.removeItem('myPlayerCurrency');
     localStorage.removeItem('myGameStats');
     localStorage.removeItem('myFootballLineup');
+    localStorage.removeItem('myGradedCollection');
     location.reload();
   }
 }
 
+// --- REEMPLAZA TU FUNCIÓN buildFilterUI CON ESTA ---
+
 function buildFilterUI() {
-    if (filtersInitialized) return; // Evita crear los botones múltiples veces
+  if (filtersInitialized) return;
 
-    const container = document.getElementById('filter-controls');
-    container.innerHTML = ''; // Limpiamos por si acaso
+  const container = document.getElementById('filter-controls');
+  container.innerHTML = '';
 
-    // Botones de Rareza
-    Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order).forEach(rarity => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn rarity-filter';
-      btn.dataset.filterType = 'rarity';
-      btn.dataset.filterValue = rarity;
-      btn.innerHTML = `${capitalize(rarity)} <span class="diamond">♦</span>`;
-      container.appendChild(btn);
-    });
+    // Botones de Rareza (sin cambios)
+  Object.keys(CONFIG.rarities).sort((a, b) => CONFIG.rarities[a].order - CONFIG.rarities[b].order).forEach(rarity => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn rarity-filter';
+    btn.dataset.filterType = 'rarity';
+    btn.dataset.filterValue = rarity;
+    btn.innerHTML = `${capitalize(rarity)}`;
+    container.appendChild(btn);
+  });
 
-    // Botones de Variante
-    Object.keys(CONFIG.variants).filter(v => v !== 'none').forEach(variant => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn variant-filter';
-      btn.dataset.filterType = 'variant';
-      btn.dataset.filterValue = variant;
-      btn.textContent = capitalize(variant);
-      container.appendChild(btn);
-    });
+    // Botones de Variante (sin cambios)
+  Object.keys(CONFIG.variants).filter(v => v !== 'none').forEach(variant => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn variant-filter';
+    btn.dataset.filterType = 'variant';
+    btn.dataset.filterValue = variant;
+    btn.textContent = capitalize(variant);
+    container.appendChild(btn);
+  });
 
-    // Botón Golden
-    const goldenBtn = document.createElement('button');
-    goldenBtn.className = 'filter-btn';
-    goldenBtn.dataset.filterType = 'golden';
-    goldenBtn.dataset.filterValue = 'golden';
-    goldenBtn.textContent = 'Golden';
-    container.appendChild(goldenBtn);
+    // Botón Golden (sin cambios)
+  const goldenBtn = document.createElement('button');
+  goldenBtn.className = 'filter-btn';
+  goldenBtn.dataset.filterType = 'golden';
+  goldenBtn.dataset.filterValue = 'golden';
+  goldenBtn.textContent = 'Golden';
+  container.appendChild(goldenBtn);
+
+    // --- ¡NUEVO BOTÓN GRADED! ---
+  const gradedBtn = document.createElement('button');
+    gradedBtn.className = 'filter-btn graded-filter-btn'; // Nueva clase para estilo opcional
+    gradedBtn.dataset.filterType = 'showGraded'; // Nuevo tipo de filtro
+    gradedBtn.textContent = 'Graded';
+    container.appendChild(gradedBtn);
 
     filtersInitialized = true;
   }
@@ -3896,124 +4475,140 @@ function buildFilterUI() {
     if (!btn) return;
 
     const buttonSound = document.getElementById('buttonClickSound');
-    if (buttonSound) {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-    }
+    if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play(); }
 
     const { filterType, filterValue } = btn.dataset;
 
-    // Si el botón ya está activo, lo desactivamos. Si no, lo activamos.
-    if (btn.classList.contains('active')) {
-      activeFilters[filterType] = null;
+    // --- LÓGICA ACTUALIZADA ---
+    if (filterType === 'showGraded') {
+        // El botón Graded es un simple interruptor (on/off)
+      activeFilters.showGraded = !activeFilters.showGraded;
     } else {
-      activeFilters[filterType] = filterType === 'golden' ? true : filterValue;
+        // Si activamos cualquier otro filtro, nos aseguramos de apagar el modo Graded
+      activeFilters.showGraded = false;
+
+        // Lógica de siempre para los otros botones
+      if (btn.classList.contains('active')) {
+        activeFilters[filterType] = null;
+      } else {
+        activeFilters[filterType] = filterType === 'golden' ? true : filterValue;
+      }
     }
 
     updateFilterUI();
-    createShowcase(); // Volvemos a renderizar el álbum con los filtros aplicados
+    createShowcase();
   }
 
   // REEMPLAZA LA FUNCIÓN updateFilterUI ENTERA CON ESTO
   function updateFilterUI() {
-    const showOwnedLabel = document.querySelector('label[for="show-owned-checkbox"]');
-    const showMissingLabel = document.querySelector('label[for="show-missing-checkbox"]');
-    const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
-    const showMissingCheckbox = document.getElementById('show-missing-checkbox');
+    const allFilterBtns = document.querySelectorAll('#filter-controls .filter-btn');
+    const searchControls = document.querySelectorAll('#search-controls input, #search-controls .checkbox-label');
+    const gradedBtn = document.querySelector('.graded-filter-btn');
 
-    if (activeFilters.showNew) {
-        // Si filtramos por "NUEVO", ocultamos los otros dos.
-      if (showOwnedLabel) showOwnedLabel.style.display = 'none';
-      if (showMissingLabel) showMissingLabel.style.display = 'none';
-
-        // Reseteamos su estado para evitar conflictos
-      if (activeFilters.showOwned) {
-        activeFilters.showOwned = false;
-        if (showOwnedCheckbox) showOwnedCheckbox.checked = false;
+    // --- MODO GRADED ACTIVO ---
+    if (activeFilters.showGraded) {
+      allFilterBtns.forEach(btn => {
+        const isGradedBtn = btn.dataset.filterType === 'showGraded';
+        btn.classList.toggle('active', isGradedBtn);
+            btn.disabled = !isGradedBtn; // Habilita solo el botón Graded
+          });
+      searchControls.forEach(ctrl => { ctrl.style.display = 'none'; });
+        // Ocultamos los checkboxes que no aplican
+      document.querySelector('label[for="show-owned-checkbox"]').style.display = 'none';
+      document.querySelector('label[for="show-new-checkbox"]').style.display = 'none';
+      document.querySelector('label[for="show-missing-checkbox"]').style.display = 'none';
+      updateSortButtonUI();
+        return; // Salimos de la función
       }
-      if (activeFilters.showMissing) {
-        activeFilters.showMissing = false;
-        if (showMissingCheckbox) showMissingCheckbox.checked = false;
+
+    // --- MODO NORMAL (SI LLEGAMOS AQUÍ, showGraded ES FALSE) ---
+
+    // 1. ¡LA CORRECCIÓN CLAVE! Re-habilitamos todos los botones y mostramos todos los controles.
+      allFilterBtns.forEach(btn => btn.disabled = false);
+      searchControls.forEach(ctrl => { ctrl.style.display = 'flex'; });
+
+    // 2. Aplicamos el estado 'active' a cada botón según el objeto activeFilters
+      const rarityBtns = document.querySelectorAll('.rarity-filter');
+      rarityBtns.forEach(btn => {
+        const value = btn.dataset.filterValue;
+        btn.classList.toggle('active', activeFilters.rarity === value);
+      });
+
+      const variantBtns = document.querySelectorAll('.variant-filter');
+      variantBtns.forEach(btn => {
+        const value = btn.dataset.filterValue;
+        btn.classList.toggle('active', activeFilters.variant === value);
+      });
+
+      const goldenBtn = document.querySelector('.filter-btn[data-filter-type="golden"]');
+      if (goldenBtn) {
+        goldenBtn.classList.toggle('active', activeFilters.golden === true);
       }
 
-    } else {
-        // Si NO filtramos por "NUEVO", usamos la lógica anterior.
-      const isFiltering =
-      activeFilters.rarity !== null ||
-      activeFilters.variant !== null ||
-      activeFilters.golden === true ||
-      activeFilters.query.trim() !== '';
+    // Nos aseguramos de que el botón Graded no se quede activo visualmente
+      if (gradedBtn) gradedBtn.classList.remove('active');
 
-      if (isFiltering) {
+    // 3. Aplicamos la lógica de deshabilitación para filtros mutuamente excluyentes
+      if (activeFilters.rarity !== null) {
+        rarityBtns.forEach(btn => {
+          if (activeFilters.rarity !== btn.dataset.filterValue) btn.disabled = true;
+        });
+      }
+      if (activeFilters.variant !== null) {
+        variantBtns.forEach(btn => {
+          if (activeFilters.variant !== btn.dataset.filterValue) btn.disabled = true;
+        });
+      }
+
+    // 4. Lógica de visibilidad de checkboxes (la que ya tenías)
+      const showOwnedLabel = document.querySelector('label[for="show-owned-checkbox"]');
+      const showMissingLabel = document.querySelector('label[for="show-missing-checkbox"]');
+      const showNewCheckboxLabel = document.querySelector('label[for="show-new-checkbox"]');
+      const isFiltering = activeFilters.rarity || activeFilters.variant || activeFilters.golden !== null || activeFilters.query.trim() !== '';
+
+      showNewCheckboxLabel.style.display = 'flex';
+      if (activeFilters.showNew) {
+        if (showOwnedLabel) showOwnedLabel.style.display = 'none';
+        if (showMissingLabel) showMissingLabel.style.display = 'none';
+      } else if (isFiltering) {
         if (showOwnedLabel) showOwnedLabel.style.display = 'none';
         if (showMissingLabel) showMissingLabel.style.display = 'flex';
-        if (activeFilters.showOwned) {
-          activeFilters.showOwned = false;
-          if (showOwnedCheckbox) showOwnedCheckbox.checked = false;
-        }
-        if (showMissingCheckbox) showMissingCheckbox.disabled = false;
       } else {
         if (showOwnedLabel) showOwnedLabel.style.display = 'flex';
         if (showMissingLabel) showMissingLabel.style.display = 'none';
-        if (activeFilters.showMissing) {
-          activeFilters.showMissing = false;
-          if (showMissingCheckbox) showMissingCheckbox.checked = false;
-        }
-        if (showMissingCheckbox) showMissingCheckbox.disabled = true;
       }
     }
-
-    // El resto de la lógica para los botones de rareza/variante no cambia
-    const rarityBtns = document.querySelectorAll('.rarity-filter');
-    rarityBtns.forEach(btn => {
-      const value = btn.dataset.filterValue;
-      btn.classList.toggle('active', activeFilters.rarity === value);
-      btn.disabled = activeFilters.rarity !== null && activeFilters.rarity !== value;
-    });
-
-    const variantBtns = document.querySelectorAll('.variant-filter');
-    variantBtns.forEach(btn => {
-      const value = btn.dataset.filterValue;
-      btn.classList.toggle('active', activeFilters.variant === value);
-      btn.disabled = activeFilters.variant !== null && activeFilters.variant !== value;
-    });
-
-    const goldenBtn = document.querySelector('.filter-btn[data-filter-type="golden"]');
-    if (goldenBtn) {
-      goldenBtn.classList.toggle('active', activeFilters.golden === true);
-    }
-  }
 
 // Sonido botones
-  const buttonSound = document.getElementById('buttonClickSound');
-  const allButtons = document.querySelectorAll('button');
+    const buttonSound = document.getElementById('buttonClickSound');
+    const allButtons = document.querySelectorAll('button');
 
-  allButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      if (buttonSound) {
-        buttonSound.currentTime = 0;
-        buttonSound.play();
-      }
+    allButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        if (buttonSound) {
+          buttonSound.currentTime = 0;
+          buttonSound.play();
+        }
+      });
     });
-  });
 
 // --- CÓDIGO PARA GIRAR CARTAS CON LA BARRA ESPACIADORA ---
-  document.addEventListener('keydown', (event) => {
+    document.addEventListener('keydown', (event) => {
     // Solo reaccionamos si la tecla presionada es la barra espaciadora
-    if (event.code !== 'Space') {
-      return;
-    }
+      if (event.code !== 'Space') {
+        return;
+      }
 
     // Si estamos en un input, no hacemos nada.
-    if (event.target.tagName === 'INPUT') {
-      return;
-    }
-    
+      if (event.target.tagName === 'INPUT') {
+        return;
+      }
+
     // Comprobamos el estado actual para decidir qué hacer
-    switch (packOpeningState) {
+      switch (packOpeningState) {
 
         // CASO 1: Estamos girando cartas.
-    case 'flipping':
+      case 'flipping':
             event.preventDefault(); // Prevenimos el scroll
             
             // Buscamos la siguiente carta a girar
@@ -4058,37 +4653,37 @@ function buildFilterUI() {
 
 // --- NUEVA LÓGICA PARA INSPECCIONAR CARTAS ---
 
-  const inspectOverlay = document.getElementById('inspect-overlay');
-
-  function showInspectView(originalCard, cardStackData) {
     const inspectOverlay = document.getElementById('inspect-overlay');
-    inspectOverlay.innerHTML = '';
 
-    const cardClone = originalCard.cloneNode(true);
-    addInteractiveTilt(cardClone);
-    addReactiveEffects(cardClone);
-    inspectOverlay.appendChild(cardClone);
+    function showInspectView(originalCard, cardStackData) {
+      const inspectOverlay = document.getElementById('inspect-overlay');
+      inspectOverlay.innerHTML = '';
 
-    if (cardStackData && cardStackData.cardData) {
-      const { playerData, ...cardInfo } = cardStackData.cardData;
-      const pricePerCard = calculateSellPrice(cardInfo);
-      const variantKey = `${cardInfo.golden}_${cardInfo.variant}`;
-      const maxQuantity = cardStackData.count;
+      const cardClone = originalCard.cloneNode(true);
+      addInteractiveTilt(cardClone);
+      addReactiveEffects(cardClone);
+      inspectOverlay.appendChild(cardClone);
 
-      const sellContainer = document.createElement('div');
-      sellContainer.id = 'inspect-sell-container';
+      if (cardStackData && cardStackData.cardData) {
+        const { playerData, ...cardInfo } = cardStackData.cardData;
+        const pricePerCard = calculateSellPrice(cardInfo);
+        const variantKey = `${cardInfo.golden}_${cardInfo.variant}`;
+        const maxQuantity = cardStackData.count;
 
-      const uniqueCardId = `${playerData.id}_${variantKey}`;
-      const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
-      const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
-      const duplicateQuantity = maxQuantity - 1;
-      const duplicateEarnings = duplicateQuantity * pricePerCard;
+        const sellContainer = document.createElement('div');
+        sellContainer.id = 'inspect-sell-container';
 
-      const sellDuplicatesButtonText = duplicateQuantity > 0 
-      ? `Sell Duplicates (${duplicateQuantity}) for ${duplicateEarnings} 💎` 
-      : `Sell Duplicates (0)`;
+        const uniqueCardId = `${playerData.id}_${variantKey}`;
+        const isCardInLineup = Object.values(lineup).includes(uniqueCardId);
+        const lineupButtonHTML = `<button id="add-to-lineup-btn" class="sell-btn" ${isCardInLineup ? 'disabled' : ''}>${isCardInLineup ? 'In Lineup' : 'Add to Lineup'}</button>`;
+        const duplicateQuantity = maxQuantity - 1;
+        const duplicateEarnings = duplicateQuantity * pricePerCard;
 
-      const sellDuplicatesButtonHTML = `
+        const sellDuplicatesButtonText = duplicateQuantity > 0 
+        ? `Sell Duplicates (${duplicateQuantity}) for ${duplicateEarnings} 💎` 
+        : `Sell Duplicates (0)`;
+
+        const sellDuplicatesButtonHTML = `
             <button 
                 id="sell-duplicates-btn" 
                 class="sell-btn sell-max-btn" 
@@ -4096,9 +4691,9 @@ function buildFilterUI() {
             >
                 ${sellDuplicatesButtonText}
             </button>
-      `;
+        `;
 
-      sellContainer.innerHTML = `
+        sellContainer.innerHTML = `
             <div class="sell-price-display">Sell Value: ${pricePerCard} <span class="gem-icon">💎</span> each</div>
             <div class="sell-controls">
                 <input type="number" id="sell-quantity-input" placeholder="1" min="1" max="${maxQuantity}">
@@ -4106,64 +4701,64 @@ function buildFilterUI() {
                 ${sellDuplicatesButtonHTML}
                 ${lineupButtonHTML}
             </div>
-      `;
-      inspectOverlay.appendChild(sellContainer);
+        `;
+        inspectOverlay.appendChild(sellContainer);
 
-      const sellBtn = document.getElementById('sell-btn');
-      const sellDuplicatesBtn = document.getElementById('sell-duplicates-btn');
-      const quantityInput = document.getElementById('sell-quantity-input');
+        const sellBtn = document.getElementById('sell-btn');
+        const sellDuplicatesBtn = document.getElementById('sell-duplicates-btn');
+        const quantityInput = document.getElementById('sell-quantity-input');
 
-      sellBtn.onclick = () => {
-        const quantity = parseInt(quantityInput.value, 10);
-        if (!quantity || quantity <= 0) {
-          showToast('Please enter a valid quantity.', 'error');
-          return;
-        }
-        if (quantity > maxQuantity) {
-          showToast(`You only have ${maxQuantity} copies to sell.`, 'error');
-          return;
-        }
-        sellCard(playerData.id, variantKey, quantity, pricePerCard);
-      };
-
-      sellDuplicatesBtn.onclick = () => {
-        if (duplicateQuantity > 0) {
-          sellCard(playerData.id, variantKey, duplicateQuantity, pricePerCard);
-        } else {
-          showToast("You don't have any duplicates to sell.", 'info');
-        }
-      };
-
-      const addToLineupBtn = document.getElementById('add-to-lineup-btn');
-      if (addToLineupBtn && !isCardInLineup) {
-        addToLineupBtn.onclick = () => {
-          cardToAddFromAlbum = { playerData, variantKey };
-          document.getElementById('inspect-overlay').classList.remove('visible');
-          document.getElementById('showcase-overlay').classList.remove('visible');
-          renderLineupView();
-          document.getElementById('lineup-overlay').classList.add('visible');
+        sellBtn.onclick = () => {
+          const quantity = parseInt(quantityInput.value, 10);
+          if (!quantity || quantity <= 0) {
+            showToast('Please enter a valid quantity.', 'error');
+            return;
+          }
+          if (quantity > maxQuantity) {
+            showToast(`You only have ${maxQuantity} copies to sell.`, 'error');
+            return;
+          }
+          sellCard(playerData.id, variantKey, quantity, pricePerCard);
         };
+
+        sellDuplicatesBtn.onclick = () => {
+          if (duplicateQuantity > 0) {
+            sellCard(playerData.id, variantKey, duplicateQuantity, pricePerCard);
+          } else {
+            showToast("You don't have any duplicates to sell.", 'info');
+          }
+        };
+
+        const addToLineupBtn = document.getElementById('add-to-lineup-btn');
+        if (addToLineupBtn && !isCardInLineup) {
+          addToLineupBtn.onclick = () => {
+            cardToAddFromAlbum = { playerData, variantKey };
+            document.getElementById('inspect-overlay').classList.remove('visible');
+            document.getElementById('showcase-overlay').classList.remove('visible');
+            renderLineupView();
+            document.getElementById('lineup-overlay').classList.add('visible');
+          };
+        }
       }
+      inspectOverlay.classList.add('visible');
     }
-    inspectOverlay.classList.add('visible');
-  }
 
 
 // ========= FUNCIONES TIENDA ========= //
-  function savePackInventory() {
-    localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
-  }
+    function savePackInventory() {
+      localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
+    }
 
-  function renderPacksView() {
-    const storeGrid = document.getElementById('pack-store-grid');
-    const inventoryGrid = document.getElementById('my-packs-grid');
+    function renderPacksView() {
+      const storeGrid = document.getElementById('pack-store-grid');
+      const inventoryGrid = document.getElementById('my-packs-grid');
 
-    storeGrid.innerHTML = '';
-    inventoryGrid.innerHTML = '';
+      storeGrid.innerHTML = '';
+      inventoryGrid.innerHTML = '';
 
   // Renderizar los packs disponibles en la tienda
    // Renderizar los packs disponibles en la tienda
-    for (const packId in packTypes) {
+      for (const packId in packTypes) {
       if (packId === 'roulette-pack') continue; // Saltamos este sobre para que no aparezca en la tienda
       const pack = packTypes[packId];
       const packEl = document.createElement('div');
@@ -4515,33 +5110,47 @@ function sellCard(playerId, variantKey, quantity, pricePerCard) {
 // --- FUNCIONES PARA LA LÓGICA DE LA ALINEACIÓN ---
 
   function createCardElement(playerData, variantKey) {
-    const cardStackData = collection[playerData.id][variantKey];
-    const { cardData } = cardStackData; // Ya no necesitamos 'count' aquí
-    const div = document.createElement("div");
-    const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
-    div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
-    div.innerHTML = `
+    // Busca la información de la carta en la colección para asegurar que tenemos todos los datos
+    const cardStackData = collection[playerData.id]?.[variantKey];
+    if (!cardStackData) {
+      console.error(`No se encontraron datos para ${playerData.id} con la clave ${variantKey}`);
+        return document.createElement('div'); // Devuelve un div vacío para evitar que el programa se detenga
+      }
+
+      const { cardData } = cardStackData;
+      const div = document.createElement("div");
+      const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
+
+    // Añadimos 'showcase-card' para que herede los estilos correctos de posicionamiento del álbum
+      div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
+
+      div.innerHTML = `
       <div class="side front">
         <img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
-        <div class="player-info">
-            <!-- La media y la posición ya no se renderizan aquí -->
-        </div>
-    </div>`;
-    
-    addInteractiveTilt(div);
-    addReactiveEffects(div);
-    return div;
-  }
+        <div class="player-info"></div>
+      </div>
+      <div class="side back"></div>
+      `;
 
-  function placeHeldCardInSlot(targetSlot) {
-    if (!cardToAddFromAlbum) return;
+    // Guardamos los datos de la carta en el elemento para usos futuros
+      div.cardData = cardData;
 
-    const { playerData, variantKey } = cardToAddFromAlbum;
+    // Aplicamos los efectos interactivos que ya tienes creados
+      addInteractiveTilt(div);
+      addReactiveEffects(div);
+
+      return div;
+    }
+
+    function placeHeldCardInSlot(targetSlot) {
+      if (!cardToAddFromAlbum) return;
+
+      const { playerData, variantKey } = cardToAddFromAlbum;
 
   // --- INICIO DE LA MODIFICACIÓN ---
   // Volvemos a comprobar aquí por si acaso.
-    if (isPlayerAlreadyInLineup(playerData.id)) {
-      showToast(`${playerData.name} is already in your lineup.`, 'error');
+      if (isPlayerAlreadyInLineup(playerData.id)) {
+        showToast(`${playerData.name} is already in your lineup.`, 'error');
       cardToAddFromAlbum = null; // Reseteamos el estado
       renderLineupView(); // Re-renderizamos para salir del "modo colocación"
       return; // Detenemos la función.
@@ -4983,22 +5592,36 @@ function sellAllDuplicates() {
 
 
 //FUNCION SORT BY OVR
-/**
- * Actualiza el texto y la clase del botón de ordenación según el estado actual.
- */
 function updateSortButtonUI() {
   const btn = document.getElementById('sort-by-ovr-btn');
   if (!btn) return;
-  
-  if (currentRatingSort === 'desc') {
-    btn.textContent = 'Rating ▼';
-    btn.classList.add('active');
-  } else if (currentRatingSort === 'asc') {
-    btn.textContent = 'Rating ▲';
-    btn.classList.add('active');
+
+  if (activeFilters.showGraded) {
+    // --- MODO GRADED ---
+    btn.disabled = false; // Nos aseguramos de que esté habilitado
+    if (currentGradeSort === 'asc') {
+      btn.textContent = 'Grade ▲';
+      btn.classList.add('active');
+    } else if (currentGradeSort === 'desc') {
+      btn.textContent = 'Grade ▼';
+      btn.classList.add('active');
+    } else {
+      btn.textContent = 'Sort by Grade';
+      btn.classList.remove('active');
+    }
   } else {
-    btn.textContent = 'Sort by OVR';
-    btn.classList.remove('active');
+    // --- MODO NORMAL (OVR) ---
+    btn.disabled = false;
+    if (currentRatingSort === 'desc') {
+      btn.textContent = 'Rating ▼';
+      btn.classList.add('active');
+    } else if (currentRatingSort === 'asc') {
+      btn.textContent = 'Rating ▲';
+      btn.classList.add('active');
+    } else {
+      btn.textContent = 'Sort by OVR';
+      btn.classList.remove('active');
+    }
   }
 }
 
@@ -5486,6 +6109,8 @@ function generateRandomTeam() {
       currentBet.value = selectedSlot.dataset.betValue;
     }
 
+    // REEMPLAZA TU FUNCIÓN checkFreeSpin POR ESTA
+// REEMPLAZA TU FUNCIÓN checkFreeSpin POR ESTA
     function checkFreeSpin() {
       const lastFreeSpin = localStorage.getItem('lastFreeRouletteSpin');
       const now = new Date().getTime();
@@ -5494,23 +6119,37 @@ function generateRandomTeam() {
       const spinBtn = document.getElementById('spin-roulette-btn');
       const statusText = document.getElementById('roulette-status-text');
 
+      const gemRewardsInfo = document.getElementById('gem-bet-rewards');
+      const freeSpinRewardsInfo = document.getElementById('free-spin-rewards');
+  // ---> AÑADE ESTA LÍNEA
+      const payoutsInfo = document.getElementById('roulette-payouts-info');
+
       if (!lastFreeSpin || (now - lastFreeSpin > cooldown)) {
         isFreeSpin = true;
         betInput.value = 'FREE';
         betInput.disabled = true;
         spinBtn.classList.add('free-spin');
         spinBtn.textContent = "FREE SPIN!";
-        statusText.textContent = "You have a free spin for today! Place a bet to use it.";
+        statusText.textContent = "You have a free spin! Place a bet to use it.";
+
+        if(gemRewardsInfo) gemRewardsInfo.style.display = 'none';
+        if(freeSpinRewardsInfo) freeSpinRewardsInfo.style.display = 'block';
+    // ---> AÑADE ESTA LÍNEA
+        if(payoutsInfo) payoutsInfo.style.display = 'none';
       } else {
         isFreeSpin = false;
         if (betInput.value === 'FREE') {
           betInput.value = '10';
         }
-        
         betInput.disabled = false;
         spinBtn.classList.remove('free-spin');
         spinBtn.textContent = "SPIN THE WHEEL!";
         statusText.textContent = "Place your bet on the table below.";
+
+        if(gemRewardsInfo) gemRewardsInfo.style.display = 'block';
+        if(freeSpinRewardsInfo) freeSpinRewardsInfo.style.display = 'none';
+    // ---> AÑADE ESTA LÍNEA
+        if(payoutsInfo) payoutsInfo.style.display = 'block';
       }
     }
 
@@ -5622,6 +6261,7 @@ function getLosingMessage(winningData, lostBet) {
  /**
  * Procesa el resultado de un giro de ruleta, calcula premios y muestra feedback.
  */
+ // REEMPLAZA TU FUNCIÓN handleRouletteResult ENTERA POR ESTA
  function handleRouletteResult(winningData, betAmount, finalAngle) {
   const wheel = document.getElementById('roulette-wheel');
   const statusText = document.getElementById('roulette-status-text');
@@ -5635,153 +6275,153 @@ function getLosingMessage(winningData, lostBet) {
   let gemWinnings = 0;
   let prizeWon = false;
   let customMessage = '';
+  let packMessage = '';
 
-  // --- INICIO DE LA MODIFICACIÓN CLAVE ---
-  // 1. Comprobamos primero el caso especial del CERO
   if (winningNumber === 0 && currentBet.type !== 'number') {
-    prizeWon = false; // Confirmamos que es una derrota
+    prizeWon = false;
     customMessage = 'Landed on 0. The house wins.';
     showToast(customMessage, 'error');
   } else {
-    // 2. Si no es el caso del cero, procedemos con la lógica normal
     // Determinar si la apuesta fue ganadora
     switch (currentBet.type) {
-    case 'number':
-      if (winningNumber == currentBet.value) prizeWon = true;
-      break;
-    case 'color':
-      if (winningData.color === currentBet.value) { prizeWon = true; gemWinnings = betAmount * 2; }
-      break;
-    case 'even':
-      if (winningNumber !== 0 && winningNumber % 2 === 0) { prizeWon = true; gemWinnings = betAmount * 2; }
-      break;
-    case 'odd':
-      if (winningNumber % 2 !== 0) { prizeWon = true; gemWinnings = betAmount * 2; }
-      break;
-    case 'low':
-      if (winningNumber >= 1 && winningNumber <= 18) { prizeWon = true; gemWinnings = betAmount * 2; }
-      break;
-    case 'high':
-      if (winningNumber >= 19 && winningNumber <= 36) { prizeWon = true; gemWinnings = betAmount * 2; }
-      break;
-    case 'dozen':
-      const dozen = parseInt(currentBet.value, 10);
-      if (winningNumber >= ((dozen - 1) * 12 + 1) && winningNumber <= (dozen * 12)) { prizeWon = true; gemWinnings = betAmount * 3; }
-      break;
-    case 'column':
-      const column = parseInt(currentBet.value, 10);
-      if (winningNumber !== 0 && (winningNumber % 3 === (column === 3 ? 0 : column))) { prizeWon = true; gemWinnings = betAmount * 3; }
-      break;
+    case 'number': if (winningNumber == currentBet.value) prizeWon = true; break;
+    case 'color': if (winningData.color === currentBet.value) prizeWon = true; break;
+    case 'even': if (winningNumber !== 0 && winningNumber % 2 === 0) prizeWon = true; break;
+    case 'odd': if (winningNumber % 2 !== 0) prizeWon = true; break;
+    case 'low': if (winningNumber >= 1 && winningNumber <= 18) prizeWon = true; break;
+    case 'high': if (winningNumber >= 19 && winningNumber <= 36) prizeWon = true; break;
+    case 'dozen': const dozen = parseInt(currentBet.value); if (winningNumber >= ((dozen - 1) * 12 + 1) && winningNumber <= (dozen * 12)) prizeWon = true; break;
+    case 'column': const column = parseInt(currentBet.value); if (winningNumber !== 0 && (winningNumber % 3 === (column === 3 ? 0 : column))) prizeWon = true; break;
     }
 
-    // Procesar el resultado (ganador o perdedor)
     if (prizeWon) {
-      let packMessage = '';
-      if (currentBet.type === 'number') {
-        if (isFreeSpin) {
+      if (isFreeSpin) {
+        // --- LÓGICA DE RECOMPENSAS PARA LA TIRADA GRATIS ---
+        switch (currentBet.type) {
+        case 'number':
           packInventory['roulette-pack'] = (packInventory['roulette-pack'] || 0) + 1;
           packMessage = 'You won a <strong>Roulette Pack!</strong>';
-        } else if (betAmount >= 1000 && currentBet.value == '0') {
-          packInventory['roulette-pack'] = (packInventory['roulette-pack'] || 0) + 1;
-          packMessage = 'You won a special <strong>Roulette Pack!</strong>';
-          gemWinnings = betAmount * 10;
-        } else if (betAmount >= 1000) {
-          packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 3;
-          packMessage = 'You won <strong>THREE</strong> Collectors Packs!';
-          gemWinnings = betAmount * 15;
-        } else if (betAmount >= 100) {
-          packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 1;
-          packMessage = 'You won a <strong>Collectors Pack!</strong>';
-          gemWinnings = betAmount * 20;
+          break;
+        case 'dozen':
+        case 'column':
+          packInventory['common-pack'] = (packInventory['common-pack'] || 0) + 3;
+          packMessage = 'You won <strong>3 Common Packs!</strong>';
+          break;
+          default: // Apuestas exteriores
+            packInventory['common-pack'] = (packInventory['common-pack'] || 0) + 1;
+            packMessage = 'You won a <strong>Common Pack!</strong>';
+            break;
+          }
         } else {
-          gemWinnings = betAmount * 35;
+        // --- LÓGICA DE RECOMPENSAS PARA APUESTAS CON GEMAS ---
+          switch (currentBet.type) {
+          case 'number':
+            gemWinnings = betAmount * 35; // Siempre 35x
+            if (betAmount >= 1000 && currentBet.value == '0') {
+              packInventory['roulette-pack'] = (packInventory['roulette-pack'] || 0) + 1;
+              packMessage = 'You won a special <strong>Roulette Pack!</strong>';
+            } else if (betAmount >= 1000) {
+              packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 3;
+              packMessage = 'You won <strong>THREE</strong> Collectors Packs!';
+            } else if (betAmount >= 100) {
+              packInventory['collectors-pack'] = (packInventory['collectors-pack'] || 0) + 1;
+              packMessage = 'You won a <strong>Collectors Pack!</strong>';
+            }
+            break;
+          case 'dozen':
+          case 'column':
+            gemWinnings = betAmount * 3;
+            break;
+          default: // Apuestas exteriores
+            gemWinnings = betAmount * 2;
+            break;
+          }
         }
+
+        customMessage = "WIN! ";
+        if (gemWinnings > 0) customMessage += `You get ${gemWinnings} 💎.`;
+        if (packMessage) customMessage += (gemWinnings > 0 ? " <br>PLUS: " : "") + packMessage;
+        showToast(customMessage, 'success', 5000);
+
+      } else {
+        customMessage = getLosingMessage(winningData, currentBet);
+        showToast(customMessage, 'error');
       }
-      customMessage = "WIN! ";
-      if (gemWinnings > 0) customMessage += `You get ${gemWinnings} 💎.`;
-      if (packMessage) customMessage += (gemWinnings > 0 ? " <br>PLUS: " : "") + packMessage;
-      showToast(customMessage, 'success', 5000);
-    } else {
-      customMessage = getLosingMessage(winningData, currentBet);
-      showToast(customMessage, 'error');
+    }
+
+    if (gemWinnings > 0) {
+      playerCurrency += gemWinnings;
+    }
+    savePackInventory();
+    saveCurrency();
+    updateCurrencyDisplay();
+
+    if (isFreeSpin) {
+      localStorage.setItem('lastFreeRouletteSpin', new Date().getTime());
+    }
+
+    setTimeout(() => {
+      setTableState(false);
+      checkFreeSpin();
+      statusText.textContent = "Place your bet on the table below.";
+    }, 100);
+  }
+
+  function setTableState(disabled) {
+    document.getElementById('spin-roulette-btn').disabled = disabled;
+    document.querySelectorAll('#roulette-betting-table .bet-slot').forEach(slot => {
+      slot.classList.toggle('disabled', disabled);
+    });
+    if (!isFreeSpin) {
+      document.getElementById('roulette-bet-input').disabled = disabled;
     }
   }
-  // --- FIN DE LA MODIFICACIÓN CLAVE ---
-
-  // El resto de la función para actualizar la UI no cambia
-  if (gemWinnings > 0) {
-    playerCurrency += gemWinnings;
-  }
-  savePackInventory();
-  saveCurrency();
-  updateCurrencyDisplay();
-
-  if (isFreeSpin) {
-    localStorage.setItem('lastFreeRouletteSpin', new Date().getTime());
-  }
-
-  setTimeout(() => {
-    setTableState(false);
-    checkFreeSpin();
-    statusText.textContent = "Place your bet on the table below.";
-  }, 700);
-}
-
-function setTableState(disabled) {
-  document.getElementById('spin-roulette-btn').disabled = disabled;
-  document.querySelectorAll('#roulette-betting-table .bet-slot').forEach(slot => {
-    slot.classList.toggle('disabled', disabled);
-  });
-  if (!isFreeSpin) {
-    document.getElementById('roulette-bet-input').disabled = disabled;
-  }
-}
 
 // --- EVENT LISTENERS PARA LA RULETA ---
-document.addEventListener('DOMContentLoaded', () => {
-  const rouletteBtn = document.getElementById('roulette-btn');
-  const rouletteOverlay = document.getElementById('roulette-overlay');
-  const closeRouletteBtn = document.getElementById('close-roulette-btn');
-  const spinRouletteBtn = document.getElementById('spin-roulette-btn');
+  document.addEventListener('DOMContentLoaded', () => {
+    const rouletteBtn = document.getElementById('roulette-btn');
+    const rouletteOverlay = document.getElementById('roulette-overlay');
+    const closeRouletteBtn = document.getElementById('close-roulette-btn');
+    const spinRouletteBtn = document.getElementById('spin-roulette-btn');
 
-  if (rouletteBtn) {
-    rouletteBtn.addEventListener('click', () => {
+    if (rouletteBtn) {
+      rouletteBtn.addEventListener('click', () => {
             initRoulette(); // Inicializa y comprueba la tirada gratis cada vez que se abre
             rouletteOverlay.classList.add('visible');
           });
-  }
-  if (closeRouletteBtn) {
-    closeRouletteBtn.addEventListener('click', () => rouletteOverlay.classList.remove('visible'));
-  }
-  if (spinRouletteBtn) {
-    spinRouletteBtn.addEventListener('click', spinWheel);
-  }
-});
+    }
+    if (closeRouletteBtn) {
+      closeRouletteBtn.addEventListener('click', () => rouletteOverlay.classList.remove('visible'));
+    }
+    if (spinRouletteBtn) {
+      spinRouletteBtn.addEventListener('click', spinWheel);
+    }
+  });
 
 
       //giro ruletta con space
-document.addEventListener('keydown', (event) => {
+  document.addEventListener('keydown', (event) => {
     // Si no es la barra espaciadora, o si estamos escribiendo en un input, no hacemos nada.
-  if (event.code !== 'Space' || event.target.tagName === 'INPUT') {
-    return;
-  }
+    if (event.code !== 'Space' || event.target.tagName === 'INPUT') {
+      return;
+    }
 
     // Comprobamos si la ventana de la ruleta está visible
-  const rouletteOverlay = document.getElementById('roulette-overlay');
-  if (rouletteOverlay && rouletteOverlay.classList.contains('visible')) {
+    const rouletteOverlay = document.getElementById('roulette-overlay');
+    if (rouletteOverlay && rouletteOverlay.classList.contains('visible')) {
 
         // Prevenimos el comportamiento por defecto del espacio (scroll de la página)
-    event.preventDefault();
+      event.preventDefault();
 
         // Buscamos el botón de girar y comprobamos si está habilitado
-    const spinBtn = document.getElementById('spin-roulette-btn');
+      const spinBtn = document.getElementById('spin-roulette-btn');
 
         // Solo giramos si hay una apuesta seleccionada Y el botón no está deshabilitado (es decir, no está ya girando)
-    if (currentBet.type && !spinBtn.disabled) {
-      spinWheel();
+      if (currentBet.type && !spinBtn.disabled) {
+        spinWheel();
+      }
     }
-  }
-});
+  });
 
 
 /**
@@ -5790,27 +6430,27 @@ document.addEventListener('keydown', (event) => {
  * probabilidades base definidas en CONFIG, aplicadas solo al pool de Relics.
  * @returns {object} Un objeto de carta completo con rareza 'relic'.
  */
-function generateRelicChoice() {
-  const rarity = 'relic';
+  function generateRelicChoice() {
+    const rarity = 'relic';
 
   // 1. Elegir un jugador Relic al azar
-  const relicPlayers = playersDB.filter(p => p.rarity === rarity);
-  if (relicPlayers.length === 0) {
-    console.error("No se encontraron jugadores 'Relic' en la base de datos.");
+    const relicPlayers = playersDB.filter(p => p.rarity === rarity);
+    if (relicPlayers.length === 0) {
+      console.error("No se encontraron jugadores 'Relic' en la base de datos.");
     // Como fallback, generamos una carta legendaria para no romper el juego.
-    const legendaryPlayers = playersDB.filter(p => p.rarity === 'legendary');
-    return { playerData: legendaryPlayers[0], rarity: 'legendary', golden: false, variant: 'none' };
-  }
-  const chosenPlayer = relicPlayers[Math.floor(Math.random() * relicPlayers.length)];
+      const legendaryPlayers = playersDB.filter(p => p.rarity === 'legendary');
+      return { playerData: legendaryPlayers[0], rarity: 'legendary', golden: false, variant: 'none' };
+    }
+    const chosenPlayer = relicPlayers[Math.floor(Math.random() * relicPlayers.length)];
 
   // 2. Calcular probabilidad de ser Golden (Ponderada)
   // Probabilidad de ser Golden DADO QUE ya es una Relic.
-  const pGoldenRelic = CONFIG.rarities.relic.p_golden || 0;
-  const pNormalRelic = CONFIG.rarities.relic.p || 0;
-  const totalRelicProb = pGoldenRelic + pNormalRelic;
-  
+    const pGoldenRelic = CONFIG.rarities.relic.p_golden || 0;
+    const pNormalRelic = CONFIG.rarities.relic.p || 0;
+    const totalRelicProb = pGoldenRelic + pNormalRelic;
+
   // Si no hay probabilidades definidas, no puede ser dorada.
-  const isGolden = totalRelicProb > 0 ? (Math.random() < (pGoldenRelic / totalRelicProb)) : false;
+    const isGolden = totalRelicProb > 0 ? (Math.random() < (pGoldenRelic / totalRelicProb)) : false;
 
   // 3. Calcular probabilidad de tener una Variante (Ponderada)
   // Decidimos una probabilidad base aumentada para que las Relics tengan variantes más a menudo.
@@ -5950,6 +6590,332 @@ function selectCardFromChoice(chosenCard) {
     if (backToStoreBtn) backToStoreBtn.click();
   }, 800); // 800ms de espera
 }
+
+function executeGrading(playerId, variantKey, quantity) {
+  const cardStack = collection[playerId]?.[variantKey];
+
+    // 1. Validar que el jugador tiene suficientes cartas
+  if (!cardStack || cardStack.count < quantity) {
+    showToast("You don't have that many copies to grade.", 'error');
+    return;
+  }
+
+    // 2. Ejecutar "El Mejor de N Tiros"
+  let bestGradeData = null;
+  for (let i = 0; i < quantity; i++) {
+        const currentGradeData = generateGradeData(); // Usamos la función que ya creamos
+        if (!bestGradeData || parseFloat(currentGradeData.condition) < parseFloat(bestGradeData.condition)) {
+          bestGradeData = currentGradeData;
+        }
+      }
+
+    // 3. Actualizar las colecciones
+    // Restar las copias sacrificadas de la colección normal
+      cardStack.count -= quantity;
+      if (cardStack.count <= 0) {
+        delete collection[playerId][variantKey];
+        // Opcional: limpiar el objeto del jugador si ya no tiene variantes
+        if (Object.keys(collection[playerId]).length === 0) {
+          delete collection[playerId];
+        }
+      }
+
+    // Añadir la nueva carta graduada a la colección de graduadas
+      const newGradedCard = {
+        instanceId: generateUUID(), // Generar ID único
+        playerId: playerId,
+        variantKey: variantKey,
+        gradeData: bestGradeData
+      };
+      gradedCollection.push(newGradedCard);
+
+    // 4. Guardar todo en localStorage
+      localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+      localStorage.setItem('myGradedCollection', JSON.stringify(gradedCollection));
+
+    // 5. Iniciar la animación de revelación y mostrar el resultado
+    // (Aquí llamarías a tu función de animación)
+      showGradingResult(newGradedCard);
+
+      showToast(`Grading complete! You got a ${bestGradeData.score}!`, 'success');
+    }
+
+    function generateGradeData() {
+      let baseCondition = (Math.random() + Math.random()) / 2;
+      const condition = Math.pow(baseCondition, 0.7);
+      const serial = `TCG-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      const grade = gradingScale.find(tier => condition < tier.threshold);
+      return { ...grade, condition: condition.toFixed(5), serial: serial };
+    }
+
+// --- FUNCIONES PARA EL FLUJO DE GRADING ---
+
+    function openGradingView() {
+      document.getElementById('grading-overlay').classList.add('visible');
+
+  // Mostrar la vista de selección y ocultar las otras
+      document.getElementById('grading-selection-view').style.display = 'block';
+      document.getElementById('grading-confirm-view').style.display = 'none';
+      document.getElementById('grading-result-view').style.display = 'none';
+
+      const grid = document.getElementById('gradable-cards-grid');
+  grid.innerHTML = ''; // Limpiamos el grid
+
+  // Iteramos sobre la colección para encontrar cartas que se pueden graduar
+  for (const playerId in collection) {
+    for (const variantKey in collection[playerId]) {
+      const cardStack = collection[playerId][variantKey];
+      
+      // Condición: el jugador debe tener al menos 1 copia
+      if (cardStack.count > 0) {
+        const { cardData } = cardStack;
+        const div = createCardElement(cardData.playerData, variantKey); // Usamos la función que ya tenías
+        
+        // Añadimos un contador para claridad
+        const duplicateCounterHTML = `<div class="duplicate-counter">x${cardStack.count}</div>`;
+        div.querySelector('.front').insertAdjacentHTML('beforeend', duplicateCounterHTML);
+
+        div.onclick = () => showGradingConfirmView(playerId, variantKey);
+        grid.appendChild(div);
+      }
+    }
+  }
+}
+
+function showGradingConfirmView(playerId, variantKey) {
+  // 1. Cambiar de vista
+  document.getElementById('grading-selection-view').style.display = 'none';
+  document.getElementById('grading-confirm-view').style.display = 'block';
+
+  // 2. Obtener datos de la carta
+  const cardStack = collection[playerId][variantKey];
+  const totalOwned = cardStack.count;
+  const rarityLimit = GRADING_CONFIG.limitsByRarity[cardStack.cardData.rarity] || 1;
+  
+  // El máximo real es el MÍNIMO entre lo que tienes y el límite por rareza
+  const maxAllowed = Math.min(totalOwned, rarityLimit);
+
+  // 3. Renderizar la carta para visualización
+  const display = document.getElementById('confirm-card-display');
+  display.innerHTML = '';
+  const cardElement = createCardElement(cardStack.cardData.playerData, variantKey);
+  display.appendChild(cardElement);
+
+  // 4. Configurar el input de cantidad
+  const quantityInput = document.getElementById('grade-quantity-input');
+  const maxCopiesInfo = document.getElementById('max-copies-info');
+  
+  quantityInput.max = maxAllowed;
+  quantityInput.value = 1; // Resetea a 1 por defecto
+  maxCopiesInfo.textContent = maxAllowed;
+
+  // 5. Configurar el botón de confirmar para que lea la cantidad del input
+  const confirmBtn = document.getElementById('confirm-grade-btn');
+  confirmBtn.onclick = () => {
+    const quantity = parseInt(quantityInput.value, 10);
+    
+    // Pequeña validación
+    if (isNaN(quantity) || quantity <= 0 || quantity > maxAllowed) {
+      showToast(`Please enter a number between 1 and ${maxAllowed}.`, 'error');
+      return;
+    }
+    
+    executeGrading(playerId, variantKey, quantity);
+  };
+}
+
+function executeGrading(playerId, variantKey, quantity) {
+  const cardStack = collection[playerId]?.[variantKey];
+
+    // 1. Doble validación de seguridad
+  if (!cardStack || cardStack.count < quantity) {
+    showToast("Error: Not enough copies.", 'error');
+    return;
+  }
+
+    // 2. --- ¡LA LÓGICA DE "EL MEJOR DE N TIROS"! ---
+  let bestGradeData = null;
+  console.log(`Grading ${quantity} copies. Finding the best result...`);
+  for (let i = 0; i < quantity; i++) {
+        const currentGradeData = generateGradeData(); // Genera una nota aleatoria
+        // Si es el primer intento, o si la nueva nota es mejor (condición más baja)
+        if (!bestGradeData || parseFloat(currentGradeData.condition) < parseFloat(bestGradeData.condition)) {
+            bestGradeData = currentGradeData; // La guardamos como la mejor hasta ahora
+          }
+        }
+        console.log("Best result found:", bestGradeData);
+
+    // 3. Actualizar las colecciones
+    cardStack.count -= quantity; // Restamos TODAS las copias sacrificadas
+    if (cardStack.count <= 0) {
+      delete collection[playerId][variantKey];
+      if (Object.keys(collection[playerId]).length === 0) {
+        delete collection[playerId];
+      }
+    }
+
+    const newGradedCard = {
+      instanceId: `GRD-${Date.now()}-${Math.random()}`,
+      playerId: playerId,
+      variantKey: variantKey,
+        gradeData: bestGradeData // Usamos la MEJOR nota que encontramos
+      };
+      gradedCollection.push(newGradedCard);
+
+    // 4. Guardar los datos actualizados
+      localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+      localStorage.setItem('myGradedCollection', JSON.stringify(gradedCollection));
+
+    // 5. Mostrar el resultado final
+      showGradingResult(newGradedCard);
+    }
+
+    function createSlabElement(gradedCard) {
+      const playerData = playersDB.find(p => p.id == gradedCard.playerId);
+      if (!playerData) return null;
+
+      const slabEl = document.createElement('div');
+      slabEl.className = 'slab-container';
+
+      const cardDataForCreation = { ...gradedCard, playerData: playerData };
+      const cardEl = createCardElementForSlab(cardDataForCreation);
+
+      slabEl.innerHTML = `
+      <div class="slab-label">
+        <div class="grade-container">
+          <div id="grade-score">${gradedCard.gradeData.score}</div>
+          <div id="grade-name">${gradedCard.gradeData.name}</div>
+        </div>
+        <div class="player-label-info">
+          <span>${playerData.name}</span>
+          <span>2025 Founder's Collection</span>
+        </div>
+        <div id="label-metadata">
+            <span>ID: ${gradedCard.gradeData.serial}</span>
+            <span>Cond: ${gradedCard.gradeData.condition}</span>
+        </div>
+      </div>
+      <div id="graded-card-container"></div>
+      `;
+      slabEl.querySelector('#graded-card-container').appendChild(cardEl);
+
+      const scoreEl = slabEl.querySelector('#grade-score');
+      const nameEl = slabEl.querySelector('#grade-name');
+      if (gradedCard.gradeData.score === "10+") {
+        scoreEl.classList.add('pristine-plus-effect');
+        nameEl.classList.add('pristine-plus-effect');
+        slabEl.classList.add('pristine-plus-slab');
+      }
+
+      const rarityColor = getComputedStyle(cardEl).getPropertyValue('--rarity-color');
+      slabEl.querySelector('.slab-label').style.borderColor = rarityColor;
+
+      addSlabInteractiveTilt(slabEl);
+      addReactiveEffects(cardEl);
+
+      return slabEl;
+    }
+
+// --- REEMPLAZA TU FUNCIÓN showGradingResult ENTERA CON ESTA ---
+    function showGradingResult(gradedCard) {
+      document.getElementById('grading-confirm-view').style.display = 'none';
+      const resultView = document.getElementById('grading-result-view');
+      resultView.style.display = 'grid';
+
+      const container = document.getElementById('graded-result-slab-container');
+      container.innerHTML = '';
+
+    const slabEl = createSlabElement(gradedCard); // <-- ¡MIRA QUÉ LIMPIO!
+    if (slabEl) {
+      container.appendChild(slabEl);
+    }
+    
+    showToast(`Grading complete! You got a ${gradedCard.gradeData.score}!`, 'success');
+  }
+
+  function createCardElementForSlab(fullCardData) {
+    const { playerData, variantKey, gradeData } = fullCardData;
+    const [isGoldenStr, variant] = variantKey.split('_');
+    
+    let cardClasses = `card graded-card flipped ${playerData.rarity}`; 
+    if (isGoldenStr === 'true') cardClasses += ' golden';
+    if (variant !== 'none') cardClasses += ` variant-${variant}`;
+
+    const cardEl = document.createElement('div');
+    cardEl.className = cardClasses;
+    
+    // --- HTML SIMPLIFICADO: Sin media ni nombre ---
+    cardEl.innerHTML = `
+      <div class="side front">
+        <div class="wear-layer-heavy-damage"></div>
+        <div class="wear-layer-borders"></div>
+        <div class="wear-layer-rips"></div>
+        <div class="wear-layer-dirt"></div>
+        <img src="${playerData.img}" class="player-image" alt="${playerData.name}" />
+        <div class="player-info"></div>
+      </div>
+    `;
+
+    // Lógica de Desgaste (esto no cambia)
+    const condition = parseFloat(gradeData.condition);
+    const PRISTINE_PLUS_THRESHOLD = 0.005;
+    const DIRT_START_THRESHOLD = 0.005;
+    const RIPS_START_THRESHOLD = 0.70;
+    const BORDERS_START_THRESHOLD = 0.90;
+
+    let wearBordersOpacity = 0, wearRipsOpacity = 0, wearDirtOpacity = 0, wearHeavyDamageOpacity = 0;
+
+    if (condition >= PRISTINE_PLUS_THRESHOLD) {
+      const scaledDirt = (condition - DIRT_START_THRESHOLD) / (1.0 - DIRT_START_THRESHOLD);
+      wearDirtOpacity = Math.pow(scaledDirt, 2.2);
+      if (condition >= RIPS_START_THRESHOLD) {
+        wearRipsOpacity = Math.pow((condition - RIPS_START_THRESHOLD) / (1.0 - RIPS_START_THRESHOLD), 1.5);
+      }
+      if (condition >= BORDERS_START_THRESHOLD) {
+        wearBordersOpacity = (condition - BORDERS_START_THRESHOLD) / (1.0 - BORDERS_START_THRESHOLD);
+      }
+    }
+    if (gradeData.score === "1" && Math.random() < 0.10) {
+      wearHeavyDamageOpacity = 1; wearBordersOpacity = 1; wearRipsOpacity = 1; wearDirtOpacity = 1;
+    }
+
+    cardEl.style.setProperty('--wear-borders-opacity', wearBordersOpacity);
+    cardEl.style.setProperty('--wear-rips-opacity', wearRipsOpacity);
+    cardEl.style.setProperty('--wear-dirt-opacity', wearDirtOpacity);
+    cardEl.style.setProperty('--wear-heavy-damage-opacity', wearHeavyDamageOpacity);
+
+    return cardEl;
+  }
+
+  function addSlabInteractiveTilt(slabElement) {
+    slabElement.addEventListener("mousemove", (e) => {
+      const rect = slabElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const rotateX = ((y / rect.height) - 0.5) * -30;
+      const rotateY = ((x / rect.width) - 0.5) * 30;
+      slabElement.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+
+    // También activamos el estado 'tilting' en la carta interna para los efectos
+      const card = slabElement.querySelector('.card');
+      if (card) card.classList.add('tilting');
+    });
+
+    slabElement.addEventListener("mouseleave", () => {
+      slabElement.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      const card = slabElement.querySelector('.card');
+      if (card) card.classList.remove('tilting');
+    });
+  }
+
+  //generar uid UNICA
+  function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
 </script>
 
