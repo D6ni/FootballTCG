@@ -2,582 +2,513 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Graded Card Concept</title>
+  <title>Football TCG - Player DB Editor</title>
+  
+  <!-- Carga automática de la base de datos -->
+  <script src="database.js" onerror="window.dbFileLoaded = false;"></script>
+
   <style>
-    /* --- ESTILOS BASE Y VARIABLES --- */
-    :root{
-      --card-w: 260px;
-      --card-h: 370px;
+    :root {
+      --bg-color: #1a1c20;
+      --card-bg: #2a2d34;
+      --border-color: #444;
+      --primary-color: #4a7dff;
+      --danger-color: #e74c3c;
+      --success-color: #27ae60;
+      --text-color: #f0f0f0;
+      --text-muted: #888;
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #111217;
-      color: white;
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
-      padding: 40px;
-      box-sizing: border-box;
-      /* ---> AÑADIDO: Perspectiva global para el efecto 3D */
-      perspective: 2000px; 
+      padding: 20px;
     }
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 30px;
+    .container { max-width: 1400px; margin: auto; }
+    h1 { text-align: center; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+    #search-input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1em; min-width: 200px; }
+    .button-group { display: flex; gap: 10px; }
+    button { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+    button:hover { transform: scale(1.05); }
+    .btn-add { background-color: var(--success-color); color: white; }
+    .btn-generate { background-color: var(--primary-color); color: white; }
+    .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .player-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: background-color 0.3s, border-color 0.3s; }
+    .player-card.rarity-common { background-color: rgba(138, 138, 138, 0.15); border-color: rgba(138, 138, 138, 0.4); }
+    .player-card.rarity-rare { background-color: rgba(74, 125, 255, 0.15); border-color: rgba(74, 125, 255, 0.4); }
+    .player-card.rarity-epic { background-color: rgba(160, 83, 222, 0.15); border-color: rgba(160, 83, 222, 0.4); }
+    .player-card.rarity-legendary { background-color: rgba(255, 200, 74, 0.15); border-color: rgba(255, 200, 74, 0.4); }
+    .player-card.rarity-relic { background-color: rgba(74, 240, 224, 0.15); border-color: rgba(74, 240, 224, 0.4); }
+    .player-card-header { display: flex; gap: 15px; align-items: center; }
+    .player-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border-color); background-color: #111; }
+    .player-card-info h3 { margin: 0; font-size: 1.1em; }
+    .player-card-info p { margin: 0; color: var(--text-muted); font-size: 0.9em; }
+    .player-card-details { font-size: 0.9em; }
+    .player-card-actions { margin-top: auto; display: flex; gap: 10px; }
+    .btn-edit { background-color: #f39c12; color: white; }
+    .btn-delete { background-color: var(--danger-color); color: white; }
+    #edit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; place-items: center; z-index: 1000; }
+    #edit-modal.visible { display: grid; }
+    #player-form { background: var(--card-bg); padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
+    #player-form h2 { margin-top: 0; text-align: center; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-weight: bold; font-size: 0.9em; color: var(--text-muted); }
+    .form-group input, .form-group select { padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1em; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .btn-save { background-color: var(--success-color); color: white; }
+    .btn-cancel { background-color: #7f8c8d; color: white; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--success-color); color: white; padding: 12px 25px; border-radius: 25px; font-weight: bold; opacity: 0; transition: opacity 0.3s, bottom 0.3s; pointer-events: none; z-index: 2000; }
+    #toast.show { opacity: 1; bottom: 30px; }
+    #toast.error { background-color: var(--danger-color); }
+    .info-box { background-color: rgba(74, 125, 255, 0.1); border: 1px solid rgba(74, 125, 255, 0.4); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.6; }
+
+
+    /* Estilo para la casilla de selección en la tarjeta */
+    .player-card {
+      position: relative; /* Necesario para posicionar el checkbox */
     }
-    h1 { margin-bottom: 0; }
-    p { color: #aaa; margin-top: 0; max-width: 500px; text-align: center; }
-
-    /* --- ESTILOS DE CARTA COPIADOS DE TU index.html --- */
-    /* (Se han eliminado transformaciones de hover para que las controle el slab) */
-    @property --x { syntax: '<number>'; initial-value: 0; inherits: true; }
-    @property --y { syntax: '<number>'; initial-value: 0; inherits: true; }
-    .card { width: var(--card-w); height: var(--card-h); border-radius: 12px; position: relative; transform-style: preserve-3d; user-select: none; }
-    .card .side { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; color: #fff; overflow: hidden; }
-    .card .front { transform: rotateY(180deg); /* ---> MODIFICADO: Solo volteada por defecto */ }
-    .card.flipped{ transform: rotateY(180deg); }
-    .card.common { --rarity-color: #8a8a8a; } .card.rare { --rarity-color: #4a7dff; } .card.epic { --rarity-color: #a053de; } .card.legendary { --rarity-color: #ffc84a; } .card.relic { --rarity-color: #4af0e0; }
-    .card.flipped .front { box-shadow: 0 0 15px 5px var(--rarity-color); }
-    .common .front { background: linear-gradient(170deg, #8a8a8a, #505050); } .rare .front { background: linear-gradient(170deg, #4a7dff, #294eb0); } .epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); } .legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); } .relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
-    .player-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; z-index: 1; opacity: 0.85; }
-    .card .front .player-info { z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: flex; flex-direction: column; position: relative; width: 100%; height: 100%; }
-    .card.golden .front::after { content: ''; position: absolute; inset: 0; border-radius: 12px; z-index: 4; pointer-events: none; background-image: linear-gradient( 120deg, transparent 25%, rgba(255, 235, 150, 0.5) 50%, transparent 65% ), radial-gradient( ellipse at 50% 50%, rgba(255, 215, 0, 0.55), rgba(200, 140, 40, 0.75) ); background-size: 300% 100%, 100% 100%; background-position: 0% 50%, 0 0; mix-blend-mode: overlay; animation: subtle-gold-shine 6.5s ease-in-out infinite alternate; }
-    @keyframes subtle-gold-shine { from { background-position: 150% 50%, 0 0; } to { background-position: -150% 50%, 0 0; } }
-    .variant-foil .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: radial-gradient(ellipse at center, rgba(220, 230, 255, 0.33) 0%, rgba(220, 230, 255, 0.15) 20%, transparent 60%); background-size: 200% 200%; background-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: color-dodge; opacity: 0; transition: opacity 0.4s ease-out; will-change: background-position, opacity; }
-    .card.variant-foil.tilting .front::before { opacity: 1; }
-    .variant-holo .front::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background-image: url('images/holoeffect.png'); background-size: cover; mask-image: radial-gradient(ellipse at center, white 25%, transparent 60%); mask-size: 200% 200%; mask-position: calc(50% + var(--y) * 8%) calc(50% + var(--x) * 8%); mix-blend-mode: overlay; opacity: 0; transition: opacity 0.8s ease-out; will-change: mask-position, opacity; }
-    .card.variant-holo.tilting .front::before { opacity: 1; transition: opacity 0.3s ease-in; }
-
-    /* ---> NUEVO: ESTILOS PARA EL DESGASTE DE LA CARTA POR CAPAS <--- */
-
-/* 1. Variables CSS para controlar la opacidad de cada capa de daño */
-.card {
-  --wear-borders-opacity: 0;
-  --wear-rips-opacity: 0;
-  --wear-dirt-opacity: 0;
-  --wear-heavy-damage-opacity: 0;
-}
-
-.wear-layer-borders, .wear-layer-rips, .wear-layer-dirt, .wear-layer-heavy-damage {
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transition: opacity 0.5s ease-out;
-  will-change: opacity;
-}
-
-/* Capa de DAÑO EXTREMO (Heavy Damage) */
-.wear-layer-heavy-damage {
-  background-image: url('images/damaged1.png');
-  z-index: 11; /* El z-index más alto para que esté encima de todo */
-  opacity: var(--wear-heavy-damage-opacity);
-}
-
-/* Capa de BORDES DAÑADOS */
-.wear-layer-borders {
-  background-image: url('images/damagedborders.png');
-  z-index: 10; /* La capa más superficial */
-  opacity: var(--wear-borders-opacity);
-}
-
-/* Capa de ROTURAS (Rips) */
-.wear-layer-rips {
-  background-image: url('images/ripped.png');
-  mix-blend-mode: screen; /* Como solicitaste */
-  z-index: 9;
-  opacity: var(--wear-rips-opacity);
-}
-
-/* Capa de SUCIEDAD (Dirt) */
-.wear-layer-dirt {
-  background-image: url('images/dirt.png');
-  mix-blend-mode: screen; /* Como solicitaste */
-  z-index: 8;
-  opacity: var(--wear-dirt-opacity);
-}
-
-
-    /* --- NUEVOS ESTILOS PARA EL SLAB Y LA ETIQUETA --- */
-    .slab-container {
-      position: relative;
-      padding: 80px 15px 15px 15px;
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      
-      /* ---> MODIFICACIONES CLAVE <--- */
-      cursor: pointer;
-      transform-style: preserve-3d; /* Permite que los hijos se muevan en 3D */
-      transition: transform 0.1s linear; /* Transición suave */
-    }
-
-    .slab-label {
+    .player-select-checkbox {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 10px 15px;
-      background: linear-gradient(180deg, #1f2937, #111827);
-      border-bottom: 3px solid var(--rarity-color);
-      border-radius: 17px 17px 0 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      height: 55px;
-      box-sizing: border-box;
-
-      /* ---> AÑADIDO: Empuja la etiqueta hacia el espectador para dar profundidad */
-      transform: translateZ(20px); 
-    }
-
-    /* ---> AÑADIDO: La carta se empuja un poco hacia atrás */
-    #graded-card-container {
-        transform: translateZ(-5px);
-    }
-    
-    .grade-container { display: flex; align-items: center; gap: 10px; }
-    #grade-score { font-size: 2.5rem; font-weight: 900; color: #fff; line-height: 1; }
-    #grade-name { font-size: 1rem; font-weight: 700; color: #ddd; text-transform: uppercase; }
-    .player-label-info { text-align: right; }
-    #label-player-name { font-weight: bold; font-size: 1.1rem; margin: 0; }
-    #label-collection-year { font-size: 0.8rem; color: #aaa; margin: 0; }
-    #label-metadata { position: absolute; bottom: 5px; right: 15px; font-family: 'Courier New', Courier, monospace; font-size: 0.7rem; color: #666; display: flex; gap: 15px; transform: translateZ(20px); }
-
-    /* --- CONTROLES --- */
-    .controls { margin-top: 30px; background-color: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
-    .variant-checks { display: flex; gap: 20px; }
-    .variant-checks label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
-    #grade-button { background-color: #4a7dff; color: white; padding: 12px 25px; border-radius: 8px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
-    #grade-button:hover { transform: scale(1.05); }
-
-
-    /* 1. La capa de textura */
-.slab-container::after {
-  content: '';
-  position: absolute;
-  inset: 0; /* Hace que cubra todo el slab */
-  border-radius: 18px; /* Coincide con el radio de borde del slab */
-  
-  /* La imagen de la textura */
-  background-image: url('images/slab-texture.png');
-  
-  /* Cómo se mezcla la textura con lo que hay debajo */
-  mix-blend-mode: overlay; /* 'overlay' es genial para efectos de brillo y textura */
-  opacity: 0.5; /* ¡AJUSTA ESTE VALOR! Un valor bajo (0.05 a 0.2) es más sutil */
-  
-  /* Colocación en el espacio 3D */
-  transform: translateZ(10px); /* La pone ligeramente por delante de la carta */
-  z-index: 5; /* Asegura que esté por encima de la carta */
-
-  /* ¡Muy importante para no bloquear el ratón! */
-  pointer-events: none; 
-}
-
-/* ---> Y AÑADE ESTA TAMBIÉN PARA ASEGURAR EL ORDEN <--- */
-/* 2. Aseguramos que la etiqueta siempre esté por encima de todo */
-.slab-label {
-  /* ... tus estilos actuales para la etiqueta ... */
-  z-index: 10; /* Un z-index más alto que la textura */
-}
-
-.grade-test-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      max-width: 300px; /* Evita que se extienda demasiado */
-    }
-    .test-grade-btn {
-      background-color: #4a5568; /* Un gris neutro */
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      font-size: 0.9rem;
-      font-weight: bold;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    .test-grade-btn:hover {
-      transform: scale(1.1);
-      background-color: #718096;
     }
 
-    /* --- NUEVO: ESTILOS PARA EL EFECTO PRISTINE+ (VERSIÓN MEJORADA) --- */
-@keyframes pearlescent-shine {
-  from { background-position: 0% 50%; }
-  to { background-position: 100% 50%; }
+/* Estilo visual para una tarjeta seleccionada */
+.player-card.selected {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 10px var(--danger-color);
+  background-color: rgba(231, 76, 60, 0.1);
 }
 
-.pristine-plus-effect {
-  /* --- Propiedades del gradiente (sin cambios) --- */
-  background-image: linear-gradient(
-    90deg, 
-    #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba
-  );
-  background-size: 300% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: pearlescent-shine 5s linear infinite alternate;
-  font-weight: 700;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
-  text-shadow: 
-    0 0 4px rgba(255, 255, 255, 0.7),  /* Brillo blanco intenso y cercano */
-    0 0 12px rgba(220, 180, 255, 0.5); /* Aura exterior más suave y violácea */
+/* Estilos para el nuevo modal de confirmación (reutilizando estilos existentes) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  place-items: center;
+  z-index: 1000;
 }
-
-/* --- NUEVO: ESTILO PARA EL BORDE DEL SLAB PRISTINE+ (VERSIÓN CON BORDES REDONDEADOS) --- */
-@keyframes pearlescent-shine-border {
-  from { background-position: 0% 50%; }
-  to { background-position: 100% 50%; }
+.modal-overlay.visible {
+  display: grid;
 }
-
-.slab-container.pristine-plus-slab {
-  position: relative;
-  border: 3px solid transparent;
+.modal-content {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
 }
-
-.slab-container.pristine-plus-slab::before {
-  content: '';
-  position: absolute;
-  inset: -3px; /* Expande 3px hacia afuera (el ancho del borde) */
-  border-radius: 18px; /* Mismo radio que el slab */
-  background: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d1baff, #ffb3ba);
-  background-size: 300% auto;
-  animation: pearlescent-shine-border 5s linear infinite alternate;
-  z-index: -1; /* Detrás del contenido del slab */
-  
-  /* La máscara crea el efecto de borde */
-  mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  padding: 3px; /* El grosor del borde */
-}
-
-/* --- NUEVO: ESTILOS PARA EL SLIDER DE CONDICIÓN --- */
-.slider-control-group {
+.modal-content h2 { margin-top: 0; }
+.modal-content p { margin-bottom: 25px; line-height: 1.6; }
+.modal-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 400px;
-}
-.slider-control-group label {
-  font-weight: bold;
-  font-size: 1rem;
-  color: #ddd;
-}
-.slider-wrapper {
-  display: flex;
-  align-items: center;
+  justify-content: center;
   gap: 15px;
-  width: 100%;
 }
-.slider-wrapper span {
-  font-size: 0.8rem;
-  color: #888;
-}
-
-#condition-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 8px;
-  background: #2a374a;
-  border-radius: 5px;
-  outline: none;
-  opacity: 0.9;
-  transition: opacity .2s;
-}
-#condition-slider:hover {
-  opacity: 1;
-}
-
-/* Estilo del "pulgar" (el círculo que se desliza) para Webkit/Blink (Chrome, Safari) */
-#condition-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  background: #4a7dff;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 2px solid #fff;
-}
-
-/* Estilo del "pulgar" para Firefox */
-#condition-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: #4a7dff;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 2px solid #fff;
-}
-
-#condition-value-display {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #ffc84a;
-  background-color: rgba(0,0,0,0.4);
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
 </style>
 </head>
 <body>
 
-  <div class="main-container">
-    <h1>Graded Card Concept</h1>
-    <p>Simulación de una carta "Graduada". Cada clic en el botón genera una nueva "Condición" aleatoria, determinando su nota. Usa los checkboxes para ver cómo se aplican las variantes.</p>
+  <div class="container">
+    <h1>Football TCG - Player DB Editor</h1>
 
-    <!-- EL SLAB QUE CONTIENE TODO -->
-    <div class="slab-container">
-      
-      <!-- LA ETIQUETA SUPERIOR -->
-      <div id="slab-label" class="slab-label">
-        <div class="grade-container">
-          <div id="grade-score">10</div>
-          <div id="grade-name">GEM MINT</div>
-        </div>
-        <div class="player-label-info">
-          <p id="label-player-name">Lionel Messi</p>
-          <p id="label-collection-year">2024 Collection</p>
-        </div>
-        <div id="label-metadata">
-            <span id="label-serial">ID: 1A2B3C4D5</span>
-            <span id="label-condition">Cond: 0.01234</span>
-        </div>
-      </div>
-      
-      <!-- LA CARTA EN SÍ (generada por JS) -->
-      <div id="graded-card-container"></div>
-
+    <div class="info-box">
+      <strong>Workflow:</strong>
+      <ol>
+        <li>This editor automatically loads your <code>database.js</code> file.</li>
+        <li>Make your changes using the interface below.</li>
+        <li>Click <strong>"Generate & Download database.js"</strong>.</li>
+        <li>Save the downloaded file in your project folder, replacing the old one.</li>
+        <li>Reload your game page (<code>index.html</code>) to see the changes.</li>
+      </ol>
     </div>
-
-    <!-- CONTROLES PARA LA DEMO -->
+    
     <div class="controls">
-        <div class="variant-checks">
-            <label><input type="checkbox" id="golden-check"> Golden</label>
-            <label><input type="checkbox" id="foil-check"> Foil</label>
-            <label><input type="checkbox" id="holo-check"> Holo</label>
-        </div>
-        <div class="slider-control-group">
-            <label for="condition-slider">Card Condition (Float)</label>
-            <div class="slider-wrapper">
-                <span>Pristine (0.0)</span>
-                <input type="range" id="condition-slider" min="0" max="1" step="0.001" value="0.01">
-                <span>Damaged (1.0)</span>
-            </div>
-            <div id="condition-value-display">0.0100</div>
-        </div>
-        <button id="grade-button">Generate Random Grade</button>
+      <input type="search" id="search-input" placeholder="Search by name or team...">
+      <div class="button-group">
+        <button id="add-player-btn" class="btn-add">Add Player</button>
+        <button id="delete-selected-btn" class="btn-delete" style="display: none;">Delete Selected</button>
+        <button id="generate-db-btn" class="btn-generate">Generate & Download database.js</button>
+      </div>
+    </div>
+    
+    <div id="player-list" class="player-grid"></div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="edit-modal">
+    <form id="player-form">
+      <h2 id="modal-title">Edit Player</h2>
+      <input type="hidden" id="player-id">
+
+      <div class="form-group">
+        <label for="player-name">Name</label>
+        <input type="text" id="player-name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="player-position">Position</label>
+        <select id="player-position" required>
+          <option value="ATK">ATK</option>
+          <option value="MID">MID</option>
+          <option value="DEF">DEF</option>
+          <option value="GK">GK</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="player-rating">Rating</label>
+        <input type="number" id="player-rating" min="1" max="99" required>
+      </div>
+
+      <div class="form-group">
+  <label for="player-tcg-rating">TCG Rating (Opcional, para la rareza)</label>
+  <input type="number" id="player-tcg-rating" min="1" max="99" placeholder="Usa este para anular el rating normal">
+</div>
+
+      <div class="form-group">
+        <label for="player-rarity">Rarity</label>
+        <select id="player-rarity" required>
+          <option value="common">Common</option>
+          <option value="rare">Rare</option>
+          <option value="epic">Epic</option>
+          <option value="legendary">Legendary</option>
+          <option value="relic">Relic</option>
+        </select>
+      </div>
+
+      <!-- === INICIO DE LOS CAMPOS MODIFICADOS Y AÑADIDOS === -->
+
+      <div class="form-group">
+        <label for="player-league">League</label>
+        <input type="text" id="player-league" list="leagues-list" required placeholder="e.g., La Liga, Premier League...">
+        <datalist id="leagues-list"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="player-teams">Primary Team (for folder path)</label>
+        <input type="text" id="player-teams" list="teams-list" required placeholder="e.g., FC Barcelona, Manchester City...">
+        <datalist id="teams-list"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="player-img">Image Path (auto-generated)</label>
+        <!-- Cambiado a readonly para que no se pueda editar manualmente -->
+        <input type="text" id="player-img" required readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="player-all-teams">All Teams (comma-separated, for display)</label>
+        <input type="text" id="player-all-teams" required placeholder="e.g., Inter Miami, FC Barcelona, Retired...">
+      </div>
+
+      <!-- === FIN DE LOS CAMPOS MODIFICADOS Y AÑADIDOS === -->
+
+      <div class="form-group">
+        <label for="player-country">Country</label>
+        <input type="text" id="player-country" required>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="cancel-btn" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="confirm-delete-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Confirm Deletion</h2>
+      <p id="confirm-delete-msg">Are you sure you want to delete these players?</p>
+      <div class="modal-actions">
+        <button id="cancel-delete-btn" class="btn-cancel">Cancel</button>
+        <button id="confirm-delete-btn" class="btn-delete">Confirm Delete</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const examplePlayer = { id: 1, name: "Roony Bardghji", position: "ATK", rating: 81, rarity: "common", img: "images/cards/la-liga/fc-barcelona/roonybardghji.png", teams: ["FC Barcelona"], country: "Spain" };
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- ESTADO GLOBAL PARA LA SELECCIÓN ---
+    let selectedPlayerIds = new Set();
+    
+    // --- REFERENCIAS A ELEMENTOS DEL DOM ---
+    const playerList = document.getElementById('player-list');
+    const addPlayerBtn = document.getElementById('add-player-btn');
+    const generateDbBtn = document.getElementById('generate-db-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const modal = document.getElementById('edit-modal');
+    const form = document.getElementById('player-form');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const searchInput = document.getElementById('search-input');
+    const toast = document.getElementById('toast');
 
-    const gradingScale = [
-      { threshold: 0.005, score: "10+", name: "PRISTINE +" },
-      { threshold: 0.07,  score: "10",  name: "PRISTINE" },
-      { threshold: 0.15,  score: "10",  name: "GEM MINT" },
-      { threshold: 0.30,  score: "9",   name: "MINT" },
-      { threshold: 0.50,  score: "8",   name: "NEAR MINT" },
-      { threshold: 0.70,  score: "7",   name: "EXCELLENT" }, 
-      { threshold: 0.82,  score: "6",   name: "VERY GOOD" },
-      { threshold: 0.90,  score: "5",   name: "GOOD" },
-      { threshold: 0.95,  score: "4",   name: "FAIR" },
-      { threshold: 0.98,  score: "3",   name: "POOR" },
-      { threshold: 0.995, score: "2",   name: "DAMAGED" },
-      { threshold: 1.00,  score: "1",   name: "HEAVY DAMAGE" }
-    ];
+    // Referencias a los inputs del formulario
+    const playerNameInput = document.getElementById('player-name');
+    const playerLeagueInput = document.getElementById('player-league');
+    const playerTeamsInput = document.getElementById('player-teams');
+    const playerAllTeamsInput = document.getElementById('player-all-teams');
+    const playerImgInput = document.getElementById('player-img');
 
-    let slabContainer;
+    // Referencias al modal de confirmación
+    const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+    const confirmDeleteMsg = document.getElementById('confirm-delete-msg');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    
+    // --- LÓGICA DE LA APLICACIÓN ---
 
-    // --- FUNCIONES DE EFECTOS (SIN CAMBIOS) ---
-    function addInteractiveTilt(slabElement) {
-      slabElement.addEventListener("mousemove", (e) => {
-        const rect = slabElement.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const rotateX = ((y / rect.height) - 0.5) * -30;
-        const rotateY = ((x / rect.width) - 0.5) * 30;
-        slabElement.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
-        const card = slabElement.querySelector('.card');
-        if (card) card.classList.add('tilting');
-      });
-      slabElement.addEventListener("mouseleave", () => {
-        slabElement.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
-        const card = slabElement.querySelector('.card');
-        if (card) card.classList.remove('tilting');
-      });
+    const showToast = (message, type = 'success') => {
+        toast.textContent = message;
+        toast.className = type;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    };
+
+    if (typeof playersDB === 'undefined' || window.dbFileLoaded === false) {
+        window.playersDB = [{ id: 1, name: "Example Player", position: "ATK", rating: 80, rarity: "rare", img: "images/example.png", teams: ["Sample FC"], country: "Sampleland" }];
+        showToast("Error: `database.js` not found. Loading example data.", "error");
+    } else {
+        showToast("`database.js` loaded successfully!");
     }
+    
+    const sanitizeForPath = (str) => str ? str.toLowerCase().replace(/[\s_.]+/g, '-').replace(/[^a-z0-9-]/g, '') : '';
+    const sanitizeNameForImagePath = (name) => name ? name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n').replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') : '';
 
-    function addReactiveEffects(cardElement) {
-      cardElement.addEventListener('mousemove', (e) => {
-        const bounds = cardElement.getBoundingClientRect();
-        const mouseX = e.clientX - bounds.left;
-        const mouseY = e.clientY - bounds.top;
-        const centerX = bounds.width / 2;
-        const centerY = bounds.height / 2;
-        const posX = (mouseY - centerY) * -0.12;
-        const posY = (mouseX - centerX) * 0.12;
-        cardElement.style.setProperty('--x', posX);
-        cardElement.style.setProperty('--y', posY);
-      });
-      cardElement.addEventListener('mouseleave', () => {
-        cardElement.style.setProperty('--x', 0);
-        cardElement.style.setProperty('--y', 0);
-      });
-    }
-
-    // --- FUNCIÓN PRINCIPAL DE RENDERIZADO (MODIFICADA) ---
-    function displayGradedCard(forcedCondition) {
-      const cardContainer = document.getElementById('graded-card-container');
-      const scoreEl = document.getElementById('grade-score');
-      const nameEl = document.getElementById('grade-name');
-      const playerNameEl = document.getElementById('label-player-name');
-      const collectionYearEl = document.getElementById('label-collection-year');
-      const serialEl = document.getElementById('label-serial');
-      const conditionEl = document.getElementById('label-condition');
-      const labelEl = document.getElementById('slab-label');
-      
-      cardContainer.innerHTML = ''; 
-
-      const condition = forcedCondition;
-      const grade = gradingScale.find(tier => condition < tier.threshold) || gradingScale[gradingScale.length - 1];
-      const serial = `TCG-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      
-      // --- CAMBIO CLAVE 1: Aumentamos la precisión a 12 decimales al guardar el dato ---
-      const gradeData = { ...grade, condition: condition.toFixed(12), serial };
-
-      scoreEl.classList.remove('pristine-plus-effect');
-      nameEl.classList.remove('pristine-plus-effect');
-      slabContainer.classList.remove('pristine-plus-slab');
-
-      if (gradeData.score === "10+") {
-        scoreEl.classList.add('pristine-plus-effect');
-        nameEl.classList.add('pristine-plus-effect');
-        slabContainer.classList.add('pristine-plus-slab');
-      }
-
-      const isGolden = document.getElementById('golden-check').checked;
-      const isFoil = document.getElementById('foil-check').checked;
-      const isHolo = document.getElementById('holo-check').checked;
-      
-      const cardEl = document.createElement('div');
-      let cardClasses = `card flipped ${examplePlayer.rarity}`;
-      if (isGolden) cardClasses += ' golden';
-      if (isFoil) cardClasses += ' variant-foil';
-      if (isHolo) cardClasses += ' variant-holo';
-      cardEl.className = cardClasses;
-
-      cardEl.innerHTML = `
-        <div class="side front">
-            <div class="wear-layer-heavy-damage"></div>
-            <div class="wear-layer-borders"></div>
-            <div class="wear-layer-rips"></div>
-            <div class="wear-layer-dirt"></div>
-            <img src="${examplePlayer.img}" class="player-image" alt="${examplePlayer.name}" />
-            <div class="player-info"></div>
-        </div>`;
-      
-      let wearBordersOpacity = 0, wearRipsOpacity = 0, wearDirtOpacity = 0, wearHeavyDamageOpacity = 0;
-      if (gradeData.score !== "10+") {
-        const DIRT_START_THRESHOLD = 0.005;
-        const RIPS_START_THRESHOLD = 0.70;
-        const BORDERS_START_THRESHOLD = 0.90;
-        if (condition >= DIRT_START_THRESHOLD) {
-          const scaledDirt = (condition - DIRT_START_THRESHOLD) / (1.0 - DIRT_START_THRESHOLD);
-          wearDirtOpacity = Math.min(1, Math.pow(scaledDirt, 0.75)); 
-        }
-        if (condition >= RIPS_START_THRESHOLD) {
-          const scaledRips = (condition - RIPS_START_THRESHOLD) / (1.0 - RIPS_START_THRESHOLD);
-          wearRipsOpacity = Math.min(1, Math.pow(scaledRips, 1.2));
-        }
-        if (condition >= BORDERS_START_THRESHOLD) {
-          wearBordersOpacity = Math.min(1, (condition - BORDERS_START_THRESHOLD) / (1.0 - BORDERS_START_THRESHOLD));
-        }
-      }
-      if (gradeData.score === "1" && Math.random() < 0.10) {
-        wearHeavyDamageOpacity = 1; wearBordersOpacity = 1; wearRipsOpacity = 1; wearDirtOpacity = 1;
-      }
-      cardEl.style.setProperty('--wear-borders-opacity', wearBordersOpacity);
-      cardEl.style.setProperty('--wear-rips-opacity', wearRipsOpacity);
-      cardEl.style.setProperty('--wear-dirt-opacity', wearDirtOpacity);
-      cardEl.style.setProperty('--wear-heavy-damage-opacity', wearHeavyDamageOpacity);
-      
-      cardContainer.appendChild(cardEl);
-      scoreEl.textContent = gradeData.score;
-      nameEl.textContent = gradeData.name;
-      playerNameEl.textContent = examplePlayer.name;
-      collectionYearEl.textContent = "2024 Founder's Collection";
-      serialEl.textContent = `ID: ${gradeData.serial}`;
-      
-      // --- CAMBIO CLAVE 2: Mostramos 12 decimales en la etiqueta ---
-      conditionEl.textContent = `Cond: ${gradeData.condition}`;
-      
-      setTimeout(() => {
-          const rarityColor = getComputedStyle(cardEl).getPropertyValue('--rarity-color');
-          labelEl.style.borderColor = rarityColor;
-      }, 0);
-      addReactiveEffects(cardEl);
-    }
-
-    // --- EVENT LISTENERS (LÓGICA NUEVA) ---
-    document.addEventListener('DOMContentLoaded', () => {
-        slabContainer = document.querySelector('.slab-container');
-        const conditionSlider = document.getElementById('condition-slider');
-        const valueDisplay = document.getElementById('condition-value-display');
-        const gradeButton = document.getElementById('grade-button');
-        const checkboxes = document.querySelectorAll('.variant-checks input');
-
-        // --- CAMBIO CLAVE 3: Modificamos el `step` del slider dinámicamente ---
-        conditionSlider.step = "0.000000000001";
-
-        function updateDisplay() {
-            const condition = parseFloat(conditionSlider.value);
-            // Mostramos 8 decimales en el display para que sea legible, aunque el valor real tiene más.
-            valueDisplay.textContent = condition.toFixed(8);
-            displayGradedCard(condition);
-        }
-
-        conditionSlider.addEventListener('input', updateDisplay);
-
-        gradeButton.addEventListener('click', () => {
-            let baseCondition = (Math.random() + Math.random()) / 2;
-            const randomCondition = Math.pow(baseCondition, 0.7);
-            conditionSlider.value = randomCondition;
-            updateDisplay();
+    const populateDatalists = () => {
+        const allTeams = new Set();
+        const allLeagues = new Set();
+        playersDB.forEach(p => {
+            p.teams.forEach(team => allTeams.add(team));
+            const pathParts = p.img.split('/');
+            if (pathParts.length > 3 && pathParts[1] === 'cards') {
+                allLeagues.add(pathParts[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+            }
         });
+        const teamsDatalist = document.getElementById('teams-list');
+        const leaguesDatalist = document.getElementById('leagues-list');
+        if (teamsDatalist) teamsDatalist.innerHTML = [...allTeams].sort().map(team => `<option value="${team}"></option>`).join('');
+        if (leaguesDatalist) leaguesDatalist.innerHTML = [...allLeagues].sort().map(league => `<option value="${league}"></option>`).join('');
+    };
 
-        checkboxes.forEach(check => {
-            check.addEventListener('change', updateDisplay);
+    const updateImagePath = () => {
+        const name = playerNameInput.value.trim();
+        const league = playerLeagueInput.value.trim();
+        const primaryTeam = playerTeamsInput.value.trim();
+        if (!name || !league || !primaryTeam) {
+            playerImgInput.value = '';
+            return;
+        }
+        const sanitizedLeague = sanitizeForPath(league);
+        const sanitizedTeam = sanitizeForPath(primaryTeam);
+        const sanitizedPlayer = sanitizeNameForImagePath(name);
+        playerImgInput.value = `images/cards/${sanitizedLeague}/${sanitizedTeam}/${sanitizedPlayer}.png`;
+        if (playerAllTeamsInput.value.trim() === '') {
+            playerAllTeamsInput.value = primaryTeam;
+        }
+    };
+
+    const updateDeleteButtonState = () => {
+        if (selectedPlayerIds.size > 0) {
+            deleteSelectedBtn.style.display = 'inline-block';
+            deleteSelectedBtn.textContent = `Delete Selected (${selectedPlayerIds.size})`;
+        } else {
+            deleteSelectedBtn.style.display = 'none';
+        }
+    };
+    
+    const renderPlayerList = () => {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        playerList.innerHTML = '';
+        let playersToRender = playersDB;
+        if (searchTerm) {
+            playersToRender = playersDB.filter(p => p.name.toLowerCase().includes(searchTerm) || p.teams.some(t => t.toLowerCase().includes(searchTerm)));
+        }
+        playersToRender.sort((a, b) => a.id - b.id).forEach(player => {
+            const card = document.createElement('div');
+            const isSelected = selectedPlayerIds.has(player.id);
+            card.className = `player-card rarity-${player.rarity} ${isSelected ? 'selected' : ''}`;
+            card.innerHTML = `
+                <input type="checkbox" class="player-select-checkbox" data-id="${player.id}" ${isSelected ? 'checked' : ''}>
+                <div class="player-card-header"><img src="${player.img}" alt="${player.name}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"><div class="player-card-info"><h3>${player.name} (ID: ${player.id})</h3><p>Rating: ${player.rating} | Rarity: ${player.rarity.toUpperCase()}</p></div></div>
+                <div class="player-card-details"><strong>Position:</strong> ${player.position}<br><strong>Country:</strong> ${player.country}<br><strong>Teams:</strong> ${player.teams.join(', ')}</div>
+                <div class="player-card-actions"><button class="btn-edit" data-id="${player.id}">Edit</button></div>`;
+            playerList.appendChild(card);
         });
+    };
 
-        updateDisplay(); 
-        addInteractiveTilt(slabContainer);
+    const getNextAvailableId = () => {
+        const ids = playersDB.map(p => p.id);
+        let nextId = 1;
+        while (ids.includes(nextId)) {
+            nextId++;
+        }
+        return nextId;
+    };
+
+    const openModal = (player = null) => {
+        form.reset();
+        if (player) {
+            document.getElementById('modal-title').textContent = 'Edit Player';
+            document.getElementById('player-id').value = player.id;
+            playerNameInput.value = player.name;
+            document.getElementById('player-position').value = player.position;
+            document.getElementById('player-rating').value = player.rating;
+            document.getElementById('player-rarity').value = player.rarity;
+            playerImgInput.value = player.img;
+            playerAllTeamsInput.value = player.teams.join(',');
+            document.getElementById('player-country').value = player.country;
+            const pathParts = player.img.split('/');
+            if (pathParts.length > 3 && pathParts[1] === 'cards') {
+                playerLeagueInput.value = pathParts[2].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                playerTeamsInput.value = player.teams[0];
+            }
+        } else {
+            document.getElementById('modal-title').textContent = 'Add New Player';
+            document.getElementById('player-id').value = '';
+        }
+        modal.classList.add('visible');
+    };
+
+    const closeModal = () => modal.classList.remove('visible');
+    
+    const showDeleteConfirmation = () => {
+        confirmDeleteMsg.textContent = `You are about to permanently delete ${selectedPlayerIds.size} player(s). This action cannot be undone.`;
+        confirmDeleteModal.classList.add('visible');
+    };
+    
+    const hideDeleteConfirmation = () => confirmDeleteModal.classList.remove('visible');
+
+    // --> ESTA ES LA FUNCIÓN CORREGIDA
+    const performDeletion = () => {
+        // Se reasigna la variable 'playersDB' directamente. Funciona gracias al 'let' en database.js
+        playersDB = playersDB.filter(p => !selectedPlayerIds.has(p.id));
+        
+        const count = selectedPlayerIds.size;
+        selectedPlayerIds.clear();
+        
+        hideDeleteConfirmation();
+        renderPlayerList();
+        updateDeleteButtonState();
+        populateDatalists();
+        showToast(`Successfully deleted ${count} player(s).`, 'success');
+    };
+    
+    // --- MANEJADORES DE EVENTOS ---
+    
+    searchInput.addEventListener('input', renderPlayerList);
+    addPlayerBtn.addEventListener('click', () => openModal());
+    cancelBtn.addEventListener('click', closeModal);
+    deleteSelectedBtn.addEventListener('click', showDeleteConfirmation);
+    cancelDeleteBtn.addEventListener('click', hideDeleteConfirmation);
+    confirmDeleteBtn.addEventListener('click', performDeletion);
+
+    playerNameInput.addEventListener('input', updateImagePath);
+    playerLeagueInput.addEventListener('input', updateImagePath);
+    playerTeamsInput.addEventListener('input', updateImagePath);
+
+    playerList.addEventListener('click', (e) => {
+        if (e.target.matches('.btn-edit')) {
+            const player = playersDB.find(p => p.id === parseInt(e.target.dataset.id));
+            openModal(player);
+            return;
+        }
+        if (e.target.matches('.player-select-checkbox')) {
+            const checkbox = e.target;
+            const playerId = parseInt(checkbox.dataset.id);
+            const card = checkbox.closest('.player-card');
+            if (checkbox.checked) {
+                selectedPlayerIds.add(playerId);
+                card.classList.add('selected');
+            } else {
+                selectedPlayerIds.delete(playerId);
+                card.classList.remove('selected');
+            }
+            updateDeleteButtonState();
+        }
     });
-  </script>
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('player-id').value;
+        const teams = playerAllTeamsInput.value.split(',').map(t => t.trim());
+        const playerData = {
+            name: playerNameInput.value,
+            position: document.getElementById('player-position').value,
+            rating: parseInt(document.getElementById('player-rating').value),
+            rarity: document.getElementById('player-rarity').value,
+            img: playerImgInput.value,
+            teams: teams,
+            country: document.getElementById('player-country').value,
+        };
+        if (id) {
+            const index = playersDB.findIndex(p => p.id === parseInt(id));
+            playersDB[index] = { ...playersDB[index], ...playerData };
+        } else {
+            playerData.id = getNextAvailableId();
+            playersDB.push(playerData);
+        }
+        closeModal();
+        renderPlayerList();
+        populateDatalists();
+    });
+
+    generateDbBtn.addEventListener('click', () => {
+        let outputString = "let playersDB = [\n";
+        playersDB.sort((a,b) => a.id - b.id).forEach(p => {
+            const teamsString = p.teams.map(t => `"${t}"`).join(',');
+            outputString += `  { id: ${p.id}, name: "${p.name}", position: "${p.position}", rating: ${p.rating}, rarity: "${p.rarity}", img: "${p.img}", teams: [${teamsString}], country: "${p.country}" },\n`;
+        });
+        outputString += "];\n";
+        const blob = new Blob([outputString], { type: 'application/javascript' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'database.js';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        showToast("Downloading database.js...");
+    });
+    
+    // --- INICIALIZACIÓN ---
+    renderPlayerList();
+    populateDatalists();
+});
+
+
+const ratingInput = document.getElementById('player-rating');
+const tcgRatingInput = document.getElementById('player-tcg-rating');
+const raritySelect = document.getElementById('player-rarity');
+
+const autoSetRarity = () => {
+    const tcgRating = parseInt(tcgRatingInput.value, 10);
+    const regularRating = parseInt(ratingInput.value, 10);
+
+    // Usa el TCG Rating si existe, si no, el rating normal
+    const effectiveRating = !isNaN(tcgRating) && tcgRating > 0 ? tcgRating : regularRating;
+
+    if (isNaN(effectiveRating)) return;
+
+    if (effectiveRating >= 96) raritySelect.value = 'relic';
+    else if (effectiveRating >= 91) raritySelect.value = 'legendary';
+    else if (effectiveRating >= 87) raritySelect.value = 'epic';
+    else if (effectiveRating >= 83) raritySelect.value = 'rare';
+    else raritySelect.value = 'common';
+};
+
+ratingInput.addEventListener('input', autoSetRarity);
+tcgRatingInput.addEventListener('input', autoSetRarity);
+</script>
 </body>
 </html>
