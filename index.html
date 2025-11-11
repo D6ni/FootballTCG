@@ -7113,36 +7113,41 @@
 
                             // Esperamos a que la animación termine antes de continuar
                             setTimeout(() => {
-                              // 1. Añadir la carta elegida a la colección
-                              const playerId = chosenCard.playerData.id;
-                              const variantKey = `${chosenCard.golden}_${chosenCard.variant}`;
+    // --- ¡AQUÍ ESTÁ EL ERROR! ---
+    // LÍNEA INCORRECTA:
+    // const playerId = chosenCard.playerData.id;
+    
+    // LÍNEA CORREGIDA:
+    const playerId = chosenCard.playerData.cardCode; // <-- ¡CAMBIO CLAVE!
+    
+    const variantKey = `${chosenCard.golden}_${chosenCard.variant}`;
 
-                              if (!collection[playerId]) {
-                                collection[playerId] = {};
-                              }
-                              if (!collection[playerId][variantKey]) {
-                                collection[playerId][variantKey] = { count: 1, cardData: chosenCard };
-                              } else {
-                                collection[playerId][variantKey].count++;
-                              }
-                              
-                              // 2. Guardar la colección y actualizar UI
-                              saveCollection();
-                              showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
-                              
-                              // 3. Ocultar y limpiar el modal
-                              const choiceOverlay = document.getElementById('choice-overlay');
-                              choiceOverlay.classList.remove('visible');
-                              document.getElementById('choice-cards-container').innerHTML = '';
+    if (!collection[playerId]) {
+      collection[playerId] = {};
+    }
+    if (!collection[playerId][variantKey]) {
+      collection[playerId][variantKey] = { count: 1, cardData: chosenCard };
+    } else {
+      collection[playerId][variantKey].count++;
+    }
+    
+    // 2. Guardar la colección y actualizar UI
+    saveCollection();
+    showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
+    
+    // 3. Ocultar y limpiar el modal
+    const choiceOverlay = document.getElementById('choice-overlay');
+    choiceOverlay.classList.remove('visible');
+    document.getElementById('choice-cards-container').innerHTML = '';
 
-                              // 4. Habilitar de nuevo el botón de abrir sobres y volver a la tienda
-                              const openPacksViewBtn = document.getElementById('openPacksViewBtn');
-                              if (openPacksViewBtn) openPacksViewBtn.disabled = false;
-                              
-                              const backToStoreBtn = document.getElementById('back-to-store-btn');
-                              if (backToStoreBtn) backToStoreBtn.click();
-                            }, 800); // 800ms de espera
-                          }
+    // 4. Habilitar de nuevo el botón de abrir sobres y volver a la tienda
+    const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+    if (openPacksViewBtn) openPacksViewBtn.disabled = false;
+    
+    const backToStoreBtn = document.getElementById('back-to-store-btn');
+    if (backToStoreBtn) backToStoreBtn.click();
+  }, 800);
+}
 
                           function executeGrading(playerId, variantKey, quantity) {
                             const cardStack = collection[playerId]?.[variantKey];
