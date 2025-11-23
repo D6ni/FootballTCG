@@ -5660,9 +5660,9 @@ const ENABLE_DEBUG_GRADING_TOOLS = false; // quitar generador floats
     const ECONOMY_CONFIG = {
 baseSellValue: 2, // Valor base en gemas para una carta común, normal y sin variante
 matchRewards: {
-  win: 50,
-  draw: 25,
-  loss: 10
+  win: 150,
+  draw: 75,
+  loss: 25
 },
 raritySellMultipliers: {
   crest: 100,
@@ -5815,7 +5815,7 @@ collection[playerCardCode] = {}; // Usamos el cardCode como clave principal
   const savedPacks = localStorage.getItem('myFootballPacks');
   packInventory = savedPacks ? JSON.parse(savedPacks) : { 'common-pack': 3 };
   const savedCurrency = localStorage.getItem('myPlayerCurrency');
-  playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 1000000;
+  playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 500; //DINERO INICIAL
 }
 
 
