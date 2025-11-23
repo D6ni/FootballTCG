@@ -4702,8 +4702,14 @@ button,
 #market-browser-overlay.visible { display: flex; }
 
 #market-browser-container {
-    width: 100%; max-width: 1400px; height: 100%;
-    display: flex; flex-direction: column; gap: 15px;
+    width: 100%; 
+    max-width: 1400px; 
+    height: 90vh; /* Altura fija (90% de la pantalla) */
+    max-height: 90vh; /* Importante */
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px;
+    overflow: hidden; /* Evita que el contenedor entero haga scroll */
 }
 
 .market-browser-header {
@@ -5153,6 +5159,216 @@ button,
     .sell-card-preview-container .card { transform: scale(1); }
 }
 
+/* --- ESTILOS PARA EL HISTORIAL DE MERCADO --- */
+
+/* El contenedor de la vista de historial */
+#market-history-view {
+    display: none; /* El JS lo cambia a flex */
+    flex-direction: column;
+    flex: 1; /* Ocupa todo el espacio restante debajo de las pestañas */
+    min-height: 0; /* TRUCO DE MAGIA: Permite que el hijo haga scroll */
+    gap: 15px;
+    padding-bottom: 10px;
+}
+
+/* Panel de Resumen Financiero (Arriba) */
+.history-summary-panel {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.summary-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Colores para beneficios/pérdidas */
+.net-positive { color: #2ecc71; } /* Verde */
+.net-negative { color: #e74c3c; } /* Rojo */
+.net-neutral { color: #fff; }
+
+/* Tabla/Lista de Transacciones */
+.history-list-container {
+    flex: 1; /* Crece hasta llenar el hueco disponible */
+    overflow-y: auto; /* ACTIVA EL SCROLL AQUÍ */
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid #333;
+    /* Mejora visual del scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #555 #222;
+}
+
+/* Estilo opcional para la barra de scroll en Chrome/Safari */
+.history-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+.history-list-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+.history-list-container::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 4px;
+}
+
+.history-row {
+    display: grid;
+    /* 1. Definimos columnas exactas: 
+       Badge (85px) | Info (lo que sobre) | Fecha (oculta o auto) | Precio (auto) | Botón (40px) */
+    grid-template-columns: 85px 1fr auto auto; 
+    align-items: center; /* 2. Esto centra VERTICALMENTE todo */
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+    height: 50px; /* 3. Altura fija para que todas las filas sean iguales */
+}
+
+
+.history-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Etiquetas de Tipo (Buy/Sell) */
+.tx-badge {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 22px;
+    width: 70px; /* Ancho fijo para que todos los badges midan lo mismo */
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+.tx-buy { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+.tx-sell { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+
+/* Detalles de la Carta */
+.history-card-details {
+    display: flex;
+    flex-direction: row; /* 4. IMPORTANTE: Pone Nombre y Rareza en la misma línea */
+    align-items: center; /* Centrado vertical del texto */
+    gap: 12px; /* Espacio entre el Nombre y la Rareza */
+    overflow: hidden; /* Por si el nombre es larguísimo */
+}
+
+.history-card-name {
+    font-weight: bold;
+    color: #eee;
+    font-size: 15px;
+    white-space: nowrap; /* 5. Prohibido saltar de línea */
+}
+
+.history-card-meta {
+    font-size: 11px; /* Un poco más pequeño para que sea secundario */
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    margin-top: 2px; /* Pequeño ajuste óptico para alinear con el texto grande */
+}
+.meta-tag {
+    text-transform: uppercase;
+}
+.meta-golden { color: #ffc84a; }
+.meta-variant { color: #4af0e0; }
+
+/* Precio y Fecha */
+.history-price {
+    font-weight: bold;
+    font-size: 16px;
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 15px;
+}
+
+.history-date {
+    font-size: 12px;
+    color: #777; /* Un gris un pelín más claro para que se lea mejor */
+    text-align: right;
+    margin-right: 45px; /* Empuja la fecha a la izquierda, separándola del precio */
+    white-space: nowrap; /* Evita que la fecha se parta en dos líneas */
+}
+
+/* Ajustes Mobile */
+@media (max-width: 600px) {
+    .history-row {
+        grid-template-columns: 50px 1fr auto; /* Ocultamos fecha o la movemos */
+        gap: 10px;
+    }
+    .history-date { display: none; } /* Ocultar fecha en móvil para espacio */
+    .history-summary-panel { flex-direction: column; gap: 10px; text-align: center; }
+}
+
+/* Títulos de sección dentro del historial */
+.history-section-title {
+    font-size: 14px;
+    color: #ffc84a; /* Dorado */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 15px 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #444;
+}
+
+/* Estilo para la fila de Listing Activo */
+.active-listing-row {
+    /* Añadimos una columna extra al final para el botón X */
+    grid-template-columns: 85px 1fr auto 40px; 
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid #f1c40f;
+}
+
+/* Badge de estado PENDING */
+.tx-pending { 
+    background: rgba(241, 196, 15, 0.2); 
+    color: #f1c40f; 
+    border: 1px solid #f1c40f; 
+}
+
+/* Botón de Cancelar (X) */
+.btn-cancel-listing {
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+.btn-cancel-listing:hover {
+    background: #e74c3c;
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+}
+
 </style>
 </head>
 <body>
@@ -5237,6 +5453,7 @@ button,
     <div class="market-tabs">
         <button class="market-tab-btn active" id="tab-market-buy" onclick="switchMarketTab('buy')">BUY CARDS</button>
         <button class="market-tab-btn" id="tab-market-sell" onclick="switchMarketTab('sell')">SELL MY CARDS</button>
+        <button class="market-tab-btn" id="tab-market-history" onclick="switchMarketTab('history')">HISTORY</button>
     </div>
 
     <!-- Barra de Filtros Actualizada -->
@@ -5280,6 +5497,30 @@ button,
 
     <!-- Rejilla de Resultados -->
     <div id="market-results-grid"></div>
+
+    <div id="market-history-view">
+    <!-- Resumen -->
+    <div class="history-summary-panel">
+        <div class="summary-stat">
+            <span class="summary-label">Total Earned (Sales)</span>
+            <span class="summary-value net-positive" id="hist-total-earned">0 💎</span>
+        </div>
+        <div class="summary-stat">
+            <span class="summary-label">Total Spent (Buys)</span>
+            <span class="summary-value net-negative" id="hist-total-spent">0 💎</span>
+        </div>
+        <div class="summary-stat">
+            <span class="summary-label">Net Profit</span>
+            <span class="summary-value" id="hist-net-profit">0 💎</span>
+        </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="history-list-container" id="history-list-content">
+        <!-- Aquí se inyectarán las filas con JS -->
+        <div style="padding:20px; text-align:center; color:#666;">No transactions yet.</div>
+    </div>
+</div>
 
   </div>
   <button id="close-market-browser-btn">X</button>
@@ -6830,6 +7071,21 @@ if (debugBtn) {
   // Ocultar el botón de búsqueda antiguo si existe, ya que ahora es automático
   const oldSearchBtn = document.getElementById('btn-market-search');
   if (oldSearchBtn) oldSearchBtn.style.display = 'none';
+
+// --- AUTO-REFRESCO DEL MERCADO ---
+setInterval(() => {
+    const marketOverlay = document.getElementById('market-browser-overlay');
+    const isMarketOpen = marketOverlay && marketOverlay.classList.contains('visible');
+    
+    if (isMarketOpen && currentMarketTab !== 'history') {
+        const searchInput = document.getElementById('market-search-input');
+        // Solo si el usuario NO está escribiendo
+        if (document.activeElement !== searchInput) { 
+            // PASAMOS TRUE AQUÍ para indicar que es automático
+            searchMarket(true); 
+        }
+    }
+}, 2000); // 2 segundos
 
 }); //FIN DEL DOM
 
@@ -10205,6 +10461,56 @@ const MARKET_CONFIG = {
 const marketDatabase = {};
 
 class MarketBackend {
+
+  // --- NUEVO: GUARDAR VENTAS ACTIVAS EN LOCALSTORAGE ---
+    static savePlayerListingsToStorage() {
+        const activeListings = [];
+        
+        // Buscamos en todo el mercado tus ventas
+        for (const [key, data] of Object.entries(marketDatabase)) {
+            const myListings = data.listings.filter(l => l.sellerId === 'PLAYER');
+            
+            myListings.forEach(l => {
+                // Guardamos el objeto del listing Y la clave del mercado para saber dónde ponerlo luego
+                activeListings.push({
+                    marketKey: key,
+                    listingData: l
+                });
+            });
+        }
+        
+        localStorage.setItem('myActiveListings', JSON.stringify(activeListings));
+    }
+
+    // --- NUEVO: RESTAURAR VENTAS AL INICIAR ---
+    static restorePlayerListings() {
+        const saved = localStorage.getItem('myActiveListings');
+        if (!saved) return;
+
+        try {
+            const activeListings = JSON.parse(saved);
+            
+            activeListings.forEach(item => {
+                const { marketKey, listingData } = item;
+                
+                // Aseguramos que la entrada en la DB existe (debería, por el init)
+                if (!marketDatabase[marketKey]) {
+                    marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, averagePrice: 0 };
+                }
+                
+                // Insertamos tu venta recuperada
+                marketDatabase[marketKey].listings.push(listingData);
+                
+                // Recalculamos precios y ordenamos
+                marketDatabase[marketKey].listings.sort((a, b) => a.price - b.price);
+                marketDatabase[marketKey].floorPrice = marketDatabase[marketKey].listings[0].price;
+            });
+            
+            console.log(`Restored ${activeListings.length} player listings.`);
+        } catch (e) {
+            console.error("Error restoring listings:", e);
+        }
+    }
     
     // Inicializar el mercado (Solo corre una vez o al cargar)
     static init() {
@@ -10231,6 +10537,59 @@ class MarketBackend {
         
         // Llenamos el mercado con datos iniciales falsos (Bots)
         this.seedInitialMarket();
+        this.restorePlayerListings();
+    }
+
+    // --- NUEVO: OBTENER VENTAS ACTIVAS DEL JUGADOR ---
+    static getPlayerListings() {
+        const playerListings = [];
+        
+        // Recorremos toda la base de datos del mercado
+        for (const [key, data] of Object.entries(marketDatabase)) {
+            // Filtramos las que sean sellerId === 'PLAYER'
+            const myListings = data.listings.filter(l => l.sellerId === 'PLAYER');
+            
+            if (myListings.length > 0) {
+                const [code, isGoldenStr, variant] = key.split('_');
+                const player = playersDB.find(p => p.cardCode === code);
+                
+                // Formateamos los datos para la vista
+                myListings.forEach(l => {
+                    playerListings.push({
+                        id: l.id,           // ID del listing
+                        marketKey: key,     // Clave para saber dónde buscar
+                        price: l.price,
+                        timestamp: l.timestamp,
+                        cardName: player.name,
+                        rarity: player.rarity,
+                        variant: variant,
+                        isGolden: isGoldenStr === 'true'
+                    });
+                });
+            }
+        }
+        
+        // Ordenar por más reciente
+        return playerListings.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    // --- NUEVO: CANCELAR VENTA ---
+    static cancelListing(listingId, marketKey) {
+        const data = marketDatabase[marketKey];
+        if (!data) return { success: false, message: "Market data not found." };
+
+        const index = data.listings.findIndex(l => l.id === listingId);
+        if (index === -1) return { success: false, message: "Listing not found (maybe sold?)." };
+
+        // 1. Eliminar del mercado
+        data.listings.splice(index, 1);
+
+        // 2. Recalcular Floor Price
+        data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+
+        this.savePlayerListingsToStorage();
+
+        return { success: true };
     }
 
     // Generador de Clave Única (Standardiza el ID del producto)
@@ -10287,6 +10646,10 @@ class MarketBackend {
         marketDatabase[key].listings.sort((a, b) => a.price - b.price);
         marketDatabase[key].floorPrice = marketDatabase[key].listings[0].price;
 
+        if (sellerId === 'PLAYER') {
+            this.savePlayerListingsToStorage();
+        }
+
         return { success: true, listingId: listing.id };
     }
 
@@ -10314,6 +10677,11 @@ class MarketBackend {
 
         // 3. Actualizar Floor Price
         data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+
+        // Si la carta comprada era del JUGADOR, guardamos para que desaparezca del storage
+        if (listing.sellerId === 'PLAYER') {
+            this.savePlayerListingsToStorage();
+        }
 
         return { success: true, price: listing.price, item: listing };
     }
@@ -10416,7 +10784,7 @@ class MarketBackend {
 class MarketSimulation {
     static start() {
         // Ejecutar un ciclo de mercado más rápido (cada 1.5 segundos) para que se vea vivo
-        setInterval(() => this.marketTick(), 1500);
+        setInterval(() => this.marketTick(), 500);
     }
 
     static marketTick() {
@@ -10424,7 +10792,7 @@ class MarketSimulation {
         const keys = Object.keys(marketDatabase);
         if (keys.length === 0) return;
         
-        for(let i=0; i<5; i++) {
+        for(let i=0; i<20; i++) {
             const randomKey = keys[Math.floor(Math.random() * keys.length)];
             this.simulateActivityForKey(randomKey);
         }
@@ -10432,67 +10800,98 @@ class MarketSimulation {
 
     static simulateActivityForKey(key) {
         const data = marketDatabase[key];
-        if(!data || !data.averagePrice) return; // Necesitamos el precio medio
+        if(!data || !data.averagePrice) return; 
 
         const [cardCode, isGoldenStr, variant] = key.split('_');
         const player = playersDB.find(p => p.cardCode === cardCode);
         if (!player) return;
 
-        // Precio de referencia (Media histórica o Floor actual, lo que sea más estable)
         const referencePrice = data.averagePrice; 
         const currentFloor = data.floorPrice > 0 ? data.floorPrice : referencePrice;
 
-        // --- CASO 1: VENTA REALIZADA (El mercado se mueve) ---
+        // --- CASO 1: ALGUIEN COMPRA UNA CARTA (Aquí es donde fallaba) ---
         const buyChance = 0.3; 
         if (Math.random() < buyChance && data.listings.length > 0) {
-            const soldItem = data.listings.shift();
             
-            // Registrar venta
+            // 1. Sacamos la carta de la lista (se vende)
+            const soldItem = data.listings.shift(); 
+
+            // 2. VERIFICAMOS SI EL VENDEDOR ERES TÚ (sellerId === 'PLAYER')
+            // <--- AQUÍ ESTÁ LA CLAVE QUE FALTABA O ESTABA MAL --->
+            if (soldItem.sellerId === 'PLAYER') {
+                console.log("¡Has vendido una carta! Procesando pago..."); // Debug en consola
+
+                // A. Pagar al jugador
+                playerCurrency += soldItem.price;
+                saveCurrency();
+                updateCurrencyDisplay(); // Actualiza el dinero arriba a la derecha
+                
+                // B. Registrar en el Historial (Transaction Log)
+                // Reconstruimos el objeto de datos para el log
+                const cardDataLog = {
+                    playerData: player,
+                    rarity: player.rarity,
+                    variant: variant,
+                    golden: isGoldenStr === 'true'
+                };
+                
+                // Llamamos a la función que crea la fila en la pestaña HISTORY
+                if (typeof logMarketTransaction === 'function') {
+                    logMarketTransaction('sell', cardDataLog, soldItem.price);
+                }
+
+                // C. Avisar visualmente
+                showToast(`💰 SOLD! ${player.name} sold for ${soldItem.price.toLocaleString()} 💎`, 'success');
+
+                // D. Si tienes abierto el panel de historial, recargarlo para ver el cambio
+                if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+                    renderHistoryView();
+                }
+            }
+            // <--- FIN DE LA CORRECCIÓN --->
+
+            // 3. Registrar venta en el historial GLOBAL del mercado (para gráficas)
             data.salesHistory.push({ price: soldItem.price, timestamp: Date.now() });
             data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
             
-            // Actualizar la media histórica (Weighted Moving Average para que varíe lento)
-            // La nueva media es 90% la anterior + 10% la nueva venta
+            // 4. Actualizar precio medio
             data.averagePrice = Math.floor((data.averagePrice * 0.9) + (soldItem.price * 0.1));
 
-            // CALCULAR VARIACIÓN
-            // ¿Se vendió más caro o más barato que la media?
+            // 5. Actualizar UI si el jugador está mirando esta carta
             const pctChange = ((soldItem.price - referencePrice) / referencePrice) * 100;
-
-            if (window.currentInspectKey === key) renderMarketUI(key);
-
-            // Solo mostramos si la variación es interesante (> 2%) o es una carta cara
+            if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
+                renderMarketUI(key); 
+            }
+            
+            // Ticker de noticias
             if (Math.abs(pctChange) > 2 || soldItem.price > 1000) {
                 updateTicker(player.name, soldItem.price, pctChange, variant);
             }
         }
 
-        // --- CASO 2: NUEVA OFERTA (Oportunidad de mercado) ---
+        // --- CASO 2: BOTS PONEN CARTAS A LA VENTA (Esto funcionaba bien) ---
         const sellChance = 0.35;
         if (Math.random() < sellChance) {
             const actionType = Math.random();
             let newPrice;
 
-            // Bots deciden precio...
             if (actionType < 0.7) {
                 newPrice = Math.max(10, Math.floor(currentFloor * (0.95 + Math.random() * 0.1))); 
             } else if (actionType < 0.9) {
-                newPrice = Math.floor(currentFloor * 1.2); // Overprice
+                newPrice = Math.floor(currentFloor * 1.2); 
             } else {
-                newPrice = Math.floor(currentFloor * 0.75); // ¡CHOLLO! Panic Sell
+                newPrice = Math.floor(currentFloor * 0.75); 
             }
 
-            MarketBackend.listItemForSale(`Bot_${Math.floor(Math.random()*900)}`, cardCode, isGoldenStr === 'true', variant, newPrice, cardData.gradeData);
+            // Importante: gradeData es null porque los bots no tienen cartas graduadas
+            MarketBackend.listItemForSale(`Bot_${Math.floor(Math.random()*900)}`, cardCode, isGoldenStr === 'true', variant, newPrice, null);
             
-            // CALCULAR VARIACIÓN DE LA OFERTA
-            // Comparamos esta NUEVA oferta con el precio medio del mercado.
-            // Si es -20%, es un chollo (Flecha verde para el comprador, o roja indicando caída de valor)
-            // En bolsa: Precio más bajo = Caída (Rojo)
             const pctChange = ((newPrice - referencePrice) / referencePrice) * 100;
 
-            if (window.currentInspectKey === key) renderMarketUI(key);
+            if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
+                renderMarketUI(key);
+            }
 
-            // Si el precio baja mucho (es un chollo) o sube mucho, lo mostramos
             if (Math.abs(pctChange) > 5) {
                  updateTicker(player.name, newPrice, pctChange, variant);
             }
@@ -10561,31 +10960,67 @@ async function renderMarketUI(marketKey, ownedCount, cardData) {
 // Funciones de Interacción del Jugador
 
 window.attemptBuyItem = async (listingId, marketKey, price) => {
+    // 1. Validación de dinero
     if(playerCurrency < price) {
         showToast("Not enough gems!", "error");
         return;
     }
 
+    // 2. Intento de compra en el "Backend"
     const result = await MarketBackend.buyItem('PLAYER', listingId, marketKey);
 
     if(result.success) {
-        // 1. Restamos el dinero
+        // --- ÉXITO ---
+
+        // A. Economía: Restar y guardar
         playerCurrency -= price;
         saveCurrency();
+        updateCurrencyDisplay(); // Actualiza contador principal y del mercado
         
-        // 2. ¡IMPORTANTE! Actualizamos la visualización (esto ahora actualizará ambos contadores)
-        updateCurrencyDisplay(); 
+        // B. Colección: Añadir carta
+        const [code, goldenStr, variant] = marketKey.split('_');
+        addCardToCollection(code, goldenStr, variant);
         
-        // ... resto de lógica de añadir carta, toast, etc ...
-        const [code, golden, variant] = marketKey.split('_');
-        addCardToCollection(code, golden, variant);
+        // C. HISTORIAL: Registrar la transacción (NUEVO)
+        const player = playersDB.find(p => p.cardCode === code);
+        if (player) {
+            const cardDataLog = {
+                playerData: player,
+                rarity: player.rarity,
+                variant: variant,
+                golden: goldenStr === 'true'
+            };
+            logMarketTransaction('buy', cardDataLog, price);
+        }
+
+        // D. Feedback Visual
+        showToast(`Bought for ${price.toLocaleString()} 💎`, "success");
         
-        showToast(`Bought for ${price} 💎`, "success");
-        
-        // ... resto del código ...
+        // E. Refrescar la UI para que desaparezca el listado comprado
+        // Si estamos en la vista de rejilla global:
+        if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
+            searchMarket(); 
+        }
+        // Si estamos en la vista de detalle (Inspect):
+        const panel = document.getElementById('market-panel');
+        if (panel) {
+            // Calculamos la nueva cantidad que tenemos para actualizar el botón "List for Sale"
+            const variantKey = `${goldenStr === 'true'}_${variant}`;
+            const count = collection[code]?.[variantKey]?.count || 0;
+            renderMarketUI(marketKey, count, null);
+        }
+
     } else {
+        // --- FALLO (Alguien la compró antes) ---
         showToast(result.message, "error");
-        renderMarketUI(marketKey, 0, null);
+        
+        // Refrescamos para que el usuario vea que ya no está
+        if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
+            searchMarket(); 
+        }
+        if (document.getElementById('market-panel')) {
+            renderMarketUI(marketKey, 0, null);
+        }
     }
 };
 
@@ -10787,7 +11222,7 @@ function openMarketBrowser() {
 }
 
 // 2. Función de Búsqueda
-async function searchMarket() {
+async function searchMarket(isAutoRefresh = false) { 
     // 1. Obtener valores de los inputs
     const rawInput = document.getElementById('market-search-input').value.toLowerCase();
     const searchTerms = rawInput.split(',').map(t => t.trim()).filter(t => t.length > 0);
@@ -10802,7 +11237,9 @@ async function searchMarket() {
     const marketGrid = document.getElementById('market-results-grid');
     
     // UI de carga
-    marketGrid.innerHTML = '<div style="color:white; width:100%; text-align:center; margin-top:50px;">Searching...</div>';
+    if (!isAutoRefresh) {
+        marketGrid.innerHTML = '<div style="color:white; width:100%; text-align:center; margin-top:50px;">Searching...</div>';
+    }
     
     // Pequeña pausa para que la UI respire
     if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
@@ -10942,85 +11379,112 @@ async function searchMarket() {
 // 3. Renderizar la Rejilla
 function renderMarketGrid(items) {
     const marketGrid = document.getElementById('market-results-grid');
-    marketGrid.innerHTML = '';
     
-    if(items.length === 0) {
-        marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found. Try adjusting filters.</div>';
-        return;
+    // Si el grid tiene el mensaje de "Searching..." o está vacío, lo limpiamos para empezar de cero
+    if (marketGrid.querySelector('div') && !marketGrid.querySelector('.market-listing-card')) {
+        marketGrid.innerHTML = '';
     }
 
+    // Creamos un Set con los IDs de las cartas que deberían estar en pantalla
+    const currentIds = new Set();
+
     items.forEach(item => {
-        const { player, stats, isGolden, variant } = item;
-        
-        const cardEl = document.createElement('div');
-        cardEl.className = 'market-listing-card';
-        cardEl.id = `market-card-${item.marketKey}`; 
-        
-        const supply = stats.listings.length;
+        const elementId = `market-card-${item.marketKey}`;
+        currentIds.add(elementId);
+
+        // Intentamos buscar si la carta YA existe en el DOM
+        let cardEl = document.getElementById(elementId);
+
+        // Datos a mostrar
+        const supply = item.stats.listings.length;
         let supplyClass = 'supply-high';
         if(supply < 10) supplyClass = 'supply-low';
         else if(supply < 50) supplyClass = 'supply-med';
-
-        // Usamos formato alemán para los puntos de los miles (ej: 10.500)
-        const priceDisplay = `${stats.floorPrice.toLocaleString('de-DE')} 💎`;
-
-        // --- LÓGICA VISUAL DE GRADO (NUEVO) ---
-        // Verificamos si el listado más barato tiene datos de grado
-        let gradeBadgeHTML = '';
         
-        // Accedemos al primer listado (el del precio suelo)
-        if (stats.listings.length > 0 && stats.listings[0].gradeData) {
-            const grade = stats.listings[0].gradeData;
-            const score = parseFloat(grade.score);
-            
-            // Colorines según la nota
-            let badgeColor = '#e74c3c'; // Rojo (malo)
-            if (score >= 10) badgeColor = '#2ecc71'; // Verde (Pristine/Gem)
-            else if (score >= 9) badgeColor = '#3498db'; // Azul (Mint)
-            else if (score >= 7) badgeColor = '#f1c40f'; // Amarillo (Decente)
+        const priceDisplay = `${item.stats.floorPrice.toLocaleString('de-DE')} 💎`;
 
-            gradeBadgeHTML = `
-                <div style="
-                    position: absolute; 
-                    top: 10px; 
-                    right: 10px; 
-                    background: ${badgeColor}; 
-                    color: #000; 
-                    font-weight: 900; 
-                    font-size: 12px; 
-                    padding: 2px 6px; 
-                    border-radius: 4px; 
-                    z-index: 10;
-                    box-shadow: 0 0 5px ${badgeColor};
-                    border: 1px solid rgba(0,0,0,0.3);
-                ">
-                    GR ${grade.score}
+        // --- CASO A: LA CARTA YA EXISTE -> ACTUALIZAMOS DATOS ---
+        if (cardEl) {
+            // 1. Actualizamos Precio
+            const priceEl = cardEl.querySelector('.market-floor-price');
+            if (priceEl.textContent !== priceDisplay) {
+                priceEl.textContent = priceDisplay;
+                // Efecto visual verde si cambia (opcional)
+                priceEl.style.color = '#fff';
+                setTimeout(() => priceEl.style.color = '#2ecc71', 200);
+            }
+
+            // 2. Actualizamos Stock
+            const stockEl = cardEl.querySelector('.market-supply-count');
+            // Solo tocamos el DOM si el texto es diferente
+            if (!stockEl.textContent.includes(supply)) {
+                stockEl.className = `market-supply-count ${supplyClass}`;
+                stockEl.textContent = `${supply} listed`;
+            }
+
+            // 3. Actualizamos Badge de Grado (si el listing más barato cambió)
+            // (Esto requiere regenerar el badge si cambia, pero para simplificar lo dejamos así
+            // o podrías actualizarlo también buscando el .grade-badge)
+
+        } 
+        // --- CASO B: LA CARTA NO EXISTE -> LA CREAMOS ---
+        else {
+            cardEl = document.createElement('div');
+            cardEl.className = 'market-listing-card';
+            cardEl.id = elementId; // ¡Importante poner el ID!
+            
+            // --- Lógica de Grado (Copiada de tu código anterior) ---
+            let gradeBadgeHTML = '';
+            if (item.stats.listings.length > 0 && item.stats.listings[0].gradeData) {
+                const grade = item.stats.listings[0].gradeData;
+                const score = parseFloat(grade.score);
+                let badgeColor = '#e74c3c';
+                if (score >= 10) badgeColor = '#2ecc71';
+                else if (score >= 9) badgeColor = '#3498db';
+                else if (score >= 7) badgeColor = '#f1c40f';
+
+                gradeBadgeHTML = `
+                    <div class="grade-badge" style="position: absolute; top: 10px; right: 10px; background: ${badgeColor}; color: #000; font-weight: 900; font-size: 12px; padding: 2px 6px; border-radius: 4px; z-index: 10; box-shadow: 0 0 5px ${badgeColor}; border: 1px solid rgba(0,0,0,0.3);">
+                        GR ${grade.score}
+                    </div>
+                `;
+            }
+
+            cardEl.innerHTML = `
+                <div class="market-card-preview">
+                    ${gradeBadgeHTML}
+                </div>
+                <div class="market-listing-info">
+                    <div style="color:#fff; font-weight:bold; font-size:14px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${item.player.name}
+                    </div>
+                    <div class="market-floor-price" style="color:#2ecc71; font-size:18px; font-weight:bold;">${priceDisplay}</div>
+                    <div class="market-supply-count ${supplyClass}" style="color:#888; font-size:12px;">${supply} listed</div>
                 </div>
             `;
+
+            const visualCard = createVisualCard(item.player, item.isGolden, item.variant);
+            cardEl.querySelector('.market-card-preview').appendChild(visualCard);
+            cardEl.onclick = () => openMarketDetails(item.player, item.isGolden, item.variant, supply);
+
+            // Añadimos al grid
+            marketGrid.appendChild(cardEl);
         }
-        // --------------------------------------
-
-        cardEl.innerHTML = `
-            <div class="market-card-preview">
-                ${gradeBadgeHTML} <!-- Inyectamos la etiqueta aquí -->
-                <!-- La carta se inyecta abajo -->
-            </div>
-            <div class="market-listing-info">
-                <div style="color:#fff; font-weight:bold; font-size:14px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    ${player.name}
-                </div>
-                <div class="market-floor-price">${priceDisplay}</div>
-                <div class="market-supply-count ${supplyClass}">${supply} listed</div>
-            </div>
-        `;
-
-        const visualCard = createVisualCard(player, isGolden, variant);
-        cardEl.querySelector('.market-card-preview').appendChild(visualCard);
-
-        cardEl.onclick = () => openMarketDetails(player, isGolden, variant, supply);
-
-        marketGrid.appendChild(cardEl);
     });
+
+    // --- CASO C: LIMPIEZA ---
+    // Borrar cartas que ya no están en los resultados (porque se vendieron todas o cambió el filtro)
+    const existingCards = marketGrid.querySelectorAll('.market-listing-card');
+    existingCards.forEach(card => {
+        if (!currentIds.has(card.id)) {
+            card.remove();
+        }
+    });
+    
+    // Mensaje si no hay nada
+    if (items.length === 0) {
+        marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found. Try adjusting filters.</div>';
+    }
 }
 
 // Función auxiliar para crear una carta visualmente sin necesidad de tenerla en la colección
@@ -11204,31 +11668,30 @@ let currentMarketTab = 'buy';
 function switchMarketTab(tab) {
     currentMarketTab = tab;
     
-    // Actualizar UI de las pestañas
+    // Botones
     document.getElementById('tab-market-buy').classList.toggle('active', tab === 'buy');
     document.getElementById('tab-market-sell').classList.toggle('active', tab === 'sell');
+    document.getElementById('tab-market-history').classList.toggle('active', tab === 'history');
     
-    // Cambiar el texto del selector de ordenación según el contexto
-    const sortSelect = document.getElementById('market-sort-select');
-    if (tab === 'sell') {
-        // En modo venta, ordenamos por OVR o cantidad
-        sortSelect.innerHTML = `
-            <option value="rating_desc">Rating: High to Low</option>
-            <option value="rating_asc">Rating: Low to High</option>
-            <option value="quantity_desc">Count: High to Low</option>
-        `;
-    } else {
-        // En modo compra (original)
-        sortSelect.innerHTML = `
-            <option value="price_desc">Price: High to Low</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="supply_asc">Stock: Low to High</option>
-            <option value="supply_desc">Stock: High to Low</option>
-        `;
-    }
+    // Contenedores
+    const grid = document.getElementById('market-results-grid');
+    const historyView = document.getElementById('market-history-view');
+    const filters = document.querySelector('.market-filters-bar'); // Ocultar filtros en historial para limpiar
 
-    // Ejecutar búsqueda inmediata
-    searchMarket();
+    if (tab === 'history') {
+        grid.style.display = 'none';
+        filters.style.display = 'none'; // Opcional: ocultar filtros
+        historyView.style.display = 'flex';
+        renderHistoryView(); // <--- Renderizar datos
+    } else {
+        grid.style.display = 'grid'; // O 'block' según tu CSS
+        filters.style.display = 'flex';
+        historyView.style.display = 'none';
+        
+        // Lógica existente de filtros...
+        // (Resto de tu función switchMarketTab...)
+        searchMarket(); // Ejecutar búsqueda para Buy/Sell
+    }
 }
 
 function renderSellGrid(items) {
@@ -11294,6 +11757,194 @@ window.quickSellFromMarket = (marketKey, floorPrice) => {
             searchMarket();
         }
     }, 500); // Pequeño delay para asegurar que la base de datos local se actualizó
+};
+
+// --- SISTEMA DE HISTORIAL DE MERCADO ---
+
+// Variable global
+let playerMarketHistory = [];
+
+// Cargar al inicio
+function loadPlayerMarketHistory() {
+    const saved = localStorage.getItem('myMarketHistory');
+    if (saved) {
+        playerMarketHistory = JSON.parse(saved);
+    }
+}
+// Llamamos a esto al iniciar la página (junto con loadNewCards, etc.)
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayerMarketHistory();
+});
+
+// Guardar
+function savePlayerMarketHistory() {
+    localStorage.setItem('myMarketHistory', JSON.stringify(playerMarketHistory));
+}
+
+/**
+ * Registra una transacción en el historial.
+ * @param {string} type - 'buy' o 'sell'
+ * @param {object} cardData - Datos de la carta {playerData, rarity, variant, golden}
+ * @param {number} price - Precio de la transacción
+ */
+function logMarketTransaction(type, cardData, price) {
+    const transaction = {
+        id: Date.now() + Math.random(), // ID único
+        type: type, // 'buy' | 'sell'
+        name: cardData.playerData.name,
+        rarity: cardData.rarity || cardData.playerData.rarity,
+        variant: cardData.variant,
+        isGolden: cardData.golden,
+        price: parseInt(price),
+        date: Date.now()
+    };
+
+    // Añadimos al principio del array (lo más nuevo primero)
+    playerMarketHistory.unshift(transaction);
+    
+    // Opcional: Limitar historial a las últimas 100 transacciones para ahorrar memoria
+    if(playerMarketHistory.length > 100) {
+        playerMarketHistory.pop();
+    }
+
+    savePlayerMarketHistory();
+}
+
+// Renderizar la vista (Se llama al pulsar la pestaña History)
+function renderHistoryView() {
+    const container = document.getElementById('history-list-content');
+    // Elementos del resumen financiero
+    const earnedEl = document.getElementById('hist-total-earned');
+    const spentEl = document.getElementById('hist-total-spent');
+    const profitEl = document.getElementById('hist-net-profit');
+
+    if (!container) return;
+    container.innerHTML = ''; // Limpiar
+
+    // --- 1. SECCIÓN VENTAS ACTIVAS (PENDING) ---
+    const activeListings = MarketBackend.getPlayerListings();
+
+    // Título Sección
+    const activeTitle = document.createElement('div');
+    activeTitle.className = 'history-section-title';
+    activeTitle.textContent = `Active Listings (${activeListings.length})`;
+    container.appendChild(activeTitle);
+
+    if (activeListings.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic;";
+        emptyMsg.textContent = "No cards currently for sale.";
+        container.appendChild(emptyMsg);
+    } else {
+        activeListings.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'history-row active-listing-row';
+
+            // Badges de la carta
+            let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${item.rarity})">${item.rarity}</span>`;
+            if (item.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+            if (item.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${item.variant}</span>`;
+
+            row.innerHTML = `
+                <div><div class="tx-badge tx-pending">PENDING</div></div>
+                <div class="history-card-details">
+                    <span class="history-card-name">${item.cardName}</span>
+                    <span class="history-card-meta">${metaHTML}</span>
+                </div>
+                <div class="history-price" style="color:#f1c40f">${item.price.toLocaleString()} 💎</div>
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="btn-cancel-listing" onclick="cancelMarketListing('${item.id}', '${item.marketKey}')" title="Cancel Listing">X</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    // --- 2. SECCIÓN HISTORIAL DE TRANSACCIONES ---
+    const historyTitle = document.createElement('div');
+    historyTitle.className = 'history-section-title';
+    historyTitle.style.marginTop = "30px";
+    historyTitle.textContent = "Transaction Log";
+    container.appendChild(historyTitle);
+
+    let totalEarned = 0;
+    let totalSpent = 0;
+
+    if (playerMarketHistory.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic;";
+        emptyMsg.textContent = "No transaction history yet.";
+        container.appendChild(emptyMsg);
+    } else {
+        playerMarketHistory.forEach(tx => {
+            if (tx.type === 'sell') totalEarned += tx.price;
+            else totalSpent += tx.price;
+
+            const dateObj = new Date(tx.date);
+            const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const row = document.createElement('div');
+            row.className = 'history-row';
+
+            const typeBadge = tx.type === 'buy' 
+                ? `<div class="tx-badge tx-buy">BOUGHT</div>` 
+                : `<div class="tx-badge tx-sell">SOLD</div>`;
+
+            const priceColor = tx.type === 'sell' ? '#2ecc71' : '#e74c3c';
+            const priceSign = tx.type === 'sell' ? '+' : '-';
+            
+            let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${tx.rarity})">${tx.rarity}</span>`;
+            if (tx.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+            if (tx.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${tx.variant}</span>`;
+
+            // Nota: Usamos una columna vacía al final para alinear con el botón X de arriba
+            row.innerHTML = `
+                <div>${typeBadge}</div>
+                <div class="history-card-details">
+                    <span class="history-card-name">${tx.name}</span>
+                    <span class="history-card-meta">${metaHTML}</span>
+                </div>
+                <div class="history-date">${dateStr}</div>
+                <div class="history-price" style="color:${priceColor}">${priceSign}${tx.price.toLocaleString()} 💎</div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    // Actualizar Resumen
+    const netProfit = totalEarned - totalSpent;
+    if(earnedEl) earnedEl.textContent = `+${totalEarned.toLocaleString()}`;
+    if(spentEl) spentEl.textContent = `-${totalSpent.toLocaleString()}`;
+    if(profitEl) {
+        profitEl.textContent = `${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()} 💎`;
+        profitEl.className = 'summary-value ' + (netProfit >= 0 ? 'net-positive' : 'net-negative');
+    }
+}
+
+window.cancelMarketListing = function(listingId, marketKey) {
+    // 1. Intentar cancelar en backend
+    const result = MarketBackend.cancelListing(listingId, marketKey);
+
+    if (result.success) {
+        // 2. Devolver carta a la colección
+        const [code, goldenStr, variant] = marketKey.split('_');
+        
+        // Usamos la función auxiliar que ya tienes o creamos la lógica aquí
+        addCardToCollection(code, goldenStr, variant);
+
+        // 3. Feedback
+        showToast("Listing cancelled. Card returned to collection.", "info");
+
+        // 4. Recargar la vista del historial
+        renderHistoryView();
+        
+        // 5. Actualizar UI de moneda (por si acaso)
+        updateCurrencyDisplay();
+    } else {
+        showToast("Error: " + result.message, "error");
+        // Si falló es porque probablemente se vendió justo ahora, recargamos
+        renderHistoryView();
+    }
 };
 
 </script>
