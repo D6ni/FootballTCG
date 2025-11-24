@@ -774,19 +774,36 @@ animation: spin-the-border 4s linear infinite;
 }
 
 /* LA MAGIA ANTI-PIXELACIÓN: */
-/* Redefinimos el tamaño de la carta SÓLO cuando está dentro del overlay */
 #inspect-overlay .card {
-/* Usamos un tamaño 3 veces mayor que el original */
---card-w: 390px;  /* 130px * 3 */
---card-h: 555px;  /* 185px * 3 */
+  /* 1. Definimos las variables de tamaño grande */
+  --card-w: 390px;
+  --card-h: 555px;
 
-/* La hacemos estática, sin posición absoluta, para que el grid la centre */
-position: relative; 
-top: auto;
-left: auto;
+  /* 2. ¡IMPORTANTE! Forzamos a que use esas variables como LÍMITE */
+  width: var(--card-w) !important;
+  height: var(--card-h) !important;
+  min-width: var(--card-w) !important; /* Evita que se encoja */
+  max-width: var(--card-w) !important; /* Evita que se ensanche (Tu problema) */
+  
+  /* 3. Evitamos que el Flexbox del padre la deforme */
+  flex-shrink: 0;
+  flex-grow: 0;
 
-/* Le damos un cursor para indicar que se puede cerrar */
-cursor: zoom-out;
+  position: relative;
+  top: auto;
+  left: auto;
+  margin: 0 auto 20px auto; /* Centrado y margen abajo para separarla del mercado */
+  cursor: zoom-out;
+  
+  /* Aseguramos que se vea bien en 3D */
+  transform-style: preserve-3d;
+}
+
+@media (max-width: 768px) {
+  #inspect-overlay .card {
+    --card-w: 260px;
+    --card-h: 370px;
+  }
 }
 
 /* --- ESTILOS PARA EL NUEVO SISTEMA DE FILTROS (CORREGIDO) --- */
@@ -4721,8 +4738,19 @@ button,
 
 .market-filters-bar {
     display: flex; gap: 15px; background: rgba(255,255,255,0.05);
+    align-items: center;
     padding: 15px; border-radius: 8px; align-items: center; flex-wrap: wrap;
 }
+
+.market-filters-bar input,
+.market-filters-bar select,
+#market-clear-filters-btn {
+    height: 42px;           /* Altura fija igual para todos */
+    box-sizing: border-box; /* Asegura que el padding no aumente el tamaño total */
+    margin: 0;              /* Elimina márgenes por defecto del navegador */
+    vertical-align: middle;
+}
+
 .market-filters-bar input[type="text"], .market-filters-bar select {
     padding: 10px; border-radius: 6px; border: 1px solid #555;
     background: #222; color: white;
@@ -5398,6 +5426,24 @@ button,
     --rarity-color: #AD0000 !important;
 }
 
+#market-clear-filters-btn {
+    background-color: #c0392b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    /* Para que no se encoja si hay poco espacio */
+    flex-shrink: 0; 
+}
+
+#market-clear-filters-btn:hover {
+    background-color: #e74c3c;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
 </style>
 </head>
 <body>
@@ -5486,11 +5532,20 @@ button,
     </div>
 
     <!-- Barra de Filtros Actualizada -->
+    <!-- Barra de Filtros Actualizada -->
     <div class="market-filters-bar">
-      <!-- El evento 'input' se encargará de buscar mientras escribes -->
+      <!-- Buscador de Texto -->
       <input type="text" id="market-search-input" placeholder="Search player, team or country...">
       
-      <!-- Los eventos 'change' de estos selects dispararán la búsqueda -->
+      <!-- NUEVO: Filtro de SET -->
+      <select id="market-set-filter">
+        <option value="all">Set: All</option>
+        <option value="S00">S00 - Base</option>
+        <option value="SR1">SR1 - Roulette</option>
+        <!-- Añade futuros sets aquí -->
+      </select>
+
+      <!-- Filtros Existentes -->
       <select id="market-rarity-filter">
         <option value="all">Rarity: All</option>
         <option value="common">Common</option>
@@ -5499,6 +5554,7 @@ button,
         <option value="legendary">Legendary</option>
         <option value="relic">Relic</option>
         <option value="crest">Crest</option>
+        <option value="roulette">Roulette</option> <!-- Añadí esto por si acaso usas la rareza -->
       </select>
 
       <select id="market-variant-filter">
@@ -5522,6 +5578,9 @@ button,
         <option value="false">Standard Only</option>
         <option value="true">Golden Only</option>
       </select>
+
+      <!-- NUEVO: Botón de Limpiar -->
+      <button id="market-clear-filters-btn">CLEAR</button>
     </div>
 
     <!-- Rejilla de Resultados -->
@@ -7115,7 +7174,8 @@ if (debugBtn) {
       document.getElementById('market-rarity-filter'),
       document.getElementById('market-variant-filter'),
       document.getElementById('market-sort-select'),
-      document.getElementById('market-golden-filter')
+      document.getElementById('market-golden-filter'),
+      document.getElementById('market-set-filter')
   ];
 
   // A) Búsqueda por texto con retraso (Debounce)
@@ -7156,6 +7216,43 @@ setInterval(() => {
         }
     }
 }, 2000); // 2 segundos
+
+// --- LÓGICA DEL BOTÓN CLEAR (MERCADO) ---
+  const clearMarketBtn = document.getElementById('market-clear-filters-btn');
+  
+  if (clearMarketBtn) {
+      clearMarketBtn.addEventListener('click', () => {
+          // 1. Resetear el buscador de texto
+          const searchInput = document.getElementById('market-search-input');
+          if (searchInput) searchInput.value = '';
+
+          // 2. Resetear todos los selectores a 'all'
+          const filters = [
+              'market-set-filter',
+              'market-rarity-filter',
+              'market-variant-filter',
+              'market-golden-filter'
+          ];
+
+          filters.forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = 'all';
+          });
+
+          // 3. Resetear ordenación (Opcional, a 'price_asc' o lo que prefieras por defecto)
+          const sortSelect = document.getElementById('market-sort-select');
+          if (sortSelect) sortSelect.value = 'price_asc'; // O 'price_desc', etc.
+
+          // 4. Forzar la búsqueda para actualizar la rejilla
+          searchMarket();
+
+          // 5. Sonido (Opcional)
+          const btnSound = document.getElementById('buttonClickSound');
+          if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+      });
+  } else {
+      console.error("Error: No se encontró el botón 'market-clear-filters-btn' en el HTML.");
+  }
 
 }); //FIN DEL DOM
 
@@ -11304,6 +11401,7 @@ async function searchMarket(isAutoRefresh = false) {
     const searchTerms = rawInput.split(',').map(t => t.trim()).filter(t => t.length > 0);
     
     const rarityFilter = document.getElementById('market-rarity-filter').value;
+    const setFilter = document.getElementById('market-set-filter').value; 
     const variantFilter = document.getElementById('market-variant-filter').value;
     const sortOption = document.getElementById('market-sort-select').value;
 
@@ -11355,6 +11453,7 @@ async function searchMarket(isAutoRefresh = false) {
                 // Filtros de Selectores
                 if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
                 if (variantFilter !== 'all' && cardData.variant !== variantFilter) return;
+                if (setFilter !== 'all' && player.set !== setFilter) return;
 
                 // --- CAMBIO AQUÍ: FILTRO GOLDEN PARA VENTA ---
                 // Si elige "Solo Normales" (false) y la carta es Golden -> Saltar
@@ -11404,6 +11503,10 @@ async function searchMarket(isAutoRefresh = false) {
 
         // Filtro Rareza
         if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
+
+
+        // Filtro Set
+        if (setFilter !== 'all' && player.set !== setFilter) return;
 
         // Filtro Variante
         let variantsToCheck = ['none', 'foil', 'holo', 'poli', 'negative'];
@@ -11567,11 +11670,16 @@ function renderMarketGrid(items) {
 function createVisualCard(playerData, isGolden, variant) {
     const div = document.createElement("div");
     const variantClass = variant !== 'none' ? `variant-${variant}` : '';
-    div.className = `card ${playerData.rarity} ${isGolden ? 'golden' : ''} ${variantClass}`;
+    
+    // --- CORRECCIÓN: Añadimos la clase del Set ---
+    const setClass = `set-${playerData.set}`; 
+
+    // Añadimos setClass a la lista de clases
+    div.className = `card ${playerData.rarity} ${isGolden ? 'golden' : ''} ${variantClass} ${setClass}`;
     
     // Estilo estático para la preview
     div.style.position = 'relative';
-    div.style.transform = 'rotateY(0deg)'; // Mostrar de frente directamente si queremos, o flipped
+    div.style.transform = 'rotateY(0deg)'; 
 
     const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
