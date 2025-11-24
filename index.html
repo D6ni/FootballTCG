@@ -124,6 +124,7 @@ user-select: none;
 .card.epic { --rarity-color: #a053de; }
 .card.legendary { --rarity-color: #ffc84a; }
 .card.relic { --rarity-color: #4af0e0; }
+.card.roulette { --rarity-color: #AD0000; }
 
 /* 1. Sombra para la carta VOLTEADA (en la cara frontal) */
 .card.flipped .front {
@@ -140,6 +141,7 @@ user-select: none;
 .epic .front { background: linear-gradient(170deg, #a053de, #6a2b9e); }
 .legendary .front { background: linear-gradient(170deg, #ffc84a, #d1921a); }
 .relic .front { background: linear-gradient(170deg, #4af0e0, #1e9e8f); }
+.roulette .front { background: linear-gradient(170deg, #AD0000, #5a0000); }
 
 
 /* --- EFECTO DORADO REFINADO (BASE PRESENTE + BRILLO SUTIL) --- */
@@ -4430,7 +4432,6 @@ img {
 #packs-overlay,
 #lineup-overlay,
 #grading-overlay,
-#roulette-overlay,
 #player-detail-overlay,
 #choice-overlay {
   overflow-y: auto;
@@ -5369,6 +5370,34 @@ button,
     box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
 }
 
+/* --- ESTILOS ESPECÍFICOS PARA EL SET DE RULETA (SR1) --- */
+
+/* 1. Forzamos el color de la variable a ROJO */
+/* Usamos !important para asegurar que sobrescriba a .relic */
+.card.set-SR1 {
+  --rarity-color: #AD0000 !important;
+}
+
+/* 2. Forzamos el fondo rojizo */
+.card.set-SR1 .front {
+  background: linear-gradient(170deg, #AD0000, #4a0000) !important;
+}
+
+/* 3. Ajuste para la sombra si la carta está volteada */
+.card.set-SR1.flipped .front {
+  box-shadow: 0 0 7px 3px #AD0000 !important;
+}
+
+/* 4. Ajuste para el brillo exterior (glow) si no está volteada */
+.card.set-SR1:not(.flipped) {
+  box-shadow: 0 0 20px 5px #AD0000 !important;
+}
+
+/* 5. (Opcional) Si quieres que también se vean rojas en el Slab de Grading */
+.slab-container:has(.set-SR1) {
+    --rarity-color: #AD0000 !important;
+}
+
 </style>
 </head>
 <body>
@@ -5892,7 +5921,9 @@ const ENABLE_DEBUG_GRADING_TOOLS = false; // quitar generador floats
       rare: { p: 21.2, p_golden: 1.1, order: 2 }, 
       epic: { p: 4.2,  p_golden: 0.6, order: 3 }, 
       legendary: { p: 0.8,  p_golden: 0.3, order: 4 }, 
-      relic: { p: 0.5,  p_golden: 0.1, order: 5 },},
+      relic: { p: 0.5,  p_golden: 0.1, order: 5 },
+      roulette: { p: 0, p_golden: 0, order: 6 },
+    },
       variants: { none: {p:0}, foil: { p: 1.1 }, holo: { p: 0.6 }, poli: { p: 0.3 }, negative: { p: 0.1 }, },
       goldenChance: 3.8,
     };
@@ -5925,28 +5956,32 @@ variantSellMultipliers: {
 
 const packTypes = {
   'common-pack': {
-    name: 'Common Pack',
+    name: 'S00 Common Pack',
 cost: 150, // PRECIO
 description: 'A basic pack, 11 cards and at least 1 Rare.',
-size: 11
+size: 11,
+setId: 'S00'
 },
 'rare-pack': {
-  name: 'Common Pack',
+  name: 'S00 Rare Pack',
 cost: 400, // PRECIO
 description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
-size: 5
+size: 5,
+setId: 'S00'
 },
 'collectors-pack': {
-  name: 'Collectors Pack',
+  name: 'S00 Collectors Pack',
 cost: 1200, // PRECIO
 description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
-size: 3
+size: 3,
+setId: 'S00'
 },
 'roulette-pack': {
-  name: 'Roulette Pack',
+  name: 'SR1 Roulette Pack',
 cost: 0, // No se puede comprar
 description: 'A special pack won only from the roulette jackpot!',
-size: 3 // O el tamaño que prefieras
+size: 3,
+setId: 'SR1' // O el tamaño que prefieras
 }
 };
 
@@ -6141,13 +6176,46 @@ function pickByProb(list) {
     return list[list.length - 1];
 }
 
-function generateCard() {
+function generateCard(targetSet = 'S00') {
+  // 1. Calcular si es Golden
   const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
-  const rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+  
+  // 2. Determinar Rareza (usando las probabilidades globales)
+  // NOTA: Si un set pequeño (como SR1) no tiene cartas 'common', esto podría fallar.
+  // Ver punto 3 para la solución de seguridad.
+  let rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+  
+  // 3. Filtrar jugadores por SET y RAREZA
+  let playersOfSet = playersDB.filter(p => p.set === targetSet);
+  
+  // Seguridad: Si el set no existe o está vacío en la DB, volvemos a S00 para no romper el juego
+  if (playersOfSet.length === 0) {
+      console.warn(`Set ${targetSet} is empty via generateCard. Fallback to S00.`);
+      playersOfSet = playersDB.filter(p => p.set === 'S00');
+  }
+
+  // Buscamos jugadores de la rareza elegida DENTRO del set
+  let playersOfRarity = playersOfSet.filter(p => p.rarity === rarity);
+
+  // 4. Lógica de Fallback (Importante para Sets pequeños como SR1)
+  // Si el dado dice "Common" pero el set SR1 solo tiene "Relics", no encontraría nada.
+  // Si no encuentra cartas de esa rareza, elige CUALQUIER carta de ese set aleatoriamente.
+  if (playersOfRarity.length === 0) {
+      playersOfRarity = playersOfSet;
+      // Actualizamos la rareza a la de la carta que vamos a coger a la fuerza
+      // (Se actualizará correctamente al leer el objeto player)
+  }
+
+  // 5. Elegir Jugador
+  const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+  
+  // Corregir la rareza si usamos el fallback (por si salió Common pero el jugador es Relic)
+  rarity = player.rarity;
+
+  // 6. Variante
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
-  const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
-  const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
+
   return { playerData: player, rarity, golden: isGolden, variant };
 }
 
@@ -6238,7 +6306,8 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
 
   let pack = [];
 
-  const packInfo = packTypes[packId] || { size: 11 };
+  const packInfo = packTypes[packId] || { size: 11, setId: 'S00' }; // Default a S00
+  const currentSetId = packInfo.setId || 'S00'; // Obtenemos el ID del set
   currentPackContentSize = packInfo.size;
 
   switch (packId) {
@@ -6295,7 +6364,7 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
   default:
     console.log("Opening a standard pack.");
     for (let i = 0; i < currentPackContentSize; i++) {
-      pack.push(generateCard());
+      pack.push(generateCard(currentSetId));
     }
 
     if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
@@ -6313,7 +6382,8 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
   pack.forEach((cardObj, i) => {
     const div = document.createElement("div");
     const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+    const setClass = `set-${cardObj.playerData.set}`; // Ej: "set-SR1" o "set-S00"
+    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
     div.style.zIndex = pack.length - i;
     div.dataset.rarity = cardObj.rarity;
     div.dataset.golden = cardObj.golden;
@@ -7408,7 +7478,10 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
   
   // Configuramos clases para estilos (Golden, Variantes, Rareza)
   const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
-  newCardElement.className = `card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
+  const setClass = `set-${cardData.playerData.set}`; 
+
+  // Añadimos setClass a la lista de clases
+  newCardElement.className = `card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
 
   // Renderizamos el HTML interno de la carta
   newCardElement.innerHTML = `
@@ -8512,8 +8585,6 @@ alert("Error: No se pudo generar un equipo aleatorio. Refresca la página.");
 return null;
 }
 
-// Pega esta función completa en lugar de la que tienes
-// Pega esta función completa en lugar de la que tienes
 function createMatchCardElement(uniqueCardId, position) {
   const [cardCode, isGoldenStr, variant] = uniqueCardId.split('_');
   const isGolden = isGoldenStr === 'true';
@@ -8523,9 +8594,11 @@ function createMatchCardElement(uniqueCardId, position) {
   const variantClass = variant !== 'none' ? `variant-${variant}` : '';
   const goldenClass = isGolden ? 'golden' : '';
 
+  const setClass = `set-${playerData.set}`;
+
   const div = document.createElement("div");
 
-  div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass}`;
+  div.className = `card flipped ${playerData.rarity} ${goldenClass} ${variantClass} ${setClass}`;
   div.dataset.position = position;
   const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
@@ -9223,40 +9296,35 @@ document.addEventListener('keydown', (event) => {
 * probabilidades base definidas en CONFIG, aplicadas solo al pool de Relics.
 * @returns {object} Un objeto de carta completo con rareza 'relic'.
 */
-function generateRelicChoice() {
-  const rarity = 'relic';
+function generateRelicChoice(targetSet = 'SR1') {
+  // 1. Obtener todos los jugadores de ese Set (ej: SR1)
+  const setPlayers = playersDB.filter(p => p.set === targetSet);
 
-// 1. Elegir un jugador Relic al azar
-  const relicPlayers = playersDB.filter(p => p.rarity === rarity);
-  if (relicPlayers.length === 0) {
-    console.error("No se encontraron jugadores 'Relic' en la base de datos.");
-// Como fallback, generamos una carta legendaria para no romper el juego.
-    const legendaryPlayers = playersDB.filter(p => p.rarity === 'legendary');
-    return { playerData: legendaryPlayers[0], rarity: 'legendary', golden: false, variant: 'none' };
+  if (setPlayers.length === 0) {
+      console.error(`No players found for set ${targetSet} in Roulette choice.`);
+      // Fallback a S00 Legendary para no romper
+      const fallback = playersDB.find(p => p.rarity === 'legendary');
+      return { playerData: fallback, rarity: 'legendary', golden: false, variant: 'none' };
   }
-  const chosenPlayer = relicPlayers[Math.floor(Math.random() * relicPlayers.length)];
 
-// 2. Calcular probabilidad de ser Golden (Ponderada)
-// Probabilidad de ser Golden DADO QUE ya es una Relic.
-  const pGoldenRelic = CONFIG.rarities.relic.p_golden || 0;
-  const pNormalRelic = CONFIG.rarities.relic.p || 0;
-  const totalRelicProb = pGoldenRelic + pNormalRelic;
+  // 2. Elegir uno al azar
+  const chosenPlayer = setPlayers[Math.floor(Math.random() * setPlayers.length)];
 
-// Si no hay probabilidades definidas, no puede ser dorada.
-  const isGolden = totalRelicProb > 0 ? (Math.random() < (pGoldenRelic / totalRelicProb)) : false;
+  // 3. Calcular variantes (Probabilidad aumentada para premios especiales)
+  // Asumimos que las cartas de ruleta son especiales, así que damos más chance de Golden/Variante
+  const isGolden = Math.random() < 0.1; // 10% Golden
+  
+  let variant = 'none';
+  if (Math.random() < 0.4) { // 40% Variante
+      variant = pickByProb(variantProbs).v;
+  }
 
-// 3. Calcular probabilidad de tener una Variante (Ponderada)
-// Decidimos una probabilidad base aumentada para que las Relics tengan variantes más a menudo.
-const RELIC_BASE_VARIANT_CHANCE = 0.40; // 40% de probabilidad de que una Relic tenga variante.
-let variant = 'none';
-
-if (Math.random() < RELIC_BASE_VARIANT_CHANCE) {
-// Si tiene variante, usamos la función pickByProb para decidir CUÁL,
-// respetando las proporciones originales.
-  variant = pickByProb(variantProbs).v;
-}
-
-return { playerData: chosenPlayer, rarity, golden: isGolden, variant };
+  return { 
+      playerData: chosenPlayer, 
+      rarity: chosenPlayer.rarity, // Usa la rareza que tenga definida en DB (puede ser 'roulette') 
+      golden: isGolden, 
+      variant: variant 
+  };
 }
 
 
@@ -9272,7 +9340,9 @@ function showChoiceView(cardOptions) {
   cardOptions.forEach(cardObj => {
     const div = document.createElement("div");
     const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass}`;
+    const setClass = `set-${cardObj.playerData.set}`;
+
+    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
 
     div.cardData = cardObj; 
 
@@ -9688,7 +9758,10 @@ function createCardElementForSlab(fullCardData) {
   const { playerData, variantKey, gradeData, visuals } = fullCardData;
   const [isGoldenStr, variant] = variantKey.split('_');
 
-  let cardClasses = `card graded-card flipped ${playerData.rarity}`; 
+  const setClass = `set-${playerData.set}`;
+
+  // Añadimos setClass aquí
+  let cardClasses = `card graded-card flipped ${playerData.rarity} ${setClass}`;  
   if (isGoldenStr === 'true') cardClasses += ' golden';
   if (variant !== 'none') cardClasses += ` variant-${variant}`;
 
@@ -10011,7 +10084,9 @@ function createCardElement(playerId, variantKey) {
   const { cardData } = cardStackData;
   const div = document.createElement("div");
   const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
-  div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass}`;
+  const setClass = `set-${cardData.playerData.set}`; 
+
+  div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
 
   div.innerHTML = `
 <div class="side front">
@@ -10748,8 +10823,9 @@ class MarketBackend {
             case 'rare':   price = 250; break;
             case 'epic':   price = 1500; break;
             case 'legendary': price = 10000; break;
-            case 'relic':  price = 75000; break; // Reliquias MUCHO más caras
+            case 'relic':  price = 75000; break;
             case 'crest':  price = 75000; break;
+            case 'roulette': price = 200000; break;
         }
 
         // 2. Multiplicador por Media (OVR)
