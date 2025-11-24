@@ -9387,38 +9387,46 @@ document.addEventListener('keydown', (event) => {
 });
 
 
-/**
-* Genera una única carta Relic para la vista de elección del Roulette Pack.
-* Las probabilidades de Golden y Variante se ponderan basándose en las
-* probabilidades base definidas en CONFIG, aplicadas solo al pool de Relics.
-* @returns {object} Un objeto de carta completo con rareza 'relic'.
-*/
-function generateRelicChoice(targetSet = 'SR1') {
-  // 1. Obtener todos los jugadores de ese Set (ej: SR1)
-  const setPlayers = playersDB.filter(p => p.set === targetSet);
+function generateRelicChoice() {
+  // 1. Tirada de probabilidad (33% vs 67%)
+  const isRouletteSet = Math.random() < 0.33; 
+  
+  let potentialPlayers = [];
 
-  if (setPlayers.length === 0) {
-      console.error(`No players found for set ${targetSet} in Roulette choice.`);
-      // Fallback a S00 Legendary para no romper
-      const fallback = playersDB.find(p => p.rarity === 'legendary');
-      return { playerData: fallback, rarity: 'legendary', golden: false, variant: 'none' };
+  if (isRouletteSet) {
+    // --- CAMINO ROJO: Buscar cartas del Set SR1 ---
+    potentialPlayers = playersDB.filter(p => p.set === 'SR1');
+    
+    // Seguridad: Si no has metido cartas SR1 aun, usa Relics para no romper el juego
+    if (potentialPlayers.length === 0) {
+        console.warn("Set SR1 vacío, usando Relics como fallback.");
+        potentialPlayers = playersDB.filter(p => p.rarity === 'relic');
+    }
+  } else {
+    // --- CAMINO AZUL: Buscar cualquier Reliquia (que NO sea SR1) ---
+    potentialPlayers = playersDB.filter(p => p.rarity === 'relic' && p.set !== 'SR1');
+    
+    // Seguridad
+    if (potentialPlayers.length === 0) {
+        potentialPlayers = playersDB.filter(p => p.rarity === 'legendary');
+    }
   }
 
-  // 2. Elegir uno al azar
-  const chosenPlayer = setPlayers[Math.floor(Math.random() * setPlayers.length)];
+  // 2. Elegir jugador al azar del grupo seleccionado
+  const chosenPlayer = potentialPlayers[Math.floor(Math.random() * potentialPlayers.length)];
 
-  // 3. Calcular variantes (Probabilidad aumentada para premios especiales)
-  // Asumimos que las cartas de ruleta son especiales, así que damos más chance de Golden/Variante
+  // 3. Calcular variantes (Probabilidad especial para este sobre premio)
   const isGolden = Math.random() < 0.1; // 10% Golden
   
   let variant = 'none';
-  if (Math.random() < 0.4) { // 40% Variante
+  // Probabilidad de variante (40%)
+  if (Math.random() < 0.4) { 
       variant = pickByProb(variantProbs).v;
   }
 
   return { 
       playerData: chosenPlayer, 
-      rarity: chosenPlayer.rarity, // Usa la rareza que tenga definida en DB (puede ser 'roulette') 
+      rarity: chosenPlayer.rarity, 
       golden: isGolden, 
       variant: variant 
   };
