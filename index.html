@@ -5959,7 +5959,7 @@ button,
 
 <script>
 //variables globales
-const TEST_MODE_FILL_ALBUM = false; /*MODO TEST*/
+const TEST_MODE_FILL_ALBUM = true; /*MODO TEST*/
 const ENABLE_DEBUG_GRADING_TOOLS = false; // quitar generador floats
 
 
@@ -6015,32 +6015,32 @@ variantSellMultipliers: {
 
 const packTypes = {
   'common-pack': {
-    name: 'S00 Common Pack',
+    name: 'Common Pack - [Set 00]',
 cost: 150, // PRECIO
 description: 'A basic pack, 11 cards and at least 1 Rare.',
 size: 11,
 setId: 'S00'
 },
 'rare-pack': {
-  name: 'S00 Rare Pack',
+  name: 'Rare Pack - [Set 00]',
 cost: 400, // PRECIO
 description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
 size: 5,
 setId: 'S00'
 },
 'collectors-pack': {
-  name: 'S00 Collectors Pack',
+  name: 'Collectors Pack - [Set 00]',
 cost: 1200, // PRECIO
 description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
 size: 3,
 setId: 'S00'
 },
 'roulette-pack': {
-  name: 'SR1 Roulette Pack',
+  name: 'Roulette Pack - [Set R1]',
 cost: 0, // No se puede comprar
 description: 'A special pack won only from the roulette jackpot!',
 size: 3,
-setId: 'SR1' // O el tamaño que prefieras
+setId: 'SR1'
 }
 };
 
@@ -6337,18 +6337,14 @@ function generateTransferredProbCard() {
 }
 
 //para el collectors pack
-/**
-* Comprueba si una variante de carta específica ya está en la colección del jugador.
-* @param {object} cardData El objeto de la carta generada (ej: { playerData, golden, variant }).
-* @returns {boolean} True si la carta ya se posee, false si es nueva.
-*/
 function isCardOwned(cardData) {
-  const playerId = cardData.playerData.id;
+  // --- CORRECCIÓN: Usamos cardCode en lugar de id ---
+  const cardCode = cardData.playerData.cardCode; 
+  
   const variantKey = `${cardData.golden}_${cardData.variant}`;
 
-// Usamos el encadenamiento opcional (?.) por seguridad.
-// Si collection[playerId] no existe, devolverá undefined (falso), lo cual es correcto.
-  return !!collection[playerId]?.[variantKey];
+  // Comprobamos si existe en la colección
+  return !!collection[cardCode]?.[variantKey];
 }
 
 function openPack(containerId = 'cards', packId = 'common-pack') {
@@ -12143,3 +12139,4 @@ window.cancelMarketListing = function(listingId, marketKey) {
 <div id="toast-notification"></div>
 </body>
 </html>
+
