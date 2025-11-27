@@ -11895,25 +11895,23 @@ async function searchMarket(isAutoRefresh = false) {
 }
 
 // 3. Renderizar la Rejilla
-    function renderMarketGrid(items) {
-      const marketGrid = document.getElementById('market-results-grid');
-
-    // Si el grid tiene el mensaje de "Searching..." o está vacío, lo limpiamos para empezar de cero
-      if (marketGrid.querySelector('div') && !marketGrid.querySelector('.market-listing-card')) {
+function renderMarketGrid(items) {
+    const marketGrid = document.getElementById('market-results-grid');
+    
+    // Limpieza inicial si es necesario
+    if (marketGrid.querySelector('div') && !marketGrid.querySelector('.market-listing-card')) {
         marketGrid.innerHTML = '';
-      }
+    }
 
-    // Creamos un Set con los IDs de las cartas que deberían estar en pantalla
-      const currentIds = new Set();
+    const currentIds = new Set();
 
-      items.forEach(item => {
+    items.forEach(item => {
         const elementId = `market-card-${item.marketKey}`;
         currentIds.add(elementId);
 
-        // Intentamos buscar si la carta YA existe en el DOM
         let cardEl = document.getElementById(elementId);
 
-        // Datos a mostrar
+        // Datos básicos
         const supply = item.stats.listings.length;
         let supplyClass = 'supply-high';
         if(supply < 10) supplyClass = 'supply-low';
@@ -11921,61 +11919,72 @@ async function searchMarket(isAutoRefresh = false) {
         
         const priceDisplay = `${item.stats.floorPrice.toLocaleString('de-DE')} 💎`;
 
-        // --- CASO A: LA CARTA YA EXISTE -> ACTUALIZAMOS DATOS ---
+        // --- CASO A: ACTUALIZAR EXISTENTE ---
         if (cardEl) {
-            // 1. Actualizamos Precio
-          const priceEl = cardEl.querySelector('.market-floor-price');
-          if (priceEl.textContent !== priceDisplay) {
-            priceEl.textContent = priceDisplay;
-                // Efecto visual verde si cambia (opcional)
-            priceEl.style.color = '#fff';
-            setTimeout(() => priceEl.style.color = '#2ecc71', 200);
-          }
-
-            // 2. Actualizamos Stock
-          const stockEl = cardEl.querySelector('.market-supply-count');
-            // Solo tocamos el DOM si el texto es diferente
-          if (!stockEl.textContent.includes(supply)) {
-            stockEl.className = `market-supply-count ${supplyClass}`;
-            stockEl.textContent = `${supply} listed`;
-          }
-
-            // 3. Actualizamos Badge de Grado (si el listing más barato cambió)
-            // (Esto requiere regenerar el badge si cambia, pero para simplificar lo dejamos así
-            // o podrías actualizarlo también buscando el .grade-badge)
-
+            const priceEl = cardEl.querySelector('.market-floor-price');
+            if (priceEl.textContent !== priceDisplay) {
+                priceEl.textContent = priceDisplay;
+                priceEl.style.color = '#fff';
+                setTimeout(() => priceEl.style.color = '#2ecc71', 200);
+            }
+            const stockEl = cardEl.querySelector('.market-supply-count');
+            if (!stockEl.textContent.includes(supply)) {
+                stockEl.className = `market-supply-count ${supplyClass}`;
+                stockEl.textContent = `${supply} listed`;
+            }
         } 
-        // --- CASO B: LA CARTA NO EXISTE -> LA CREAMOS ---
+        // --- CASO B: CREAR NUEVA TARJETA ---
         else {
-          cardEl = document.createElement('div');
-          cardEl.className = 'market-listing-card';
-            cardEl.id = elementId; // ¡Importante poner el ID!
+            cardEl = document.createElement('div');
+            cardEl.className = 'market-listing-card';
+            cardEl.id = elementId;
             
-            // --- Lógica de Grado (Copiada de tu código anterior) ---
+            // Badge de Grado (si existe)
             let gradeBadgeHTML = '';
             if (item.stats.listings.length > 0 && item.stats.listings[0].gradeData) {
-              const grade = item.stats.listings[0].gradeData;
-              const score = parseFloat(grade.score);
-              let badgeColor = '#e74c3c';
-              if (score >= 10) badgeColor = '#2ecc71';
-              else if (score >= 9) badgeColor = '#3498db';
-              else if (score >= 7) badgeColor = '#f1c40f';
+                const grade = item.stats.listings[0].gradeData;
+                const score = parseFloat(grade.score);
+                let badgeColor = '#e74c3c';
+                if (score >= 10) badgeColor = '#2ecc71';
+                else if (score >= 9) badgeColor = '#3498db';
+                else if (score >= 7) badgeColor = '#f1c40f';
 
-              gradeBadgeHTML = `
+                gradeBadgeHTML = `
                     <div class="grade-badge" style="position: absolute; top: 10px; right: 10px; background: ${badgeColor}; color: #000; font-weight: 900; font-size: 12px; padding: 2px 6px; border-radius: 4px; z-index: 10; box-shadow: 0 0 5px ${badgeColor}; border: 1px solid rgba(0,0,0,0.3);">
                         GR ${grade.score}
                     </div>
-              `;
+                `;
             }
+
+            // --- AQUÍ ESTÁ LA NUEVA LÓGICA DE METADATOS ---
+            // Construimos el HTML de la línea de información
+            let metaHTML = `<span style="color: #bbb;">${item.player.rarity.toUpperCase()}</span>`;
+            
+            if (item.variant !== 'none') {
+                metaHTML += ` <span style="color: #4af0e0;">• ${item.variant.toUpperCase()}</span>`;
+            }
+            
+            if (item.isGolden) {
+                metaHTML += ` <span style="color: #ffc84a; text-shadow: 0 0 2px #ffc84a;">• GOLDEN</span>`;
+            }
+            // -----------------------------------------------
 
             cardEl.innerHTML = `
                 <div class="market-card-preview">
                     ${gradeBadgeHTML}
                 </div>
                 <div class="market-listing-info">
-                    <div style="color:#fff; font-weight:bold; font-size:14px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    <!-- Nombre del Jugador -->
+                    <div style="color:#fff; font-weight:bold; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         ${item.player.name}
                     </div>
+                    
+                    <!-- NUEVO: Línea de Metadatos (Rareza - Variante - Golden) -->
+                    <div style="font-size:10px; margin-top:2px; margin-bottom:8px; font-weight:600;">
+                        ${metaHTML}
+                    </div>
+
+                    <!-- Precio y Stock -->
                     <div class="market-floor-price" style="color:#2ecc71; font-size:18px; font-weight:bold;">${priceDisplay}</div>
                     <div class="market-supply-count ${supplyClass}" style="color:#888; font-size:12px;">${supply} listed</div>
                 </div>
@@ -11985,25 +11994,22 @@ async function searchMarket(isAutoRefresh = false) {
             cardEl.querySelector('.market-card-preview').appendChild(visualCard);
             cardEl.onclick = () => openMarketDetails(item.player, item.isGolden, item.variant, supply);
 
-            // Añadimos al grid
             marketGrid.appendChild(cardEl);
-          }
-        });
-
-    // --- CASO C: LIMPIEZA ---
-    // Borrar cartas que ya no están en los resultados (porque se vendieron todas o cambió el filtro)
-      const existingCards = marketGrid.querySelectorAll('.market-listing-card');
-      existingCards.forEach(card => {
-        if (!currentIds.has(card.id)) {
-          card.remove();
         }
-      });
+    });
 
-    // Mensaje si no hay nada
-      if (items.length === 0) {
+    // Limpieza de cartas viejas
+    const existingCards = marketGrid.querySelectorAll('.market-listing-card');
+    existingCards.forEach(card => {
+        if (!currentIds.has(card.id)) {
+            card.remove();
+        }
+    });
+    
+    if (items.length === 0) {
         marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found. Try adjusting filters.</div>';
-      }
     }
+}
 
 // Función auxiliar para crear una carta visualmente sin necesidad de tenerla en la colección
     function createVisualCard(playerData, isGolden, variant) {
