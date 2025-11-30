@@ -4757,32 +4757,66 @@ button,
 }
 
 #market-results-grid {
-  flex: 1; overflow-y: auto;
+  flex: 1; 
+  overflow-y: auto;
   display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Cartas un poco más anchas para info */
-  gap: 15px; padding: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+  gap: 15px; 
+  padding: 10px;
+  
+  /* --- AÑADE ESTAS LÍNEAS PARA SOLUCIONAR EL ERROR --- */
+  
+  /* 1. Fuerza a las filas a medir solo lo que mide su contenido */
+  grid-auto-rows: min-content; 
+  
+  /* 2. Alinea los elementos al inicio (arriba) en lugar de estirarlos */
+  align-items: start;
+  align-content: start;
+  
+  /* ---------------------------------------------------- */
 }
 
 /* Estilo de la tarjeta en el listado del mercado */
 .market-listing-card {
-  background: #1a1c24; border: 1px solid #333; border-radius: 8px;
-  overflow: hidden; transition: transform 0.2s; cursor: pointer;
+  background: #1a1c24; 
+  border: 1px solid #333; 
+  border-radius: 8px;
+  overflow: hidden; 
+  transition: transform 0.2s; 
+  cursor: pointer;
   position: relative;
-  display: flex; flex-direction: column;
-  height: 280px; /* Un poco más de altura total */
+  display: flex; 
+  flex-direction: column;
+  
+  /* --- CONFIRMA QUE ESTO ESTÉ ASÍ --- */
+  height: auto; /* Cambia fit-content por auto para evitar bugs en algunos navegadores */
+  min-height: 250px; /* Una altura mínima razonable */
+  /* ---------------------------------- */
+  
+  max-height: 420px; 
 }
+
+.market-listing-card.auction-card-height {
+    height: 420px !important;
+}
+
 .market-listing-card:hover { transform: translateY(-5px); border-color: #aaa; }
 
 /* Contenedor visual de la carta dentro del listado */
 .market-card-preview {
-  height: 185px; /* Altura fija para el contenedor */
+  height: 185px; 
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden; /* Por si acaso, pero con scale no debería hacer falta */
+  overflow: hidden;
   margin-top: 10px;
+  
+  /* --- AÑADE ESTO --- */
+  flex-shrink: 0; /* Evita que la imagen se encoja si falta espacio */
+  flex-grow: 0;   /* Evita que la imagen crezca y estire la tarjeta */
 }
+
 .market-card-preview .card {
   position: relative !important; /* Quitamos absolute */
   top: auto !important;
@@ -4800,9 +4834,13 @@ button,
 .supply-low { color: #e74c3c; }  /* Escaso */
 
 .market-listing-info {
-  padding: 10px; background: #111; text-align: center; border-top: 1px solid #333;
-  margin-top: auto; /* Empuja al fondo */
+  padding: 10px; 
+  background: #111; 
+  text-align: center; 
+  border-top: 1px solid #333;
+  flex-shrink: 0; /* AÑADE - Evita compresión */
 }
+
 .market-floor-price { color: #2ecc71; font-size: 18px; font-weight: bold; }
 .market-supply-count { color: #888; font-size: 12px; }
 
@@ -5127,22 +5165,64 @@ button,
 .close-modal-x:hover { color: #fff; }
 
 .sell-modal-body {
-  display: flex; flex-wrap: wrap; padding: 20px; gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  
+  /* --- EL CAMBIO CLAVE ESTÁ AQUÍ --- */
+  /* Reducimos el espacio de ARRIBA a solo 10px (antes era 20px). */
+  /* Orden: Arriba(10px) Derecha(20px) Abajo(20px) Izquierda(20px) */
+  padding: 10px 20px 20px 20px !important;
+  
+  /* Asegura que todo empiece arriba */
+  align-items: flex-start !important; 
 }
 
 /* Preview Carta */
 .sell-card-preview-container {
-  flex: 1; min-width: 200px;
-  display: flex; justify-content: center; align-items: center;
-  background: rgba(0,0,0,0.2); border-radius: 8px; padding: 20px;
+  display: flex;
+  flex-direction: column !important; /* Apilar verticalmente */
+  align-items: center;
+  justify-content: flex-start; /* Empezar desde arriba */
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 15px;
+  overflow: hidden; /* Evitar desbordes */
 }
+
+/* Envoltorio para proteger la carta de deformaciones */
+.visual-card-wrapper {
+  width: 100%;
+  height: 260px; /* Altura fija reservada para la carta */
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px; /* Separación con los controles */
+}
+
+/* Asegurar que la carta visual se vea bien */
+.visual-card-wrapper .card {
+  transform: scale(1.1); /* Escala original */
+  position: relative !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
 /* Forzamos un tamaño razonable para la carta en el modal */
 .sell-card-preview-container .card { transform: scale(1.1); position: relative !important; }
 
 /* Controles */
 .sell-controls-container {
-  flex: 1.5; min-width: 250px;
-  display: flex; flex-direction: column; gap: 15px;
+  flex: 1.5;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: flex-start !important;
+  
+  /* Sin márgenes extraños */
+  margin-top: 0 !important; 
+  padding-top: 0 !important;
 }
 
 .market-context-info {
@@ -5592,6 +5672,393 @@ button,
   transform: scale(0.98);
 }
 
+/* --- NUEVOS ESTILOS SUBASTA --- */
+
+/* Temporizador integrado en el panel de info */
+.auction-timer-inline {
+  background: #222;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px; /* Más redondeado */
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  border: 1px solid #444;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+  min-width: 80px;
+  text-align: center;
+}
+
+.auction-timer-inline.ending-soon {
+  color: #fff;
+  background-color: #c0392b;
+  border-color: #e74c3c;
+  animation: pulse-red-bg 1s infinite;
+}
+
+@keyframes pulse-red-bg {
+  0% { background-color: #c0392b; }
+  50% { background-color: #e74c3c; }
+  100% { background-color: #c0392b; }
+}
+
+/* Botón de Puja Ancho */
+.btn-market-bid.full-width {
+  width: 90%; /* Casi todo el ancho */
+  padding: 10px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+  border-top: 1px solid #af7ac5;
+  box-shadow: 0 4px 0 #6c3483; /* Efecto 3D */
+  margin-bottom: 5px;
+}
+
+.btn-market-bid.full-width:active {
+  transform: translateY(4px); /* Efecto de pulsado */
+  box-shadow: none;
+}
+
+.btn-market-bid.full-width:hover {
+  background: linear-gradient(to bottom, #a569bd, #9b59b6);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #6c3483;
+}
+
+/* Toggle de Tipo de Venta */
+.sell-type-toggle {
+  display: flex;
+  gap: 10px; /* Espacio entre los dos botones */
+  margin-bottom: 15px;
+  
+  /* --- CAMBIOS: Quitamos la caja contenedora --- */
+  background: transparent !important; /* Sin fondo */
+  padding: 0 !important;              /* Sin relleno interno */
+  border: none !important;
+  margin-top: 0 !important;           /* Pegado arriba */
+}
+
+.type-btn {
+  flex: 1;
+  padding: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  
+  /* --- CAMBIO: Estilo por defecto (Inactivo) --- */
+  background: rgba(255, 255, 255, 0.1); /* Gris translúcido */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+  color: #888;
+}
+
+/* Estado activo (Seleccionado) */
+.type-btn.active {
+  background: #3b68d1; /* Azul */
+  color: white;
+  border-color: #3b68d1;
+  box-shadow: 0 0 15px rgba(59, 104, 209, 0.4); /* Glow azul */
+}
+
+/* Hover (Al pasar el ratón) */
+.type-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.auction-options {
+  display: none; /* Oculto por defecto */
+  margin-bottom: 15px;
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+  border-radius: 6px;
+}
+.auction-options select {
+  width: 100%;
+  padding: 10px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   FIX: AJUSTE AUTOMÁTICO DE ALTURA SOLO PARA SELL CARDS
+   ============================================================ */
+
+/* 1. Identificamos las cartas de venta buscando si tienen el overlay de acción dentro.
+   Usamos :has() para no afectar a las de Buy o Auction */
+.market-listing-card:has(.sell-action-overlay) {
+  height: auto !important;       /* Permite que la altura se ajuste al contenido */
+  min-height: auto !important;   /* Elimina alturas mínimas forzadas */
+  max-height: none !important;   /* Elimina límites de altura */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. Ajustamos el contenedor de información (mitad inferior) */
+.market-listing-card:has(.sell-action-overlay) .market-listing-info {
+  height: auto !important;       /* Altura automática */
+  flex: 1 0 auto;                /* Ocupar el espacio necesario pero no estirarse de más */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;   /* Alinear todo arriba */
+  gap: 5px;                      /* Espacio entre elementos de texto */
+  padding-bottom: 10px;          /* Un poco de aire al final */
+}
+
+/* 3. CAMBIO CLAVE: Hacemos que el panel de botones deje de flotar */
+/* Originalmente es position: absolute. Lo cambiamos a relative para que empuje el borde de la carta */
+.market-listing-card .sell-action-overlay {
+  position: relative !important; 
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  
+  /* Ajustes visuales para que se integre mejor */
+  margin-top: 10px;              /* Separación del texto de precio/nombre */
+  background: rgba(0, 0, 0, 0.3) !important; /* Fondo más sutil */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;            /* Bordes redondeados */
+  width: 100%;                   /* Ancho completo */
+  box-sizing: border-box;        /* Para que el padding no rompa el ancho */
+}
+
+/* 4. Aseguramos que la imagen (mitad superior) no se deforme */
+.market-listing-card:has(.sell-action-overlay) .market-card-preview {
+  flex-shrink: 0;                /* Evita que la imagen se encoja */
+  height: 185px;                 /* Mantiene la altura estándar de la preview */
+}
+
+/* Estado cuando TU eres el máximo pujador */
+.market-listing-card.auction-winning {
+  border: 2px solid #2ecc71 !important; /* Borde Verde */
+  box-shadow: 0 0 15px rgba(46, 204, 113, 0.4) !important; /* Resplandor verde */
+  transform: scale(1.02); /* Un pelín más grande para destacar */
+  transition: all 0.3s ease;
+}
+
+/* Opcional: Un pequeño texto dentro que diga "WINNING" */
+.winning-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2ecc71;
+  color: #000;
+  font-weight: 900;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  z-index: 20;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+/* Estilo para el botón cuando eres el Top Bidder */
+.btn-market-bid:disabled {
+  background: #333 !important;       /* Fondo Gris Oscuro */
+  color: #888 !important;            /* Texto gris apagado */
+  border: 1px solid #444 !important; /* Borde sutil */
+  cursor: not-allowed !important;    /* Cursor de "prohibido" */
+  box-shadow: none !important;       /* Quitamos el relieve 3D */
+  transform: none !important;        /* Quitamos el efecto de pulsación */
+  pointer-events: none;              /* Asegura que no responda al ratón */
+}
+
+/* Tag para transacciones de subasta */
+.meta-auction {
+  color: #ff69b4; /* Rosa */
+  text-shadow: none; /* Sin brillo */
+  font-weight: normal; /* Grosor normal */
+}
+
+/* Estados de la Apuesta */
+.bet-status {
+  font-weight: 900;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  text-align: center;
+  width: 80px;
+}
+
+.status-winning {
+  background: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
+  box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
+}
+
+.status-outbid {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  animation: pulse-red-border 1.5s infinite;
+}
+
+@keyframes pulse-red-border {
+  0% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.4); }
+  50% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.4); }
+  100% { box-shadow: 0 0 0 rgba(231, 76, 60, 0.4); }
+}
+
+/* Botones de Acción Mini */
+.action-btn-group {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  align-items: center; /* <--- ESTO centra verticalmente los botones */
+  height: 100%;        /* Asegura que ocupe toda la altura de la fila */
+  margin: 0;
+}
+
+.btn-mini {
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px; /* Padding original cómodo */
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.1s;
+  margin: 0 !important;
+  
+  /* --- CAMBIOS CLAVE --- */
+  height: auto;        /* Quitamos la altura fija para que se ajuste al texto */
+  white-space: nowrap; /* OBLIGA al texto a quedarse en una sola línea */
+  line-height: normal; /* Restablece la altura de línea */
+  display: inline-block; /* Comportamiento de botón estándar */
+}
+
+.btn-mini:hover { transform: scale(1.05); }
+
+.btn-bet-plus { background: #3b68d1; color: white; }
+.btn-forfeit { background: #444; color: #aaa; }
+.btn-forfeit:hover { background: #c0392b; color: white; }
+
+/* --- Estilo para el Input de Puja Personalizada en el Modal --- */
+#custom-bid-input {
+  background-color: #222;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 24px; /* Grande para que se lea bien */
+  font-weight: bold;
+  text-align: center;
+  width: 150px;
+  margin: 15px 0;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#custom-bid-input:focus {
+  border-color: #ffc84a; /* Borde dorado al escribir */
+  box-shadow: 0 0 10px rgba(255, 200, 74, 0.2);
+}
+
+.bid-info-text {
+  font-size: 13px; 
+  color: #aaa; 
+  margin-top: 5px;
+}
+
+/* Estilo para los controles de cantidad (Zona Verde) */
+.sell-quantity-controls {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Fondo oscuro suave */
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.sell-qty-label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.sell-qty-wrapper {
+  display: flex;
+  /* 'stretch' es la clave: fuerza a que ambos hijos tengan la misma altura automática */
+  align-items: stretch; 
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  
+  /* Opcional: Para que no sea gigante en pantallas grandes */
+  max-width: 250px; 
+}
+
+/* El campo de número */
+#sell-quantity-input {
+  flex: 1; /* Ocupa el espacio disponible flexiblemente */
+  min-width: 60px; /* Mínimo para que no desaparezca en móviles muy pequeños */
+  
+  background: #111;
+  border: 1px solid #444;
+  color: #fff;
+  
+  /* Usamos unidades relativas (rem) en lugar de px para responsive */
+  font-size: 1.2rem; 
+  font-weight: bold;
+  text-align: center;
+  border-radius: 6px;
+  
+  /* El padding define el grosor, no una altura fija */
+  padding: 0.5rem; 
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* El botón MAX */
+#sell-max-btn {
+  /* No permitimos que el botón se encoja o estire a lo ancho */
+  flex: 0 0 auto; 
+  
+  background-color: #3b68d1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  /* Padding lateral */
+  padding: 0 1.2rem;
+  margin: 0;
+  box-sizing: border-box;
+  
+  /* Centrar el texto dentro del botón */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#sell-max-btn:hover {
+  background-color: #4a7dff;
+}
+
+/* Ajuste extra para móviles pequeños */
+@media (max-width: 480px) {
+  .sell-qty-wrapper {
+    max-width: 100%; /* Aprovecha todo el ancho en móvil */
+  }
+  
+  #sell-quantity-input {
+    font-size: 1rem; /* Texto un poco más pequeño en móvil */
+  }
+}
+
 </style>
 </head>
 <body>
@@ -5671,6 +6138,7 @@ button,
     <!-- NUEVO: PESTAÑAS DE NAVEGACIÓN -->
     <div class="market-tabs">
       <button class="market-tab-btn active" id="tab-market-buy" onclick="switchMarketTab('buy')">BUY CARDS</button>
+      <button class="market-tab-btn" id="tab-market-auction" onclick="switchMarketTab('auction')">AUCTIONS</button>
       <button class="market-tab-btn" id="tab-market-sell" onclick="switchMarketTab('sell')">SELL MY CARDS</button>
       <button class="market-tab-btn" id="tab-market-history" onclick="switchMarketTab('history')">HISTORY</button>
     </div>
@@ -5711,8 +6179,10 @@ button,
       <select id="market-sort-select">
         <option value="price_desc">Price: High to Low</option>
         <option value="price_asc">Price: Low to High</option>
-        <option value="supply_asc">Stock: Low to High</option>
-        <option value="supply_desc">Stock: High to Low</option>
+        <option value="supply_asc" class="stock-sort-option">Stock: Low to High</option>
+        <option value="supply_desc" class="stock-sort-option">Stock: High to Low</option>
+        <option value="time_asc" class="auction-sort-option" hidden>Time: Ending Soon</option>
+        <option value="time_desc" class="auction-sort-option" hidden>Time: Longest</option>
       </select>
 
       <select id="market-golden-filter">
@@ -5972,14 +6442,30 @@ button,
       <!-- Columna Derecha: Controles -->
       <div class="sell-controls-container">
 
+        <div class="sell-type-toggle">
+            <button id="btn-mode-fixed" class="type-btn active" onclick="setSellMode('fixed')">Fixed Price</button>
+            <button id="btn-mode-auction" class="type-btn" onclick="setSellMode('auction')">Auction</button>
+        </div>
+
         <div class="market-context-info">
           <p class="info-label">Lowest Market Price:</p>
           <p id="sell-modal-floor-price" class="info-value">Checking...</p>
         </div>
 
         <div class="input-group">
-          <label for="sell-input-price">Your Listing Price (💎)</label>
+          <label id="price-input-label" for="sell-input-price">Listing Price (💎)</label>
           <input type="number" id="sell-input-price" placeholder="Enter amount..." min="1">
+        </div>
+
+        <div id="auction-duration-container" class="auction-options">
+            <label style="display:block; margin-bottom:5px; color:#ccc; font-weight:bold;">Duration:</label>
+            <select id="auction-duration-select">
+                <option value="1">1 Hour</option>
+                <option value="3">3 Hours</option>
+                <option value="6">6 Hours</option>
+                <option value="12">12 Hours</option>
+                <option value="24" selected>24 Hours</option>
+            </select>
         </div>
 
         <div class="fee-breakdown">
@@ -6112,6 +6598,8 @@ let gradingFilters = { query: '', rarity: null };
 let gradingFiltersInitialized = false;
 
 let playerFavorites = {};
+
+let currentSellMode = 'fixed'; // 'fixed' o 'auction'
 
 
 const CONFIG = {
@@ -11020,32 +11508,84 @@ function startFirstTimeUserTour() {
       }
     }
     
-    // Inicializar el mercado (Solo corre una vez o al cargar)
-    static init() {
-      console.log("Initializing Global Market...");
-        // Creamos el libro de órdenes vacío para todas las cartas posibles
-      playersDB.forEach(player => {
-        const variants = ['none', 'foil', 'holo', 'poli', 'negative'];
-        const goldenStates = [false, true];
+    // --- NUEVO: GUARDAR SUBASTAS DONDE PARTICIPAS ---
+    static saveInteractedAuctions() {
+        // Necesitamos la variable global myActiveBets
+        if (typeof myActiveBets === 'undefined') return;
 
-        variants.forEach(v => {
-          goldenStates.forEach(g => {
-            const marketKey = this.getMarketKey(player.cardCode, g, v);
-            if (!marketDatabase[marketKey]) {
-              marketDatabase[marketKey] = {
-                            listings: [],      // Ofertas de venta activas
-                            salesHistory: [],  // Historial de ventas pasadas (para gráficas)
-                            floorPrice: 0,     // Precio más bajo actual
-                            volume24h: 0       // Cantidad vendida en 24h
-                          };
-                        }
-                      });
+        const trackedAuctions = [];
+        
+        myActiveBets.forEach(bet => {
+            const data = marketDatabase[bet.key];
+            if (data) {
+                const auction = data.listings.find(l => l.id === bet.id);
+                // Solo guardamos si la subasta sigue existiendo y no ha terminado hace mucho
+                if (auction && (!auction.endTime || Date.now() < auction.endTime + 86400000)) { 
+                    trackedAuctions.push({
+                        marketKey: bet.key,
+                        auctionData: auction
+                    });
+                }
+            }
         });
-      });
 
-        // Llenamos el mercado con datos iniciales falsos (Bots)
-      this.seedInitialMarket();
-      this.restorePlayerListings();
+        localStorage.setItem('myTrackedAuctions', JSON.stringify(trackedAuctions));
+    }
+
+    // --- NUEVO: RESTAURAR SUBASTAS ---
+    static restoreInteractedAuctions() {
+        const saved = localStorage.getItem('myTrackedAuctions');
+        if (!saved) return;
+
+        try {
+            const trackedAuctions = JSON.parse(saved);
+            trackedAuctions.forEach(item => {
+                const { marketKey, auctionData } = item;
+
+                // Asegurar que la entrada de mercado existe
+                if (!marketDatabase[marketKey]) {
+                    marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, averagePrice: 0 };
+                }
+
+                // Evitar duplicados (por si el seed aleatorio generó una ID idéntica, improbable pero posible)
+                const exists = marketDatabase[marketKey].listings.some(l => l.id === auctionData.id);
+                if (!exists) {
+                    // Si la subasta ya acabó mientras estábamos fuera, nos aseguramos de que no aparezca como activa en lógica futura
+                    // pero la mantenemos para que el historial pueda procesar si ganaste o perdiste.
+                    marketDatabase[marketKey].listings.push(auctionData);
+                }
+            });
+            console.log(`Restored ${trackedAuctions.length} interacted auctions.`);
+        } catch (e) {
+            console.error("Error restoring auctions:", e);
+        }
+    }
+
+    // --- INIT ACTUALIZADO ---
+    static init() {
+        console.log("Initializing Global Market...");
+        
+        // 1. Estructura vacía
+        playersDB.forEach(player => {
+            const variants = ['none', 'foil', 'holo', 'poli', 'negative'];
+            const goldenStates = [false, true];
+            variants.forEach(v => {
+                goldenStates.forEach(g => {
+                    const marketKey = this.getMarketKey(player.cardCode, g, v);
+                    if (!marketDatabase[marketKey]) {
+                        marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, volume24h: 0 };
+                    }
+                });
+            });
+        });
+
+        // 2. Datos Falsos
+        this.seedInitialMarket();
+        this.seedInitialAuctions(); 
+
+        // 3. Restaurar Datos Reales del Jugador
+        this.restorePlayerListings();     // Tus ventas
+        this.restoreInteractedAuctions(); // TUS SUBASTAS (NUEVO)
     }
 
     // --- NUEVO: OBTENER VENTAS ACTIVAS DEL JUGADOR ---
@@ -11136,30 +11676,39 @@ function startFirstTimeUserTour() {
       };
     }
 
-    // POST /api/market/sell
-    static async listItemForSale(sellerId, cardCode, isGolden, variant, price, gradeData = null) {
-      const key = this.getMarketKey(cardCode, isGolden, variant);
-
-      const listing = {
-        id: `lst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            sellerId: sellerId, // 'PLAYER' o 'Bot_Name'
+    // POST /api/market/sell (ACTUALIZADO)
+static async listItemForSale(sellerId, cardCode, isGolden, variant, price, gradeData = null, isAuction = false, endTime = null) {
+        const key = this.getMarketKey(cardCode, isGolden, variant);
+        const listing = {
+            id: `lst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            sellerId: sellerId,
             price: parseInt(price),
             gradeData: gradeData,
-            timestamp: Date.now()
-          };
+            timestamp: Date.now(),
+            isAuction: isAuction,
+            endTime: endTime,
+            currentBid: isAuction ? parseInt(price) : null,
+            highestBidder: null
+        };
 
-          marketDatabase[key].listings.push(listing);
+        marketDatabase[key].listings.push(listing);
 
-        // Reordenar y actualizar Floor Price
-          marketDatabase[key].listings.sort((a, b) => a.price - b.price);
-          marketDatabase[key].floorPrice = marketDatabase[key].listings[0].price;
-
-          if (sellerId === 'PLAYER') {
-            this.savePlayerListingsToStorage();
-          }
-
-          return { success: true, listingId: listing.id };
+        if (!isAuction) {
+            marketDatabase[key].listings.sort((a, b) => a.price - b.price);
+            marketDatabase[key].floorPrice = marketDatabase[key].listings[0].price;
         }
+
+        if (sellerId === 'PLAYER') {
+            this.savePlayerListingsToStorage();
+        }
+        
+        // Si el jugador crea una subasta, también deberíamos guardarla como "interactuada" para que no desaparezca
+        if (isAuction && sellerId === 'PLAYER') {
+             this.saveInteractedAuctions();
+        }
+
+        return { success: true, listingId: listing.id };
+    }
 
     // POST /api/market/buy
         static async buyItem(buyerId, listingId, marketKey) {
@@ -11288,125 +11837,181 @@ function startFirstTimeUserTour() {
           }
         }
 
-// --- market-simulation.js ---
+// --- market-simulation.js (VERSIÓN BALANCEADA: MENOS AGRESIVA) ---
 
-        class MarketSimulation {
-          static start() {
-        // Ejecutar un ciclo de mercado más rápido (cada 1.5 segundos) para que se vea vivo
-            setInterval(() => this.marketTick(), 500);
-          }
+class MarketSimulation {
+    static start() {
+        // CAMBIO 1: El mercado "piensa" cada 2.5 segundos (antes 1s)
+        // Esto da tiempo al jugador a respirar.
+        setInterval(() => this.marketTick(), 2500);
+    }
 
-          static marketTick() {
-        // Elegimos aleatoriamente unas 5 cartas para actualizar en cada tick
-            const keys = Object.keys(marketDatabase);
-            if (keys.length === 0) return;
+    static marketTick() {
+        const keys = Object.keys(marketDatabase);
+        if (keys.length === 0) return;
 
-            for(let i=0; i<20; i++) {
-              const randomKey = keys[Math.floor(Math.random() * keys.length)];
-              this.simulateActivityForKey(randomKey);
+        // 1. ACTIVIDAD ALEATORIA (Ruido de fondo)
+        // Reducimos un poco el ruido para mejorar rendimiento
+        for (let i = 0; i < 5; i++) {
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            this.simulateActivityForKey(randomKey);
+        }
+
+        // 2. LÓGICA DE "BOT CAZADOR" (BALANCEADA)
+        const playerWinningKeys = [];
+        for (const [key, data] of Object.entries(marketDatabase)) {
+            const isPlayerWinning = data.listings.some(l => 
+                l.isAuction && 
+                l.highestBidder === 'PLAYER' && 
+                Date.now() < l.endTime
+            );
+            if (isPlayerWinning) {
+                playerWinningKeys.push(key);
             }
-          }
+        }
 
-          static simulateActivityForKey(key) {
-            const data = marketDatabase[key];
-            if(!data || !data.averagePrice) return; 
+        // CAMBIO 2: Foco Único.
+        // Si vas ganando 10 subastas, el bot no te ataca en las 10 a la vez.
+        // Elige una al azar para "revisar".
+        if (playerWinningKeys.length > 0) {
+            const targetKey = playerWinningKeys[Math.floor(Math.random() * playerWinningKeys.length)];
 
-            const [cardCode, isGoldenStr, variant] = key.split('_');
-            const player = playersDB.find(p => p.cardCode === cardCode);
-            if (!player) return;
+            // CAMBIO 3: Probabilidad reducida (12% cada 2.5s)
+            // Esto se siente mucho más humano. A veces pujan rápido, a veces tardan.
+            if (Math.random() < 0.12) { 
+                console.log(`🤖 Bot challenging player softly on ${targetKey}`);
+                this.simulateActivityForKey(targetKey, true); // true = forzar modo hostil
+            }
+        }
+    }
 
-            const referencePrice = data.averagePrice; 
-            const currentFloor = data.floorPrice > 0 ? data.floorPrice : referencePrice;
+    static simulateActivityForKey(key, forceHostile = false) {
+        const data = marketDatabase[key];
+        if (!data || !data.averagePrice) return;
 
-        // --- CASO 1: ALGUIEN COMPRA UNA CARTA (Aquí es donde fallaba) ---
-            const buyChance = 0.3; 
-            if (Math.random() < buyChance && data.listings.length > 0) {
+        const [cardCode, isGoldenStr, variant] = key.split('_');
+        const player = playersDB.find(p => p.cardCode === cardCode);
+        if (!player) return;
 
-            // 1. Sacamos la carta de la lista (se vende)
-              const soldItem = data.listings.shift(); 
+        const referencePrice = data.averagePrice;
+        
+        // Priorizamos Subastas si existen
+        let targetItem = data.listings.find(l => l.isAuction && Date.now() < l.endTime);
+        if (!targetItem) targetItem = data.listings[0]; 
 
-            // 2. VERIFICAMOS SI EL VENDEDOR ERES TÚ (sellerId === 'PLAYER')
-            // <--- AQUÍ ESTÁ LA CLAVE QUE FALTABA O ESTABA MAL --->
-              if (soldItem.sellerId === 'PLAYER') {
-                console.log("¡Has vendido una carta! Procesando pago..."); // Debug en consola
+        if (!targetItem) return; 
 
-                // A. Pagar al jugador
-                playerCurrency += soldItem.price;
-                saveCurrency();
-                updateCurrencyDisplay(); // Actualiza el dinero arriba a la derecha
-                
-                // B. Registrar en el Historial (Transaction Log)
-                // Reconstruimos el objeto de datos para el log
-                const cardDataLog = {
-                  playerData: player,
-                  rarity: player.rarity,
-                  variant: variant,
-                  golden: isGoldenStr === 'true'
-                };
-                
-                // Llamamos a la función que crea la fila en la pestaña HISTORY
-                if (typeof logMarketTransaction === 'function') {
-                  logMarketTransaction('sell', cardDataLog, soldItem.price);
+        // Probabilidad base si no es hostil
+        const buyChance = forceHostile ? 1.0 : 0.2; // Bajado a 20% para actividad random
+
+        if (Math.random() < buyChance) {
+
+            // --- LÓGICA A: ES UNA SUBASTA ---
+            if (targetItem.isAuction) {
+                if (Date.now() > targetItem.endTime) return;
+
+                // Evitar autopuja de bots salvo en modo hostil
+                if (!forceHostile && targetItem.highestBidder && targetItem.highestBidder.startsWith('Bot_') && Math.random() > 0.5) return;
+
+                // 1. CALCULAR PUJA DEL BOT (Menos agresiva)
+                let minIncrement = Math.floor(targetItem.currentBid * 0.05);
+                if (minIncrement < 10) minIncrement = 10;
+
+                // CAMBIO 4: Puja conservadora.
+                // Antes: hasta 1.5x el mínimo. Ahora: máx 1.1x el mínimo.
+                // Esto hace que el precio no se infle locamente.
+                const botAggression = 1 + (Math.random() * 0.1); 
+                const botIncrement = Math.floor(minIncrement * botAggression);
+                const newBid = targetItem.currentBid + botIncrement;
+
+                // 2. DEVOLUCIÓN AL JUGADOR
+                if (targetItem.highestBidder === 'PLAYER') {
+                    playerCurrency += targetItem.currentBid; 
+                    saveCurrency();
+                    updateCurrencyDisplay();
+                    showToast(`⚠️ Outbid on ${player.name}! Gems returned.`, 'info');
+                    
+                    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+                        renderHistoryView();
+                    }
                 }
 
-                // C. Avisar visualmente
-                showToast(`💰 SOLD! ${player.name} sold for ${soldItem.price.toLocaleString()} 💎`, 'success');
+                // 3. APLICAR PUJA
+                targetItem.currentBid = newBid;
+                targetItem.highestBidder = `Bot_${Math.floor(Math.random() * 900)}`;
 
-                // D. Si tienes abierto el panel de historial, recargarlo para ver el cambio
-                if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
-                  renderHistoryView();
+                if (typeof myActiveBets !== 'undefined' && myActiveBets.some(b => b.id === targetItem.id)) {
+                    MarketBackend.saveInteractedAuctions();
                 }
-              }
-            // <--- FIN DE LA CORRECCIÓN --->
 
-            // 3. Registrar venta en el historial GLOBAL del mercado (para gráficas)
-              data.salesHistory.push({ price: soldItem.price, timestamp: Date.now() });
-              data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+                if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
+                    renderMarketUI(key);
+                }
+                updateTicker(player.name, newBid, 5, variant);
+            } 
+            
+            // --- LÓGICA B: VENTA DIRECTA ---
+            else if (!forceHostile) {
+                const soldItem = data.listings.shift(); 
 
-            // 4. Actualizar precio medio
-              data.averagePrice = Math.floor((data.averagePrice * 0.9) + (soldItem.price * 0.1));
+                if (soldItem.sellerId === 'PLAYER') {
+                    playerCurrency += soldItem.price;
+                    saveCurrency();
+                    updateCurrencyDisplay();
 
-            // 5. Actualizar UI si el jugador está mirando esta carta
-              const pctChange = ((soldItem.price - referencePrice) / referencePrice) * 100;
-              if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
-                renderMarketUI(key); 
-              }
+                    if (typeof logMarketTransaction === 'function') {
+                        logMarketTransaction('sell', {
+                            playerData: player, rarity: player.rarity, variant: variant, golden: isGoldenStr === 'true'
+                        }, soldItem.price);
+                    }
+                    showToast(`💰 SOLD! ${player.name} sold for ${soldItem.price.toLocaleString()} 💎`, 'success');
 
-            // Ticker de noticias
-              if (Math.abs(pctChange) > 2 || soldItem.price > 1000) {
-                updateTicker(player.name, soldItem.price, pctChange, variant);
-              }
+                    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+                        renderHistoryView();
+                    }
+                }
+
+                data.salesHistory.push({ price: soldItem.price, timestamp: Date.now() });
+                data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+                data.averagePrice = Math.floor((data.averagePrice * 0.9) + (soldItem.price * 0.1)); 
+
+                if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
+                    renderMarketUI(key);
+                }
+
+                const pctChange = ((soldItem.price - referencePrice) / referencePrice) * 100;
+                if (Math.abs(pctChange) > 2 || soldItem.price > 1000) {
+                    updateTicker(player.name, soldItem.price, pctChange, variant);
+                }
             }
+        }
 
-        // --- CASO 2: BOTS PONEN CARTAS A LA VENTA (Esto funcionaba bien) ---
-            const sellChance = 0.35;
+        // --- CASO 2: GENERAR STOCK ---
+        if (!forceHostile) {
+            // Bajamos un poco la generación de stock para que no se inunde el mercado
+            const sellChance = 0.25; 
             if (Math.random() < sellChance) {
-              const actionType = Math.random();
-              let newPrice;
+                const currentFloor = data.floorPrice > 0 ? data.floorPrice : referencePrice;
+                const actionType = Math.random();
+                let newPrice;
 
-              if (actionType < 0.7) {
-                newPrice = Math.max(10, Math.floor(currentFloor * (0.95 + Math.random() * 0.1))); 
-              } else if (actionType < 0.9) {
-                newPrice = Math.floor(currentFloor * 1.2); 
-              } else {
-                newPrice = Math.floor(currentFloor * 0.75); 
-              }
+                if (actionType < 0.7) {
+                    newPrice = Math.max(10, Math.floor(currentFloor * (0.95 + Math.random() * 0.1)));
+                } else if (actionType < 0.9) {
+                    newPrice = Math.floor(currentFloor * 1.2);
+                } else {
+                    newPrice = Math.floor(currentFloor * 0.85); // Undercut menos agresivo
+                }
 
-            // Importante: gradeData es null porque los bots no tienen cartas graduadas
-              MarketBackend.listItemForSale(`Bot_${Math.floor(Math.random()*900)}`, cardCode, isGoldenStr === 'true', variant, newPrice, null);
+                MarketBackend.listItemForSale(`Bot_${Math.floor(Math.random() * 900)}`, cardCode, isGoldenStr === 'true', variant, newPrice, null);
 
-              const pctChange = ((newPrice - referencePrice) / referencePrice) * 100;
-
-              if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
-                renderMarketUI(key);
-              }
-
-              if (Math.abs(pctChange) > 5) {
-               updateTicker(player.name, newPrice, pctChange, variant);
-             }
-           }
-         }
-       }
+                if (window.currentInspectKey === key && typeof renderMarketUI === 'function') {
+                    renderMarketUI(key);
+                }
+            }
+        }
+    }
+}
 
        async function renderMarketUI(marketKey, ownedCount, cardData) {
         const panel = document.getElementById('market-panel');
@@ -11468,70 +12073,63 @@ function startFirstTimeUserTour() {
 
 // Funciones de Interacción del Jugador
 
-           window.attemptBuyItem = async (listingId, marketKey, price) => {
+    window.attemptBuyItem = async (listingId, marketKey, price) => {
+    // --- SONIDO ---
+    const btnSound = document.getElementById('buttonClickSound');
+    if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
+
     // 1. Validación de dinero
-            if(playerCurrency < price) {
-              showToast("Not enough gems!", "error");
-              return;
-            }
+    if(playerCurrency < price) {
+        showToast("Not enough gems!", "error");
+        return;
+    }
 
     // 2. Intento de compra en el "Backend"
-            const result = await MarketBackend.buyItem('PLAYER', listingId, marketKey);
+    const result = await MarketBackend.buyItem('PLAYER', listingId, marketKey);
 
-            if(result.success) {
-        // --- ÉXITO ---
-
-        // A. Economía: Restar y guardar
-              playerCurrency -= price;
-              saveCurrency();
-        updateCurrencyDisplay(); // Actualiza contador principal y del mercado
+    if(result.success) {
+        // A. Economía
+        playerCurrency -= price;
+        saveCurrency();
+        updateCurrencyDisplay();
         
-        // B. Colección: Añadir carta
+        // B. Colección
         const [code, goldenStr, variant] = marketKey.split('_');
         addCardToCollection(code, goldenStr, variant);
         
-        // C. HISTORIAL: Registrar la transacción (NUEVO)
+        // C. Historial
         const player = playersDB.find(p => p.cardCode === code);
         if (player) {
-          const cardDataLog = {
-            playerData: player,
-            rarity: player.rarity,
-            variant: variant,
-            golden: goldenStr === 'true'
-          };
-          logMarketTransaction('buy', cardDataLog, price);
+            const cardDataLog = {
+            playerData: player, rarity: player.rarity, variant: variant, golden: goldenStr === 'true'
+            };
+            logMarketTransaction('buy', cardDataLog, price);
         }
 
-        // D. Feedback Visual
         showToast(`Bought for ${price.toLocaleString()} 💎`, "success");
         
-        // E. Refrescar la UI para que desaparezca el listado comprado
-        // Si estamos en la vista de rejilla global:
+        // D. Refrescar UI
         if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
-          searchMarket(); 
+            searchMarket(); 
         }
-        // Si estamos en la vista de detalle (Inspect):
         const panel = document.getElementById('market-panel');
         if (panel) {
-            // Calculamos la nueva cantidad que tenemos para actualizar el botón "List for Sale"
-          const variantKey = `${goldenStr === 'true'}_${variant}`;
-          const count = collection[code]?.[variantKey]?.count || 0;
-          renderMarketUI(marketKey, count, null);
+            const variantKey = `${goldenStr === 'true'}_${variant}`;
+            const count = collection[code]?.[variantKey]?.count || 0;
+            renderMarketUI(marketKey, count, null);
         }
 
-      } else {
-        // --- FALLO (Alguien la compró antes) ---
+    } else {
         showToast(result.message, "error");
-        
-        // Refrescamos para que el usuario vea que ya no está
         if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
-          searchMarket(); 
+            searchMarket(); 
         }
         if (document.getElementById('market-panel')) {
-          renderMarketUI(marketKey, 0, null);
+            renderMarketUI(marketKey, 0, null);
         }
-      }
-    };
+    }
+};
 
 // Variables globales para el modal de venta
 let currentSellKey = null; // Para saber qué carta estamos vendiendo
@@ -11539,58 +12137,115 @@ const SELL_TAX_RATE = 0.05; // 5%
 
 // Función principal llamada desde el botón "LIST FOR SALE"
 window.showListForSaleModal = (marketKey, suggestedPrice) => {
+  // --- SONIDO ---
+  const btnSound = document.getElementById('buttonClickSound');
+  if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+  // --------------
+
   currentSellKey = marketKey;
   const [code, isGoldenStr, variant] = marketKey.split('_');
 
-    // 1. Obtener datos del jugador
+  // 1. Obtener datos
   const player = playersDB.find(p => p.cardCode === code);
   if (!player) return;
 
-    // 2. Configurar UI del Modal
+  const variantKey = `${isGoldenStr}_${variant}`;
+  const ownedCount = collection[code]?.[variantKey]?.count || 0;
+
+  if (ownedCount <= 0) {
+      showToast("Error: You don't own this card.", "error");
+      return;
+  }
+
+  // 2. Elementos del DOM
   const modal = document.getElementById('market-sell-modal');
   const floorPriceEl = document.getElementById('sell-modal-floor-price');
   const previewContainer = document.getElementById('sell-modal-card-view');
   const inputPrice = document.getElementById('sell-input-price');
 
-    // Limpiar inputs previos
   inputPrice.value = '';
-    updateSellCalculations(); // Resetea los textos de fees a 0
+  
+  // 3. GENERACIÓN DEL HTML
+  previewContainer.innerHTML = '';
+  
+  const cardWrapper = document.createElement('div');
+  cardWrapper.className = 'visual-card-wrapper';
+  const visualCard = createVisualCard(player, isGoldenStr === 'true', variant);
+  cardWrapper.appendChild(visualCard);
+  previewContainer.appendChild(cardWrapper);
 
-    // 3. Generar Carta Visual
-    previewContainer.innerHTML = '';
-    const visualCard = createVisualCard(player, isGoldenStr === 'true', variant);
-    previewContainer.appendChild(visualCard);
+  const qtyControls = document.createElement('div');
+  qtyControls.className = 'sell-quantity-controls';
+  qtyControls.innerHTML = `
+      <div class="sell-qty-label">Quantity to Sell</div>
+      <div class="sell-qty-wrapper">
+          <input type="number" id="sell-quantity-input" value="1" min="1" max="${ownedCount}">
+          <button id="sell-max-btn">MAX</button>
+      </div>
+      <div class="sell-owned-info">Owned: <strong style="color:#fff">${ownedCount}</strong></div>
+  `;
+  previewContainer.appendChild(qtyControls);
 
-    // 4. Lógica de Precio Suelo
-    // Si suggestedPrice es 0, significa que no hay ventas activas
-    if (suggestedPrice > 0) {
+  // C) Listeners
+  const qtyInput = document.getElementById('sell-quantity-input');
+  const maxBtn = document.getElementById('sell-max-btn');
+
+  qtyInput.addEventListener('input', () => {
+      let val = parseInt(qtyInput.value);
+      if (val > ownedCount) qtyInput.value = ownedCount;
+      if (val < 1) qtyInput.value = 1;
+      updateSellCalculations();
+  });
+
+  maxBtn.addEventListener('click', () => {
+      // Sonido también para el botón MAX interno
+      if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+      qtyInput.value = ownedCount;
+      updateSellCalculations();
+  });
+
+  // 4. Inicializar
+  setTimeout(() => updateSellCalculations(), 0);
+
+  // 5. Precio Suelo
+  if (suggestedPrice > 0) {
       floorPriceEl.innerHTML = `${suggestedPrice.toLocaleString()} 💎`;
-        floorPriceEl.style.color = "#2ecc71"; // Verde
-        // Placeholder útil
-        inputPrice.placeholder = `Try ${Math.floor(suggestedPrice * 0.95)}...`;
-      } else {
-        floorPriceEl.innerHTML = "No active listings";
-        floorPriceEl.style.color = "#f1c40f"; // Amarillo
-        inputPrice.placeholder = "Set the price!";
-      }
+      floorPriceEl.style.color = "#2ecc71"; 
+      inputPrice.placeholder = `Try ${Math.floor(suggestedPrice * 0.95)}...`;
+  } else {
+      floorPriceEl.innerHTML = "No active listings";
+      floorPriceEl.style.color = "#f1c40f"; 
+      inputPrice.placeholder = "Set the price!";
+  }
 
-    // 5. Mostrar Modal
-      modal.classList.add('visible');
-
-    // Poner el foco en el input
-      setTimeout(() => inputPrice.focus(), 100);
-    };
+  modal.classList.add('visible');
+  setTimeout(() => inputPrice.focus(), 100);
+};
 
 // Función para calcular impuestos en tiempo real
     function updateSellCalculations() {
-      const inputVal = parseInt(document.getElementById('sell-input-price').value) || 0;
+  const priceInput = document.getElementById('sell-input-price');
+  const qtyInput = document.getElementById('sell-quantity-input');
 
-      const fee = Math.ceil(inputVal * SELL_TAX_RATE);
-      const total = inputVal - fee;
+  const pricePerCard = parseInt(priceInput.value) || 0;
+  // Si el input de cantidad no existe aún (error de carga), asumimos 1
+  const quantity = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
 
-      document.getElementById('sell-calc-fee').textContent = `- ${fee.toLocaleString()} 💎`;
-      document.getElementById('sell-calc-total').textContent = `${total.toLocaleString()} 💎`;
-    }
+  const totalGross = pricePerCard * quantity;
+  const fee = Math.ceil(totalGross * SELL_TAX_RATE); // 5% del total
+  const totalNet = totalGross - fee;
+
+  // Actualizar textos
+  document.getElementById('sell-calc-fee').textContent = `- ${fee.toLocaleString()} 💎`;
+  
+  // Mostrar desglose si es más de 1 carta
+  const totalLabel = document.getElementById('sell-calc-total');
+  if (quantity > 1) {
+      totalLabel.innerHTML = `${totalNet.toLocaleString()} 💎 <span style="font-size:10px; color:#888">(${quantity} items)</span>`;
+  } else {
+      totalLabel.textContent = `${totalNet.toLocaleString()} 💎`;
+  }
+}
 
 // Listener para el input (calcular mientras escribes)
     document.getElementById('sell-input-price').addEventListener('input', updateSellCalculations);
@@ -11600,46 +12255,86 @@ window.showListForSaleModal = (marketKey, suggestedPrice) => {
       document.getElementById('market-sell-modal').classList.remove('visible');
     });
 
-// Listener para el botón CONFIRMAR
-    document.getElementById('confirm-sell-listing-btn').addEventListener('click', () => {
-      const priceInput = document.getElementById('sell-input-price');
-      const price = parseInt(priceInput.value);
+// Listener para el botón CONFIRMAR VENTA / SUBASTA
+document.getElementById('confirm-sell-listing-btn').addEventListener('click', async () => {
+  const priceInput = document.getElementById('sell-input-price');
+  const qtyInput = document.getElementById('sell-quantity-input');
+  
+  const price = parseInt(priceInput.value);
+  const quantity = parseInt(qtyInput.value) || 1;
 
-    // Validaciones
-      if (!price || isNaN(price) || price <= 0) {
-        showToast("Please enter a valid price.", "error");
-        priceInput.classList.add('error-shake'); // (Opcional si tienes css de shake)
-        return;
-      }
+  // Validaciones
+  if (!price || isNaN(price) || price <= 0) {
+    showToast("Please enter a valid price.", "error");
+    return;
+  }
 
-      if (!currentSellKey) return;
+  if (!currentSellKey) return;
 
-    // Ejecutar la venta
-      const [code, golden, variant] = currentSellKey.split('_');
+  // Ejecutar la venta
+  const [code, golden, variant] = currentSellKey.split('_');
 
-    // 1. Quitar de la colección
-      const removed = removeCardFromCollection(code, golden, variant, 1);
+  // 1. Quitar de la colección
+  const removed = removeCardFromCollection(code, golden, variant, quantity);
 
-      if (removed) {
-        // 2. Listar en backend
-        MarketBackend.listItemForSale('PLAYER', code, golden === 'true', variant, price);
-        
-        showToast(`Item listed for ${price.toLocaleString()} 💎`, "success");
-        
-        // 3. Cerrar Modal
-        document.getElementById('market-sell-modal').classList.remove('visible');
+  if (removed) {
+    const isAuction = currentSellMode === 'auction';
+    let auctionEndTime = null;
+    
+    if (isAuction) {
+        const hours = parseInt(document.getElementById('auction-duration-select').value);
+        auctionEndTime = Date.now() + (hours * 60 * 60 * 1000);
+    }
 
-        // 4. Refrescar la vista del mercado
-        if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
-             // Pequeño delay para asegurar que el backend procesó la inserción
-         setTimeout(() => searchMarket(), 100);
-       }
-     } else {
-      showToast("Error: You don't own this card anymore.", "error");
-      document.getElementById('market-sell-modal').classList.remove('visible');
-        searchMarket(); // Refrescar para quitar la carta fantasma
-      }
-    });
+    // 2. BUCLE: Crear Listings Individuales
+    let listingsCreated = 0;
+    
+    for (let i = 0; i < quantity; i++) {
+        await MarketBackend.listItemForSale(
+            'PLAYER', 
+            code, 
+            golden === 'true', 
+            variant, 
+            price, 
+            null, 
+            isAuction,
+            auctionEndTime
+        );
+        listingsCreated++;
+    }
+    
+    // Mensaje de éxito
+    let msg = "";
+    if (quantity > 1) {
+        msg = isAuction 
+            ? `Started ${quantity} auctions at ${price} 💎 each.` 
+            : `Listed ${quantity} items for ${price} 💎 each.`;
+    } else {
+        msg = isAuction 
+            ? `Auction started at ${price} 💎` 
+            : `Item listed for ${price} 💎`;
+    }
+    showToast(msg, "success");
+    
+    // 3. Cerrar Modal y Resetear
+    document.getElementById('market-sell-modal').classList.remove('visible');
+    setSellMode('fixed'); 
+
+    // 4. Refrescar la vista ACTUAL (Sin cambiar de pestaña)
+    if (typeof currentMarketTab !== 'undefined') {
+         setTimeout(() => {
+             // CORRECCIÓN FINAL:
+             // Simplemente recargamos la búsqueda. 
+             // Si estás en 'sell', recargará tus cartas (y las vendidas desaparecerán).
+             // NO forzamos el cambio a la pestaña de subastas.
+             searchMarket();
+         }, 100);
+   }
+ } else {
+  showToast("Error: Not enough copies to sell.", "error");
+  document.getElementById('market-sell-modal').classList.remove('visible');
+ }
+});
 
 // Cerrar modal si haces clic fuera (en el fondo oscuro)
     document.getElementById('market-sell-modal').addEventListener('click', (e) => {
@@ -11790,7 +12485,7 @@ async function searchMarket(isAutoRefresh = false) {
     };
 
     // ============================================================
-    // LÓGICA DE MODO VENTA (SELL)
+    // LÓGICA DE MODO VENTA (SELL) - ACTUALIZADA CON ORDENACIÓN
     // ============================================================
     if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
         Object.keys(collection).forEach(cardCode => {
@@ -11803,35 +12498,135 @@ async function searchMarket(isAutoRefresh = false) {
                 const stack = userVariants[variantKey];
                 const { cardData, count } = stack;
                 
-                // --- NUEVA LÓGICA DE BÚSQUEDA ---
+                // Filtros de Búsqueda (Texto, etc.)
                 if (!matchesSearch(player, cardData.golden, cardData.variant)) return;
 
-                // Filtros de Selectores (igual que antes)
+                // Filtros de Selectores
                 if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
                 if (variantFilter !== 'all' && cardData.variant !== variantFilter) return;
                 if (setFilter !== 'all' && player.set !== setFilter) return;
                 if (goldenFilterValue === 'false' && cardData.golden) return;
                 if (goldenFilterValue === 'true' && !cardData.golden) return;
                 
+                // --- OBTENER DATOS DE MERCADO PARA ORDENAR ---
+                const marketKey = `${cardCode}_${cardData.golden}_${cardData.variant}`;
+                const marketData = marketDatabase[marketKey];
+
+                // Si hay datos, usamos el floorPrice, si no, es 0
+                const floorPrice = (marketData && marketData.floorPrice > 0) ? marketData.floorPrice : 0;
+                
+                // Supply: Cuántas hay a la venta globalmente (competencia)
+                const marketSupply = (marketData && marketData.listings) ? marketData.listings.length : 0;
+
                 results.push({
                     type: 'sell',
                     player: player,
                     cardData: cardData,
                     count: count,
-                    marketKey: `${cardCode}_${cardData.golden}_${cardData.variant}`
+                    marketKey: marketKey,
+                    // Guardamos estos datos para poder ordenar después
+                    floorPrice: floorPrice,
+                    marketSupply: marketSupply
                 });
             });
         });
 
-        // Ordenación Venta
+        // --- ORDENACIÓN ---
         results.sort((a, b) => {
-            if (sortOption === 'rating_desc') return b.player.rating - a.player.rating;
-            if (sortOption === 'rating_asc') return a.player.rating - b.player.rating;
-            if (sortOption === 'quantity_desc') return b.count - a.count;
-            return 0; // Default
+            switch (sortOption) {
+                // Ordenar por PRECIO DE MERCADO (Floor Price)
+                case 'price_desc': 
+                    return b.floorPrice - a.floorPrice;
+                case 'price_asc': 
+                    return a.floorPrice - b.floorPrice;
+                
+                // CAMBIO AQUÍ: Ordenar por TU CANTIDAD (Copias que posees)
+                // supply_desc = Primero las que tienes más repetidas
+                case 'supply_desc': 
+                    return b.count - a.count;
+                // supply_asc = Primero las que tienes menos (1 copia)
+                case 'supply_asc': 
+                    return a.count - b.count;
+                
+                default: return 0;
+            }
         });
         
         renderSellGrid(results);
+        return;
+    }
+
+     // ============================================================
+    // LÓGICA DE MODO SUBASTA (AUCTION) - ACTUALIZADA CON ORDENACIÓN
+    // ============================================================
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'auction') {
+        Object.keys(marketDatabase).forEach(key => {
+            const data = marketDatabase[key];
+            
+            // 1. Filtrar solo subastas activas
+            const activeAuctions = data.listings.filter(l => l.isAuction === true);
+            
+            // Calculamos el "Stock" (cuántas subastas hay de esta carta)
+            const auctionsCount = activeAuctions.length; 
+            
+            if (auctionsCount > 0) {
+                const [code, isGoldenStr, variant] = key.split('_');
+                const player = playersDB.find(p => p.cardCode === code);
+                if (!player) return;
+
+                // Aplicar filtros de búsqueda
+                if (!matchesSearch(player, isGoldenStr === 'true', variant)) return;
+                if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
+                if (variantFilter !== 'all' && variant !== variantFilter) return;
+                if (setFilter !== 'all' && player.set !== setFilter) return;
+                if (goldenFilterValue === 'false' && isGoldenStr === 'true') return;
+                if (goldenFilterValue === 'true' && isGoldenStr !== 'true') return;
+
+                activeAuctions.forEach(auction => {
+                    results.push({
+                        type: 'auction',
+                        player: player,
+                        marketKey: key,
+                        listing: auction,
+                        isGolden: isGoldenStr === 'true',
+                        variant: variant,
+                        // DATOS PARA ORDENAR
+                        currentPrice: auction.currentBid || auction.price,
+                        marketSupply: auctionsCount // Cuántas subastas hay de esta carta
+                    });
+                });
+            }
+        });
+        
+        // --- ORDENACIÓN ---
+        results.sort((a, b) => {
+            switch (sortOption) {
+
+              // NUEVO: Ordenar por TIEMPO RESTANTE
+                case 'time_asc': // Terminan pronto (Menor timestamp final)
+                    return a.listing.endTime - b.listing.endTime;
+                case 'time_desc': // Terminan tarde (Mayor timestamp final)
+                    return b.listing.endTime - a.listing.endTime;
+
+                // Ordenar por PRECIO (Puja Actual)
+                case 'price_asc': 
+                    return a.currentPrice - b.currentPrice;
+                case 'price_desc': 
+                    return b.currentPrice - a.currentPrice;
+                
+                // Ordenar por STOCK (Cuántas subastas hay de esa carta)
+                case 'supply_asc': 
+                    return a.marketSupply - b.marketSupply;
+                case 'supply_desc': 
+                    return b.marketSupply - a.marketSupply;
+                
+                // Por defecto: Tiempo Restante (Las que acaban antes primero)
+                default: 
+                    return a.listing.endTime - b.listing.endTime;
+            }
+        });
+        
+        renderMarketGrid(results);
         return;
     }
 
@@ -11894,11 +12689,11 @@ async function searchMarket(isAutoRefresh = false) {
     renderMarketGrid(results);
 }
 
-// 3. Renderizar la Rejilla
+// 3. Renderizar la Rejilla (CORREGIDO: IDs únicos para subastas múltiples)
 function renderMarketGrid(items) {
     const marketGrid = document.getElementById('market-results-grid');
     
-    // Limpieza inicial si es necesario
+    // Limpieza inicial si la rejilla tiene mensajes de texto o está vacía
     if (marketGrid.querySelector('div') && !marketGrid.querySelector('.market-listing-card')) {
         marketGrid.innerHTML = '';
     }
@@ -11906,11 +12701,121 @@ function renderMarketGrid(items) {
     const currentIds = new Set();
 
     items.forEach(item => {
-        const elementId = `market-card-${item.marketKey}`;
+        let elementId;
+
+        // --- CORRECCIÓN CLAVE AQUÍ ---
+        if (item.type === 'auction') {
+            // Si es subasta, usamos el ID único de la subasta para que no se pisen si hay varias iguales
+            elementId = `auction-card-${item.listing.id}`;
+        } else {
+            // Si es compra/venta agrupada, usamos la clave del mercado (nombre carta)
+            elementId = `market-card-${item.marketKey}`;
+        }
+        
         currentIds.add(elementId);
 
         let cardEl = document.getElementById(elementId);
 
+        // ============================================================
+        // BLOQUE SUBASTAS
+        // ============================================================
+        if (item.type === 'auction') {
+            const auction = item.listing;
+            const currentBid = auction.currentBid || auction.price; 
+            
+            if (!cardEl) {
+                cardEl = document.createElement('div');
+                cardEl.className = 'market-listing-card auction-card-height';
+                cardEl.id = elementId;
+                marketGrid.appendChild(cardEl);
+            }
+
+             const isWinning = auction.highestBidder === 'PLAYER';
+
+             const btnDisabledAttr = isWinning ? 'disabled' : '';
+             const btnText = isWinning ? 'HIGHEST BIDDER' : 'PLACE BID';
+             const btnOnclick = isWinning ? '' : `onclick="placeBid('${auction.id}', '${item.marketKey}', ${currentBid})"`;
+    
+            if (isWinning) {
+                cardEl.classList.add('auction-winning');
+                if (!cardEl.querySelector('.winning-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'winning-badge';
+                    badge.textContent = "YOU ARE WINNING";
+                    cardEl.appendChild(badge);
+                }
+            } else {
+                cardEl.classList.remove('auction-winning');
+                const badge = cardEl.querySelector('.winning-badge');
+                if (badge) badge.remove();
+            }
+
+            // Calculamos tiempo
+            const now = Date.now();
+            const timeLeft = auction.endTime - now;
+            let timeString = "Ended";
+            let timerClass = "auction-timer-inline"; 
+            
+            if (timeLeft > 0) {
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                if (hours > 0) {
+                    timeString = `${hours}h ${minutes}m ${seconds}s`;
+                } else {
+                    timeString = `${minutes}m ${seconds}s`;
+                    if (minutes < 1) timerClass += " ending-soon"; 
+                }
+            }
+
+            cardEl.innerHTML = `
+                <div class="market-card-preview"></div>
+                
+                <div class="market-listing-info" style="text-align: center; display: flex; flex-direction: column; gap: 5px; height: auto;">
+                    <div style="line-height: 1.2;">
+                        <div style="color:#fff; font-weight:bold; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${item.player.name}
+                        </div>
+                        <div style="font-size:10px; margin-bottom: 5px; font-weight:600;">
+                           <span style="color: #bbb;">${item.player.rarity.toUpperCase()}</span>
+                           ${item.isGolden ? '<span style="color:#ffc84a">• GOLDEN</span>' : ''}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center;">
+                        <div class="${timerClass}" id="timer-${auction.id}">⏱️ ${timeString}</div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <div style="font-size:10px; color:#aaa; text-transform: uppercase; letter-spacing: 1px;">Current Bid</div>
+                        <div style="color:#ffc84a; font-size:22px; font-weight:900; margin-bottom: 8px; text-shadow: 0 0 10px rgba(255, 200, 74, 0.3);">
+                            ${currentBid.toLocaleString()} 💎
+                        </div>
+                        <button class="btn-market-bid full-width" ${btnOnclick} ${btnDisabledAttr}>
+                            ${btnText}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const visualCard = createVisualCard(item.player, item.isGolden, item.variant);
+            visualCard.style.transform = "scale(0.95)";
+            visualCard.style.position = "relative"; 
+            visualCard.style.zIndex = "1";
+            
+            const previewContainer = cardEl.querySelector('.market-card-preview');
+            previewContainer.innerHTML = ''; 
+            previewContainer.style.overflow = "visible"; 
+            previewContainer.appendChild(visualCard);
+            
+            return; 
+        }
+        
+        // ============================================================
+        // BLOQUE COMPRA/VENTA (FIXED PRICE)
+        // ============================================================
+        
         // Datos básicos
         const supply = item.stats.listings.length;
         let supplyClass = 'supply-high';
@@ -11919,27 +12824,26 @@ function renderMarketGrid(items) {
         
         const priceDisplay = `${item.stats.floorPrice.toLocaleString('de-DE')} 💎`;
 
-        // --- CASO A: ACTUALIZAR EXISTENTE ---
         if (cardEl) {
+            // Actualizar existente (Optimización)
             const priceEl = cardEl.querySelector('.market-floor-price');
-            if (priceEl.textContent !== priceDisplay) {
+            if (priceEl && priceEl.textContent !== priceDisplay) {
                 priceEl.textContent = priceDisplay;
                 priceEl.style.color = '#fff';
                 setTimeout(() => priceEl.style.color = '#2ecc71', 200);
             }
             const stockEl = cardEl.querySelector('.market-supply-count');
-            if (!stockEl.textContent.includes(supply)) {
+            if (stockEl && !stockEl.textContent.includes(supply)) {
                 stockEl.className = `market-supply-count ${supplyClass}`;
                 stockEl.textContent = `${supply} listed`;
             }
-        } 
-        // --- CASO B: CREAR NUEVA TARJETA ---
-        else {
+        } else {
+            // Crear nueva
             cardEl = document.createElement('div');
             cardEl.className = 'market-listing-card';
             cardEl.id = elementId;
             
-            // Badge de Grado (si existe)
+            // Badge de Grado
             let gradeBadgeHTML = '';
             if (item.stats.listings.length > 0 && item.stats.listings[0].gradeData) {
                 const grade = item.stats.listings[0].gradeData;
@@ -11956,35 +12860,21 @@ function renderMarketGrid(items) {
                 `;
             }
 
-            // --- AQUÍ ESTÁ LA NUEVA LÓGICA DE METADATOS ---
-            // Construimos el HTML de la línea de información
             let metaHTML = `<span style="color: #bbb;">${item.player.rarity.toUpperCase()}</span>`;
-            
-            if (item.variant !== 'none') {
-                metaHTML += ` <span style="color: #4af0e0;">• ${item.variant.toUpperCase()}</span>`;
-            }
-            
-            if (item.isGolden) {
-                metaHTML += ` <span style="color: #ffc84a; text-shadow: 0 0 2px #ffc84a;">• GOLDEN</span>`;
-            }
-            // -----------------------------------------------
+            if (item.variant !== 'none') metaHTML += ` <span style="color: #4af0e0;">• ${item.variant.toUpperCase()}</span>`;
+            if (item.isGolden) metaHTML += ` <span style="color: #ffc84a; text-shadow: 0 0 2px #ffc84a;">• GOLDEN</span>`;
 
             cardEl.innerHTML = `
                 <div class="market-card-preview">
                     ${gradeBadgeHTML}
                 </div>
                 <div class="market-listing-info">
-                    <!-- Nombre del Jugador -->
                     <div style="color:#fff; font-weight:bold; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         ${item.player.name}
                     </div>
-                    
-                    <!-- NUEVO: Línea de Metadatos (Rareza - Variante - Golden) -->
                     <div style="font-size:10px; margin-top:2px; margin-bottom:8px; font-weight:600;">
                         ${metaHTML}
                     </div>
-
-                    <!-- Precio y Stock -->
                     <div class="market-floor-price" style="color:#2ecc71; font-size:18px; font-weight:bold;">${priceDisplay}</div>
                     <div class="market-supply-count ${supplyClass}" style="color:#888; font-size:12px;">${supply} listed</div>
                 </div>
@@ -11998,7 +12888,7 @@ function renderMarketGrid(items) {
         }
     });
 
-    // Limpieza de cartas viejas
+    // Limpieza de cartas viejas que ya no están en los resultados
     const existingCards = marketGrid.querySelectorAll('.market-listing-card');
     existingCards.forEach(card => {
         if (!currentIds.has(card.id)) {
@@ -12007,7 +12897,7 @@ function renderMarketGrid(items) {
     });
     
     if (items.length === 0) {
-        marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found. Try adjusting filters.</div>';
+        marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found.</div>';
     }
 }
 
@@ -12194,34 +13084,57 @@ function generateBellCurveFloat() {
 // Estado global del mercado ('buy' o 'sell')
   let currentMarketTab = 'buy'; 
 
-  function switchMarketTab(tab) {
+ function switchMarketTab(tab) {
     currentMarketTab = tab;
     
-    // Botones
+    // 1. Actualizar clases visuales
     document.getElementById('tab-market-buy').classList.toggle('active', tab === 'buy');
     document.getElementById('tab-market-sell').classList.toggle('active', tab === 'sell');
     document.getElementById('tab-market-history').classList.toggle('active', tab === 'history');
+    document.getElementById('tab-market-auction').classList.toggle('active', tab === 'auction');
     
-    // Contenedores
+    // 2. Elementos del DOM
     const grid = document.getElementById('market-results-grid');
     const historyView = document.getElementById('market-history-view');
-    const filters = document.querySelector('.market-filters-bar'); // Ocultar filtros en historial para limpiar
+    const filters = document.querySelector('.market-filters-bar'); 
+    const sortSelect = document.getElementById('market-sort-select');
+
+    // --- GESTIÓN DE VISIBILIDAD DE OPCIONES DE ORDENACIÓN ---
+    const auctionOptions = document.querySelectorAll('.auction-sort-option'); // Time
+    const stockOptions = document.querySelectorAll('.stock-sort-option');     // Stock
+    
+    if (tab === 'auction') {
+        // EN SUBASTAS: Mostrar Tiempo, Ocultar Stock
+        auctionOptions.forEach(opt => opt.hidden = false);
+        stockOptions.forEach(opt => opt.hidden = true);
+        
+        // Poner por defecto "Ending Soon"
+        sortSelect.value = 'time_asc';
+    } else {
+        // EN COMPRA/VENTA: Ocultar Tiempo, Mostrar Stock
+        auctionOptions.forEach(opt => opt.hidden = true);
+        stockOptions.forEach(opt => opt.hidden = false);
+        
+        // Si estaba seleccionado algo de tiempo, resetear a precio
+        if (sortSelect.value.startsWith('time_')) {
+            sortSelect.value = 'price_asc';
+        }
+    }
+    // -------------------------------------------------------
 
     if (tab === 'history') {
-      grid.style.display = 'none';
-        filters.style.display = 'none'; // Opcional: ocultar filtros
+        grid.style.display = 'none';
+        filters.style.display = 'none';
         historyView.style.display = 'flex';
-        renderHistoryView(); // <--- Renderizar datos
-      } else {
-        grid.style.display = 'grid'; // O 'block' según tu CSS
+        renderHistoryView();
+    } else {
+        grid.style.display = 'grid';
         filters.style.display = 'flex';
         historyView.style.display = 'none';
         
-        // Lógica existente de filtros...
-        // (Resto de tu función switchMarketTab...)
-        searchMarket(); // Ejecutar búsqueda para Buy/Sell
-      }
+        searchMarket(); 
     }
+}
 
     function renderSellGrid(items) {
       const marketGrid = document.getElementById('market-results-grid');
@@ -12269,24 +13182,19 @@ function generateBellCurveFloat() {
     }
 
     window.quickSellFromMarket = (marketKey, floorPrice) => {
-    // Reutilizamos tu modal de venta existente
-    // Nota: floorPrice puede ser 0 si no hay listings, pasamos 0 para que el modal maneje el default
-      showListForSaleModal(marketKey, floorPrice);
+    // --- SONIDO ---
+    const btnSound = document.getElementById('buttonClickSound');
+    if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
 
-    // IMPORTANTE: Sobreescribimos ligeramente el comportamiento post-venta
-    // para refrescar la pestaña "Sell" inmediatamente
+    showListForSaleModal(marketKey, floorPrice);
 
-    // Como `showListForSaleModal` usa `prompt` (es síncrono), el código de abajo 
-    // se ejecutará justo después de que el usuario acepte o cancele.
-
-    // Volvemos a ejecutar la búsqueda para actualizar los contadores (You own: X)
-    // o eliminar la carta si se vendió la última copia.
-      setTimeout(() => {
+    setTimeout(() => {
         if (currentMarketTab === 'sell') {
           searchMarket();
         }
-    }, 500); // Pequeño delay para asegurar que la base de datos local se actualizó
-    };
+    }, 500);
+};
 
 // --- SISTEMA DE HISTORIAL DE MERCADO ---
 
@@ -12310,171 +13218,574 @@ function generateBellCurveFloat() {
       localStorage.setItem('myMarketHistory', JSON.stringify(playerMarketHistory));
     }
 
-/**
- * Registra una transacción en el historial.
- * @param {string} type - 'buy' o 'sell'
- * @param {object} cardData - Datos de la carta {playerData, rarity, variant, golden}
- * @param {number} price - Precio de la transacción
- */
-    function logMarketTransaction(type, cardData, price) {
-      const transaction = {
-        id: Date.now() + Math.random(), // ID único
-        type: type, // 'buy' | 'sell'
-        name: cardData.playerData.name,
-        rarity: cardData.rarity || cardData.playerData.rarity,
-        variant: cardData.variant,
-        isGolden: cardData.golden,
-        price: parseInt(price),
-        date: Date.now()
-      };
+function logMarketTransaction(type, cardData, price, isAuction = false) {
+  const transaction = {
+    id: Date.now() + Math.random(),
+    type: type,
+    name: cardData.playerData.name,
+    rarity: cardData.rarity || cardData.playerData.rarity,
+    variant: cardData.variant,
+    isGolden: cardData.golden,
+    price: parseInt(price),
+    date: Date.now(),
+    isAuction: isAuction // <--- Guardamos este dato
+  };
 
-    // Añadimos al principio del array (lo más nuevo primero)
-      playerMarketHistory.unshift(transaction);
+  playerMarketHistory.unshift(transaction);
 
-    // Opcional: Limitar historial a las últimas 100 transacciones para ahorrar memoria
-      if(playerMarketHistory.length > 100) {
-        playerMarketHistory.pop();
-      }
-
-      savePlayerMarketHistory();
-    }
-
-// Renderizar la vista (Se llama al pulsar la pestaña History)
-    function renderHistoryView() {
-      const container = document.getElementById('history-list-content');
-    // Elementos del resumen financiero
-      const earnedEl = document.getElementById('hist-total-earned');
-      const spentEl = document.getElementById('hist-total-spent');
-      const profitEl = document.getElementById('hist-net-profit');
-
-      if (!container) return;
-    container.innerHTML = ''; // Limpiar
-
-    // --- 1. SECCIÓN VENTAS ACTIVAS (PENDING) ---
-    const activeListings = MarketBackend.getPlayerListings();
-
-    // Título Sección
-    const activeTitle = document.createElement('div');
-    activeTitle.className = 'history-section-title';
-    activeTitle.textContent = `Active Listings (${activeListings.length})`;
-    container.appendChild(activeTitle);
-
-    if (activeListings.length === 0) {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic;";
-      emptyMsg.textContent = "No cards currently for sale.";
-      container.appendChild(emptyMsg);
-    } else {
-      activeListings.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'history-row active-listing-row';
-
-            // Badges de la carta
-        let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${item.rarity})">${item.rarity}</span>`;
-        if (item.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
-        if (item.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${item.variant}</span>`;
-
-        row.innerHTML = `
-                <div><div class="tx-badge tx-pending">PENDING</div></div>
-                <div class="history-card-details">
-                    <span class="history-card-name">${item.cardName}</span>
-                    <span class="history-card-meta">${metaHTML}</span>
-                </div>
-                <div class="history-price" style="color:#f1c40f">${item.price.toLocaleString()} 💎</div>
-                <div style="display:flex; justify-content:flex-end;">
-                    <button class="btn-cancel-listing" onclick="cancelMarketListing('${item.id}', '${item.marketKey}')" title="Cancel Listing">X</button>
-                </div>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    // --- 2. SECCIÓN HISTORIAL DE TRANSACCIONES ---
-    const historyTitle = document.createElement('div');
-    historyTitle.className = 'history-section-title';
-    historyTitle.style.marginTop = "30px";
-    historyTitle.textContent = "Transaction Log";
-    container.appendChild(historyTitle);
-
-    let totalEarned = 0;
-    let totalSpent = 0;
-
-    if (playerMarketHistory.length === 0) {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic;";
-      emptyMsg.textContent = "No transaction history yet.";
-      container.appendChild(emptyMsg);
-    } else {
-      playerMarketHistory.forEach(tx => {
-        if (tx.type === 'sell') totalEarned += tx.price;
-        else totalSpent += tx.price;
-
-        const dateObj = new Date(tx.date);
-        const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        const row = document.createElement('div');
-        row.className = 'history-row';
-
-        const typeBadge = tx.type === 'buy' 
-        ? `<div class="tx-badge tx-buy">BOUGHT</div>` 
-        : `<div class="tx-badge tx-sell">SOLD</div>`;
-
-        const priceColor = tx.type === 'sell' ? '#2ecc71' : '#e74c3c';
-        const priceSign = tx.type === 'sell' ? '+' : '-';
-
-        let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${tx.rarity})">${tx.rarity}</span>`;
-        if (tx.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
-        if (tx.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${tx.variant}</span>`;
-
-            // Nota: Usamos una columna vacía al final para alinear con el botón X de arriba
-        row.innerHTML = `
-                <div>${typeBadge}</div>
-                <div class="history-card-details">
-                    <span class="history-card-name">${tx.name}</span>
-                    <span class="history-card-meta">${metaHTML}</span>
-                </div>
-                <div class="history-date">${dateStr}</div>
-                <div class="history-price" style="color:${priceColor}">${priceSign}${tx.price.toLocaleString()} 💎</div>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    // Actualizar Resumen
-    const netProfit = totalEarned - totalSpent;
-    if(earnedEl) earnedEl.textContent = `+${totalEarned.toLocaleString()}`;
-    if(spentEl) spentEl.textContent = `-${totalSpent.toLocaleString()}`;
-    if(profitEl) {
-      profitEl.textContent = `${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()} 💎`;
-      profitEl.className = 'summary-value ' + (netProfit >= 0 ? 'net-positive' : 'net-negative');
-    }
+  if(playerMarketHistory.length > 100) {
+    playerMarketHistory.pop();
   }
 
+  savePlayerMarketHistory();
+}
+
+// Renderizar la vista (Se llama al pulsar la pestaña History)
+   function renderHistoryView() {
+  const container = document.getElementById('history-list-content');
+  const earnedEl = document.getElementById('hist-total-earned');
+  const spentEl = document.getElementById('hist-total-spent');
+  const profitEl = document.getElementById('hist-net-profit');
+
+  if (!container) return;
+  container.innerHTML = '';
+
+  // ============================================================
+  // 1. SECCIÓN: ACTIVE BETS (ACTUALIZADO)
+  // ============================================================
+  const betsTitle = document.createElement('div');
+  betsTitle.className = 'history-section-title';
+  betsTitle.innerHTML = 'Active Bets &nbsp;<span style="font-size:10px; color:#666;">(Live Updates)</span>';
+  container.appendChild(betsTitle);
+
+  let activeBetsCount = 0;
+
+  for (let i = myActiveBets.length - 1; i >= 0; i--) {
+      const betInfo = myActiveBets[i];
+      const data = marketDatabase[betInfo.key];
+      const auction = data ? data.listings.find(l => l.id === betInfo.id) : null;
+
+      if (!auction) {
+          myActiveBets.splice(i, 1);
+          saveActiveBets();
+          continue;
+      }
+
+      activeBetsCount++;
+      const [code, goldenStr, variant] = betInfo.key.split('_');
+      const player = playersDB.find(p => p.cardCode === code);
+      
+      const isWinning = auction.highestBidder === 'PLAYER';
+      
+      const statusClass = isWinning ? 'status-winning' : 'status-outbid';
+      const statusText = isWinning ? 'WINNING' : 'OUTBID';
+      
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${player.rarity})">${player.rarity}</span>`;
+      if (goldenStr === 'true') metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${variant}</span>`;
+
+      // --- 1. LÓGICA BOTÓN RAISE BID (Ya la tenías) ---
+      const betBtnHTML = isWinning 
+          ? `<button class="btn-mini" style="background:#222; color:#555; cursor:default; border:1px solid #333;" disabled>RAISE BID</button>`
+          : `<button class="btn-mini btn-bet-plus" onclick="placeBid('${auction.id}', '${betInfo.key}', ${auction.currentBid})">RAISE BID</button>`;
+
+      // --- 2. LÓGICA BOTÓN FORFEIT BID (NUEVO) ---
+      // Si vas ganando (isWinning), el botón se deshabilita y se pone gris.
+      // Si vas perdiendo, el botón funciona para dejar de seguir la subasta.
+      const forfeitBtnHTML = isWinning
+          ? `<button class="btn-mini" style="background:#222; color:#555; cursor:not-allowed; border:1px solid #333;" disabled title="Cannot forfeit while winning">FORFEIT BID</button>`
+          : `<button class="btn-mini btn-forfeit" onclick="forfeitBet('${auction.id}')" title="Stop watching">FORFEIT BID</button>`;
+
+      const row = document.createElement('div');
+      row.className = 'history-row';
+      
+      // Ajustes de Grid
+      row.style.gridTemplateColumns = "110px 1fr auto 210px"; 
+      row.style.gap = "10px";
+      row.style.alignItems = "center"; 
+
+      row.innerHTML = `
+          <div style="display:flex; justify-content:flex-start; align-items:center; height:100%;">
+              <div class="bet-status ${statusClass}">${statusText}</div>
+          </div>
+          
+          <div class="history-card-details" style="height:100%; display:flex; align-items:center;">
+              <span class="history-card-name">${player.name}</span>
+              <span class="history-card-meta">${metaHTML}</span>
+          </div>
+          
+          <div class="history-price" style="color:${isWinning ? '#2ecc71' : '#e74c3c'}; display:flex; align-items:center; height:100%;">
+              ${auction.currentBid.toLocaleString()} 💎
+          </div>
+          
+          <div class="action-btn-group">
+              ${betBtnHTML}
+              ${forfeitBtnHTML}
+          </div>
+      `;
+      container.appendChild(row);
+  }
+
+  if (activeBetsCount === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#444; font-style:italic; text-align:center;";
+      emptyMsg.textContent = "You have no active bids.";
+      container.appendChild(emptyMsg);
+  }
+
+  // ============================================================
+  // 2. SECCIÓN: ACTIVE LISTINGS (Tus ventas) - IGUAL QUE ANTES
+  // ============================================================
+  const activeListings = MarketBackend.getPlayerListings();
+  const activeTitle = document.createElement('div');
+  activeTitle.className = 'history-section-title';
+  activeTitle.style.marginTop = "30px";
+  activeTitle.textContent = `My Active Listings (${activeListings.length})`;
+  container.appendChild(activeTitle);
+
+  if (activeListings.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;";
+    emptyMsg.textContent = "No cards currently for sale.";
+    container.appendChild(emptyMsg);
+  } else {
+    activeListings.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'history-row active-listing-row';
+
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${item.rarity})">${item.rarity}</span>`;
+      if (item.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (item.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${item.variant}</span>`;
+
+      row.innerHTML = `
+              <div><div class="tx-badge tx-pending">SELLING</div></div>
+              <div class="history-card-details">
+                  <span class="history-card-name">${item.cardName}</span>
+                  <span class="history-card-meta">${metaHTML}</span>
+              </div>
+              <div class="history-price" style="color:#f1c40f">${item.price.toLocaleString()} 💎</div>
+              <div style="display:flex; justify-content:flex-end;">
+                  <button class="btn-cancel-listing" onclick="cancelMarketListing('${item.id}', '${item.marketKey}')" title="Cancel Listing">X</button>
+              </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  // ============================================================
+  // 3. SECCIÓN: TRANSACTION LOG - IGUAL QUE ANTES
+  // ============================================================
+  const historyTitle = document.createElement('div');
+  historyTitle.className = 'history-section-title';
+  historyTitle.style.marginTop = "30px";
+  historyTitle.textContent = "Transaction Log";
+  container.appendChild(historyTitle);
+
+  let totalEarned = 0;
+  let totalSpent = 0;
+
+  if (playerMarketHistory.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;";
+    emptyMsg.textContent = "No transaction history yet.";
+    container.appendChild(emptyMsg);
+  } else {
+    playerMarketHistory.forEach(tx => {
+      if (tx.type === 'sell') totalEarned += tx.price;
+      else totalSpent += tx.price;
+
+      const dateObj = new Date(tx.date);
+      const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+      const row = document.createElement('div');
+      row.className = 'history-row';
+
+      const typeBadge = tx.type === 'buy' 
+      ? `<div class="tx-badge tx-buy">BOUGHT</div>` 
+      : `<div class="tx-badge tx-sell">SOLD</div>`;
+
+      const priceColor = tx.type === 'sell' ? '#2ecc71' : '#e74c3c';
+      const priceSign = tx.type === 'sell' ? '+' : '-';
+
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${tx.rarity})">${tx.rarity}</span>`;
+      if (tx.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (tx.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${tx.variant}</span>`;
+      if (tx.isAuction) metaHTML += ` • <span class="meta-tag meta-auction">AUCTION</span>`;
+
+      row.innerHTML = `
+              <div>${typeBadge}</div>
+              <div class="history-card-details">
+                  <span class="history-card-name">${tx.name}</span>
+                  <span class="history-card-meta">${metaHTML}</span>
+              </div>
+              <div class="history-date">${dateStr}</div>
+              <div class="history-price" style="color:${priceColor}">${priceSign}${tx.price.toLocaleString()} 💎</div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  // Actualizar Resumen (Igual que antes)
+  const netProfit = totalEarned - totalSpent;
+  if(earnedEl) earnedEl.textContent = `+${totalEarned.toLocaleString()}`;
+  if(spentEl) spentEl.textContent = `-${totalSpent.toLocaleString()}`;
+  if(profitEl) {
+    profitEl.textContent = `${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()} 💎`;
+    profitEl.className = 'summary-value ' + (netProfit >= 0 ? 'net-positive' : 'net-negative');
+  }
+}
+
   window.cancelMarketListing = function(listingId, marketKey) {
-    // 1. Intentar cancelar en backend
+    // --- SONIDO ---
+    const btnSound = document.getElementById('buttonClickSound');
+    if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
+
     const result = MarketBackend.cancelListing(listingId, marketKey);
 
     if (result.success) {
-        // 2. Devolver carta a la colección
       const [code, goldenStr, variant] = marketKey.split('_');
-
-        // Usamos la función auxiliar que ya tienes o creamos la lógica aquí
       addCardToCollection(code, goldenStr, variant);
-
-        // 3. Feedback
       showToast("Listing cancelled. Card returned to collection.", "info");
-
-        // 4. Recargar la vista del historial
       renderHistoryView();
-
-        // 5. Actualizar UI de moneda (por si acaso)
       updateCurrencyDisplay();
     } else {
       showToast("Error: " + result.message, "error");
-        // Si falló es porque probablemente se vendió justo ahora, recargamos
       renderHistoryView();
     }
-  };
+};
+
+  // 1. Inicializar Subastas Falsas (Seed)
+// Añade esta llamada dentro de MarketBackend.seedInitialMarket()
+/* 
+   MarketBackend.seedInitialMarket = function() {
+       // ... tu código existente de bots ...
+       this.seedInitialAuctions(); // <--- AÑADE ESTA LÍNEA
+   }
+*/
+
+MarketBackend.seedInitialAuctions = function() {
+    console.log("Seeding Auctions...");
+    // Creamos unas 15 subastas aleatorias
+    for(let i=0; i<15; i++) {
+        const randomPlayer = playersDB[Math.floor(Math.random() * playersDB.length)];
+        const isGolden = Math.random() < 0.1;
+        const variant = 'none'; // Simplificado
+        
+        const basePrice = this.calculateBaseBotPrice(randomPlayer.rarity, isGolden, variant, randomPlayer);
+        const startPrice = Math.floor(basePrice * 0.5); // Las subastas empiezan baratas
+        
+        // Tiempo aleatorio entre 2 minutos y 10 minutos desde ahora
+        const duration = (Math.floor(Math.random() * 8) + 2) * 60 * 1000;
+        
+        const marketKey = this.getMarketKey(randomPlayer.cardCode, isGolden, variant);
+        
+        // Asegurar que existe la entrada en DB
+        if (!marketDatabase[marketKey]) {
+             marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0 };
+        }
+
+        const auction = {
+            id: `auc_${Date.now()}_${i}`,
+            sellerId: `Bot_Auctioneer`,
+            price: startPrice, // Precio inicial
+            currentBid: startPrice,
+            isAuction: true,
+            endTime: Date.now() + duration,
+            highestBidder: null,
+            timestamp: Date.now()
+        };
+        
+        marketDatabase[marketKey].listings.push(auction);
+    }
+};
+
+// 2. Función para realizar una puja (Frontend -> Backend)
+window.placeBid = function(listingId, marketKey, currentBid) {
+    // --- SONIDO ---
+    const btnSound = document.getElementById('buttonClickSound');
+    if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
+    
+    // --- 1. CÁLCULO DEL MÍNIMO LEGAL (Regla del 5%) ---
+    let increment = Math.floor(currentBid * 0.05);
+    if (increment < 10) increment = 10; 
+    
+    const minNextBid = currentBid + increment;
+
+    // --- 2. PREPARAR MODAL ---
+    const overlay = document.getElementById('confirm-modal-overlay');
+    const title = document.getElementById('confirm-modal-title');
+    const text = document.getElementById('confirm-modal-text');
+    const confirmBtn = document.getElementById('confirm-action-btn');
+    const cancelBtn = document.getElementById('cancel-action-btn');
+
+    title.textContent = 'Place Your Bid';
+    
+    text.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="color:#aaa; font-size:14px;">Current Bid: <strong>${currentBid.toLocaleString()}</strong></span>
+            <input type="number" id="custom-bid-input" value="${minNextBid}" min="${minNextBid}">
+            <span class="bid-info-text">Min Bid (+5%): ${minNextBid.toLocaleString()}</span>
+            <span class="bid-info-text" style="color:${playerCurrency >= minNextBid ? '#2ecc71' : '#e74c3c'}">
+                Your Balance: ${playerCurrency.toLocaleString()}
+            </span>
+        </div>
+    `;
+
+    overlay.classList.add('visible');
+
+    setTimeout(() => {
+        const input = document.getElementById('custom-bid-input');
+        if(input) { input.focus(); input.select(); }
+    }, 100);
+
+    // --- 3. DEFINIR ACCIONES ---
+    cancelBtn.onclick = () => {
+        overlay.classList.remove('visible');
+    };
+
+    confirmBtn.onclick = () => {
+        const input = document.getElementById('custom-bid-input');
+        const userBidAmount = parseInt(input.value);
+
+        if (isNaN(userBidAmount)) { showToast("Please enter a valid number.", 'error'); return; }
+        if (userBidAmount < minNextBid) { showToast(`Bid too low! Minimum is ${minNextBid.toLocaleString()}.`, 'error'); input.value = minNextBid; return; }
+        if (playerCurrency < userBidAmount) { showToast(`Not enough gems! You need ${userBidAmount.toLocaleString()}.`, 'error'); return; }
+
+        overlay.classList.remove('visible'); 
+        executeBidLogic(userBidAmount); 
+    };
+
+    function executeBidLogic(finalBidAmount) {
+        const data = marketDatabase[marketKey];
+        if (!data) return;
+        const auction = data.listings.find(l => l.id === listingId);
+        
+        if (!auction) {
+            showToast("Auction ended or not found.", 'error');
+            searchMarket();
+            return;
+        }
+        
+        if (auction.currentBid >= finalBidAmount) {
+            showToast("Price updated! Someone bid higher while you were typing.", 'error');
+            if (typeof searchMarket === 'function') searchMarket(true);
+            return;
+        }
+
+        if (Date.now() > auction.endTime) {
+            showToast("Auction has ended!", 'error');
+            return;
+        }
+
+        playerCurrency -= finalBidAmount;
+        saveCurrency();
+        updateCurrencyDisplay();
+        
+        auction.currentBid = finalBidAmount;
+        auction.highestBidder = 'PLAYER';
+        
+        if (auction.endTime - Date.now() < 30000) {
+            auction.endTime += 30000;
+            showToast("Time extended by 30s!", 'info');
+        }
+
+        showToast(`Bid of ${finalBidAmount.toLocaleString()} 💎 placed!`, 'success');
+        trackBet(listingId, marketKey); 
+        MarketBackend.saveInteractedAuctions(); 
+
+        if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+            renderHistoryView(); 
+        } else {
+            searchMarket(true); 
+        }
+    }
+};
+
+// 3. Sistema de Ticker para actualizar los tiempos en tiempo real
+// (Sin recargar toda la rejilla)
+setInterval(() => {
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'auction') {
+        const timerElements = document.querySelectorAll('.auction-timer');
+        const now = Date.now();
+        
+        timerElements.forEach(el => {
+            // El ID del elemento es "timer-auc_123..."
+            const auctionId = el.id.replace('timer-', '');
+            
+            // Buscar la subasta en la DB es costoso, así que intentamos parsear si es posible
+            // O mejor, forzamos un searchMarket() si detectamos que un tiempo llegó a 0
+            // Para simplificar rendimiento: Forzamos searchMarket cada 10s o actualizamos texto.
+            
+            // Opción simple: Refrescar la rejilla entera cada segundo si estás en auctions
+            // (Puede ser pesado pero efectivo para pocas subastas)
+        });
+        
+        // Refresco automático de la pestaña subastas para ver cambios de precio/tiempo
+        searchMarket(true); 
+    }
+}, 1000);
+
+// 4. Procesador de Subastas Finalizadas (Backend Loop)
+setInterval(() => {
+    // Recorre todas las subastas y si han terminado, entrega el item
+    Object.keys(marketDatabase).forEach(key => {
+        const data = marketDatabase[key];
+        // Iteramos hacia atrás para poder borrar
+        for (let i = data.listings.length - 1; i >= 0; i--) {
+            const listing = data.listings[i];
+            if (listing.isAuction && Date.now() > listing.endTime) {
+                
+                // Si el jugador ganó
+                if (listing.highestBidder === 'PLAYER') {
+                    const [code, goldenStr, variant] = key.split('_');
+                    addCardToCollection(code, goldenStr, variant);
+                    
+                    const player = playersDB.find(p => p.cardCode === code);
+                    showToast(`🏆 You won the auction for ${player.name}!`, 'success', 5000);
+                    
+                    // Log en historial
+                    logMarketTransaction('buy', {
+        playerData: player, 
+        rarity: player.rarity, 
+        variant: variant, 
+        golden: goldenStr === 'true'
+    }, listing.currentBid, true); // <--- TRUE indica subasta
+}
+
+// Si el jugador VENDIÓ (Era su carta y alguien pujó)
+if (listing.sellerId === 'PLAYER' && listing.highestBidder !== null) {
+    const [code, goldenStr, variant] = key.split('_');
+    const player = playersDB.find(p => p.cardCode === code);
+    
+    // Sumar dinero (ya que la subasta acabó)
+    playerCurrency += listing.currentBid;
+    saveCurrency();
+    updateCurrencyDisplay();
+    showToast(`💰 Auction sold! ${player.name} for ${listing.currentBid} 💎`, 'success');
+
+    // Registrar en historial con el flag TRUE
+    logMarketTransaction('sell', {
+        playerData: player, 
+        rarity: player.rarity, 
+        variant: variant, 
+        golden: goldenStr === 'true'
+    }, listing.currentBid, true); // <--- TRUE indica subasta
+}
+                
+                // Eliminar subasta finalizada
+                data.listings.splice(i, 1);
+            }
+        }
+    });
+}, 1000);
+
+window.setSellMode = function(mode) {
+    currentSellMode = mode;
+    
+    // Actualizar botones visualmente
+    document.getElementById('btn-mode-fixed').classList.toggle('active', mode === 'fixed');
+    document.getElementById('btn-mode-auction').classList.toggle('active', mode === 'auction');
+    
+    // Mostrar/Ocultar duración
+    const durationContainer = document.getElementById('auction-duration-container');
+    const priceLabel = document.getElementById('price-input-label');
+    const confirmBtn = document.getElementById('confirm-sell-listing-btn');
+    
+    if (mode === 'auction') {
+        durationContainer.style.display = 'block';
+        priceLabel.textContent = "Starting Bid (💎)";
+        confirmBtn.textContent = "START AUCTION";
+        confirmBtn.style.background = "#9b59b6"; // Morado
+    } else {
+        durationContainer.style.display = 'none';
+        priceLabel.textContent = "Listing Price (💎)";
+        confirmBtn.textContent = "CONFIRM LISTING";
+        confirmBtn.style.background = "#1f7"; // Verde
+    }
+};
+
+// --- GESTIÓN DE APUESTAS ACTIVAS ---
+let myActiveBets = [];
+
+function loadActiveBets() {
+  const saved = localStorage.getItem('myActiveBets');
+  if (saved) myActiveBets = JSON.parse(saved);
+}
+
+function saveActiveBets() {
+  localStorage.setItem('myActiveBets', JSON.stringify(myActiveBets));
+}
+
+function trackBet(listingId, marketKey) {
+  // Evitar duplicados
+  if (!myActiveBets.some(b => b.id === listingId)) {
+    myActiveBets.push({ id: listingId, key: marketKey });
+    saveActiveBets();
+  }
+}
+
+function forfeitBet(listingId) {
+  // --- SONIDO ---
+  const btnSound = document.getElementById('buttonClickSound');
+  if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+  // --------------
+
+  myActiveBets = myActiveBets.filter(b => b.id !== listingId);
+  saveActiveBets();
+  renderHistoryView(); 
+  showToast("Removed from Active Bets list.", "info");
+}
+// Cargar al inicio
+document.addEventListener('DOMContentLoaded', loadActiveBets);
+
+// Intervalo de refresco de UI (1 segundo)
+setInterval(() => {
+    // 1. Si estás en AUCTIONS o BUY -> Refresca la rejilla
+    if (typeof currentMarketTab !== 'undefined' && (currentMarketTab === 'auction' || currentMarketTab === 'buy')) {
+        // searchMarket(true); // Descomenta esto si quieres que los precios de Buy también se muevan solos
+        // Para subastas es vital para el temporizador:
+        if(currentMarketTab === 'auction') searchMarket(true);
+    }
+
+    // 2. --- ESTO ES LO QUE TE FALTA ---
+    // Si estás en HISTORY -> Refresca la lista para ver si pasas de Winning a Outbid
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+        renderHistoryView();
+    }
+}, 1000);
+
+// Función para cambiar las opciones del filtro de ordenación dinámicamente
+function updateSortOptions(tab) {
+    const select = document.getElementById('market-sort-select');
+    if (!select) return;
+
+    // Limpiamos las opciones actuales
+    select.innerHTML = '';
+
+    if (tab === 'auction') {
+        // --- OPCIONES PARA SUBASTAS (Time en vez de Stock) ---
+        select.innerHTML = `
+            <option value="time_asc">Time: Ending Soon</option>
+            <option value="time_desc">Time: Newest</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+        `;
+        // Por defecto: Ending Soon
+        select.value = 'time_asc';
+    } else {
+        // --- OPCIONES ESTÁNDAR (Buy / Sell) ---
+        select.innerHTML = `
+            <option value="price_desc">Price: High to Low</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="supply_asc">Stock: Low to High</option>
+            <option value="supply_desc">Stock: High to Low</option>
+        `;
+        // Por defecto para Buy/Sell (puedes cambiarlo si prefieres Low to High)
+        select.value = 'price_desc'; 
+    }
+}
 
 </script>
 <div id="toast-notification"></div>
