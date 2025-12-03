@@ -7086,18 +7086,20 @@ function buildProbLists(config) {
 
 const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
-// --- INICIALIZACIÓN DE DATOS DE JUGADOR (MODO TEST O NORMAL) ---
 
-window.collection = {}; 
-window.packInventory = {};
-window.playerCurrency = 0; // Empieza en 0, Firebase lo actualizará en medio segundo
-// let playerCurrency = 0;    // Mantener compatibilidad si usas esta variable localmente
+// --- INICIALIZACIÓN DE DATOS (VERSIÓN ONLINE LIMPIA) ---
+window.collection = {};
+window.packInventory = { 'common-pack': 0, 'rare-pack': 0, 'collectors-pack': 0 };
+window.playerCurrency = 0; 
 window.gradedCollection = [];
+window.isCloudDataLoaded = false;
 
+// ALIAS PARA COMPATIBILIDAD (Sin usar 'let')
 var collection = window.collection;
 var packInventory = window.packInventory;
 var playerCurrency = window.playerCurrency;
 var gradedCollection = window.gradedCollection;
+
 
 const gradingScale = [
   { threshold: 0.015, score: "10+", name: "PRISTINE" },     // 
@@ -7159,7 +7161,6 @@ collection[playerCardCode] = {}; // Usamos el cardCode como clave principal
 });
 });
 
-  playerCurrency = 999999;
   packInventory = {
     'common-pack': 99,
     'rare-pack': 99,
@@ -14128,4 +14129,3 @@ async function checkAndFinalizeAuction(listing) {
 <div id="toast-notification"></div>
 </body>
 </html>
-
