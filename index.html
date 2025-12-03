@@ -9281,21 +9281,31 @@ showToast(`Sold for ${totalEarnings} 💎`, 'info');
 
 // Necesitamos una función para guardar la colección, por si no la tienes
 async function saveCollection() {
-  // 1. Guardar en local (Copia de seguridad visual)
+  // 1. Guardar en local
   localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
 
-  // 2. Si aún no hemos cargado datos de la nube, NO guardamos para no machacar datos
-  if (!window.isCloudDataLoaded) return;
+  // 2. Seguridad
+  if (!window.isCloudDataLoaded || !window.currentUser) return;
 
-  // 3. GUARDAR EN FIREBASE (La parte importante)
-  if (window.currentUser) {
+  try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      
+      // CAMBIO CLAVE: Usamos updateDoc.
+      // Esto reemplaza el campo 'collection' entero con lo que tengas ahora en memoria.
+      // Así, si has borrado una carta, desaparecerá también de la nube.
+      await window.fs.updateDoc(userRef, { 
+          collection: window.collection 
+      });
+      
+      console.log("☁️ Guardado en nube OK.");
+  } catch (e) {
+      console.error("Error guardando colección:", e);
+      // Si falla, intentamos set con merge (fallback)
       try {
           const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          // Enviamos el objeto window.collection completo
           await window.fs.setDoc(userRef, { collection: window.collection }, { merge: true });
-          // console.log("☁️ Colección sincronizada con la nube.");
-      } catch (e) {
-          console.error("Error guardando en Firebase:", e);
+      } catch(e2) {
+          console.error("Error crítico guardando:", e2);
       }
   }
 }
@@ -12721,39 +12731,42 @@ function addCardToCollection(cardCode, isGolden, variant) {
 
   // --- removeCardFromCollection CORREGIDA (Borra de Nube) ---
 function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
-    // Normalizar booleanos
+    // 1. Normalizar claves
     const goldenBool = (isGolden === true || isGolden === "true");
     const variantKey = `${goldenBool}_${variant}`;
     
-    // Verificación de seguridad
+    // 2. Buscar en la colección GLOBAL
     if (!window.collection[cardCode] || !window.collection[cardCode][variantKey]) {
-        console.error("Intento de vender carta que no tienes:", cardCode, variantKey);
+        console.error("No tienes esa carta:", cardCode);
         return false; 
     }
 
     const cardStack = window.collection[cardCode][variantKey];
 
     if (cardStack.count < quantity) {
-        console.error("No tienes suficientes copias:", cardStack.count, " < ", quantity);
+        console.error("No tienes suficientes copias.");
         return false; 
     }
 
-    // Restar cantidad
+    // 3. Modificar datos
     cardStack.count -= quantity;
 
-    // Si llega a 0, borramos la entrada completamente
+    // Si llega a 0, BORRAR la propiedad del objeto
     if (cardStack.count <= 0) {
         delete window.collection[cardCode][variantKey];
         
-        // Si el jugador se queda sin variantes, borramos al jugador del objeto
+        // Limpieza profunda: si el jugador no tiene más variantes, borrar al jugador
         if (Object.keys(window.collection[cardCode]).length === 0) {
             delete window.collection[cardCode];
         }
     }
 
-    // --- GUARDADO CRÍTICO ---
-    saveCollection(); // <--- ESTO ENVÍA EL BORRADO A FIREBASE
-    updateAlbumStats();
+    // 4. GUARDAR INMEDIATAMENTE
+    console.log("Guardando cambios tras borrar...");
+    saveCollection(); 
+    
+    // 5. Actualizar visuales
+    if (typeof updateAlbumStats === 'function') updateAlbumStats();
     
     return true;
 }
