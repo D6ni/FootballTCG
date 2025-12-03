@@ -9271,21 +9271,21 @@ showToast(`Sold for ${totalEarnings} 💎`, 'info');
 
 // Necesitamos una función para guardar la colección, por si no la tienes
 async function saveCollection() {
-  // 1. Guardar en local (Caché visual)
+  // 1. Guardar en local (Copia de seguridad visual)
   localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
 
-  // 2. Protección: No guardar si aún no hemos cargado (Evita borrar datos al inicio)
+  // 2. Si aún no hemos cargado datos de la nube, NO guardamos para no machacar datos
   if (!window.isCloudDataLoaded) return;
 
-  // 3. Guardar en Firebase
+  // 3. GUARDAR EN FIREBASE (La parte importante)
   if (window.currentUser) {
       try {
           const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          // IMPORTANTE: Enviamos window.collection
+          // Enviamos el objeto window.collection completo
           await window.fs.setDoc(userRef, { collection: window.collection }, { merge: true });
-          console.log("☁️ Colección guardada en la nube.");
+          // console.log("☁️ Colección sincronizada con la nube.");
       } catch (e) {
-          console.error("Error guardando colección:", e);
+          console.error("Error guardando en Firebase:", e);
       }
   }
 }
@@ -12672,41 +12672,42 @@ document.getElementById('confirm-sell-listing-btn').addEventListener('click', as
 
 // --- FUNCIONES AUXILIARES PARA GESTIONAR LA COLECCIÓN DESDE EL MERCADO ---
 
-    function addCardToCollection(cardCode, isGolden, variant) {
-    // Convertir isGolden a booleano por si acaso viene como string
-      const goldenBool = String(isGolden) === 'true';
-      const variantKey = `${goldenBool}_${variant}`;
-      const playerData = playersDB.find(p => p.cardCode === cardCode);
+function addCardToCollection(cardCode, isGolden, variant) {
+    // Normalizar datos
+    const goldenBool = (isGolden === true || isGolden === "true");
+    const variantKey = `${goldenBool}_${variant}`;
+    const playerData = playersDB.find(p => p.cardCode === cardCode);
 
-      if (!playerData) return console.error("Player not found:", cardCode);
+    if (!playerData) return console.error("Player not found in DB:", cardCode);
 
-      if (!collection[cardCode]) {
-        collection[cardCode] = {};
-      }
+    // Asegurar estructura
+    if (!window.collection[cardCode]) {
+        window.collection[cardCode] = {};
+    }
 
-      if (!collection[cardCode][variantKey]) {
-        // Si es nueva, creamos la entrada
-        collection[cardCode][variantKey] = {
-          count: 1,
-          cardData: {
-            playerData: playerData,
-            rarity: playerData.rarity,
-            golden: goldenBool,
-            variant: variant
-          }
+    // Añadir o incrementar
+    if (!window.collection[cardCode][variantKey]) {
+        window.collection[cardCode][variantKey] = {
+            count: 1,
+            cardData: {
+                playerData: playerData,
+                rarity: playerData.rarity,
+                golden: goldenBool,
+                variant: variant
+            }
         };
-        // Marcamos como nueva para el álbum
-        const uniqueId = getUniqueCardId(collection[cardCode][variantKey].cardData);
+        // Marcar como nueva
+        const uniqueId = `${cardCode}_${goldenBool}_${variant}`;
         newCards.add(uniqueId);
         saveNewCards();
-      } else {
-        // Si ya existe, sumamos 1
-        collection[cardCode][variantKey].count++;
-      }
+    } else {
+        window.collection[cardCode][variantKey].count++;
+    }
 
-    saveCollection(); // Guardar en localStorage
-    updateAlbumStats(); // Actualizar contadores visuales
-  }
+    // --- GUARDAR EN NUBE ---
+    saveCollection(); 
+    updateAlbumStats();
+}
 
   function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
     const goldenBool = String(isGolden) === 'true';
