@@ -6077,6 +6077,7 @@ button,
 </div>
 
 <!-- 2. BARRA DE USUARIO (Centrada debajo) -->
+<!-- 2. BARRA DE USUARIO (Alineación Perfecta) -->
 <div id="user-auth-ui" style="
     display: flex; 
     justify-content: center; 
@@ -6109,23 +6110,26 @@ button,
     <!-- B. PERFIL JUGADOR (Si estás conectado) -->
     <div id="user-profile-info" style="
         display: none; 
-        align-items: center; 
-        justify-content: space-between; 
-        gap: 15px; 
+        align-items: center; /* Centrado vertical MAESTRO */
+        justify-content: center; 
+        gap: 18px; /* Un poco más de espacio entre elementos */
         background: rgba(0, 0, 0, 0.6); 
-        padding: 8px 20px; 
+        padding: 6px 20px; 
         border-radius: 50px; 
         border: 1px solid #444; 
         box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        height: 32px; /* Altura fija para controlar el centro */
     ">
         
         <!-- Nombre y Lápiz -->
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; height: 100%;">
             <span id="display-username" style="
                 color: #ffc84a; 
                 font-weight: 800; 
                 font-size: 15px; 
                 letter-spacing: 0.5px;
+                line-height: 1; /* Evita desplazamientos de texto */
+                padding-top: 2px; /* Pequeño ajuste óptico */
             ">User</span>
             
             <button id="btn-edit-username" title="Change Name" style="
@@ -6135,22 +6139,31 @@ button,
                 font-size: 14px; 
                 opacity: 0.7; 
                 padding: 0;
+                display: flex;
+                align-items: center;
+                height: 100%;
             ">✏️</button>
         </div>
 
         <!-- Línea Separadora -->
-        <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.2);"></div>
+        <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2);"></div>
 
         <!-- Botón Logout -->
         <button id="btn-logout" style="
             background: #c0392b; 
             color: white; 
             border: none; 
-            padding: 6px 12px; 
-            border-radius: 20px; 
+            padding: 0 14px; /* Padding solo lateral */
+            height: 24px;    /* Altura fija exacta */
+            border-radius: 12px; 
             cursor: pointer; 
-            font-size: 11px; 
-            font-weight: bold;
+            font-size: 10px; 
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;       /* Flexbox dentro del botón */
+            align-items: center; /* Centra el texto del botón verticalmente */
+            justify-content: center;
+            margin: 0;           /* Elimina márgenes fantasma */
         ">
             LOGOUT
         </button>
