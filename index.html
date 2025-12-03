@@ -7779,74 +7779,56 @@ function createShowcase() {
     return true;
   });
 
-  // --- 4. ORDENACIÓN (LIGAS -> EQUIPOS -> ESCUDO -> MEDIA) ---
-  
-  if (currentRatingSort !== 'none') {
-    // Si hay ordenación manual por OVR (botón), tiene prioridad
-    filteredPlayers.sort((playerA, playerB) => {
-        const ratingA = playerA.rating; 
-        const ratingB = playerB.rating;
-        if (currentRatingSort === 'desc') { return ratingB - ratingA; } 
-        else { return ratingA - ratingB; }
-    });
-  } 
-  else {
-    // ORDEN AUTOMÁTICO DEL ÁLBUM
-    filteredPlayers.sort((a, b) => {
-        
-        // --- CONFIGURACIÓN: ORDEN DE TUS LIGAS ---
-        // Pon aquí los nombres EXACTOS de las carpetas de las ligas.
-        // El orden en esta lista será el orden en el álbum.
-        // Si añades el set "Mundial", añade "world-cup" a esta lista.
-        const leaguePriority = [
-            "la-liga", 
-            "premier-league", 
-            "serie-a", 
-            "bundesliga",
-            "ligue-1",
-            "retired" // Para el set SR1 u otros especiales
-        ];
-
-        // Función inteligente para detectar la liga sin importar el Set
-        const getLeagueIndex = (player) => {
-            const path = player.img.toLowerCase(); // Convertimos a minúsculas para evitar errores
+  // --- 4. ORDENACIÓN AUTOMÁTICA (EXTRAE LA LIGA DE LA IMAGEN) ---
+    
+    if (currentRatingSort !== 'none') {
+        // Orden manual por botón (OVR)
+        filteredPlayers.sort((a, b) => {
+            if (currentRatingSort === 'desc') return b.rating - a.rating;
+            return a.rating - b.rating;
+        });
+    } 
+    else {
+        // ORDEN POR DEFECTO DEL ÁLBUM
+        filteredPlayers.sort((a, b) => {
             
-            // Buscamos cuál de las ligas de nuestra lista aparece en la ruta de la imagen
-            const index = leaguePriority.findIndex(leagueName => path.includes(leagueName));
+            // A. DETECTAR LIGA AUTOMÁTICAMENTE
+            // La ruta es: images/cards/sets/S00/NOMBRE-LIGA/equipo...
+            // Al hacer split('/'), los índices son:
+            // 0: images, 1: cards, 2: sets, 3: S00, 4: NOMBRE-LIGA
+            const getLeagueName = (card) => {
+                const parts = card.img.split('/');
+                // Cogemos la parte 4. Si la ruta es rara, devolvemos "z_otros" para que vaya al final.
+                return (parts.length > 4) ? parts[4].toLowerCase() : "z_otros";
+            };
+
+            const leagueA = getLeagueName(a);
+            const leagueB = getLeagueName(b);
+
+            // Comparamos los nombres de las carpetas alfabéticamente
+            // Ej: "bundesliga" irá antes que "la-liga", y este antes que "premier-league"
+            const leagueCompare = leagueA.localeCompare(leagueB);
+            if (leagueCompare !== 0) return leagueCompare;
+
+
+            // B. ORDENAR POR EQUIPO (Dentro de la misma liga)
+            const teamA = (a.teams && a.teams.length > 0) ? a.teams[0] : (a.team || "ZZZ");
+            const teamB = (b.teams && b.teams.length > 0) ? b.teams[0] : (b.team || "ZZZ");
+
+            const teamCompare = teamA.localeCompare(teamB);
+            if (teamCompare !== 0) return teamCompare;
+
+
+            // C. ESTRUCTURA INTERNA (Escudo -> Media)
             
-            // Si la encuentra, devuelve su posición (0, 1, 2...). 
-            // Si no (ej: una liga nueva no configurada), devuelve 999 para ir al final.
-            return index === -1 ? 999 : index;
-        };
+            // 1. Escudo primero
+            if (a.position === "Crest" && b.position !== "Crest") return -1;
+            if (a.position !== "Crest" && b.position === "Crest") return 1;
 
-        const idxA = getLeagueIndex(a);
-        const idxB = getLeagueIndex(b);
-
-        // 1. COMPARAR LIGAS
-        if (idxA !== idxB) return idxA - idxB;
-
-
-        // 2. COMPARAR EQUIPOS (Alfabéticamente A-Z)
-        // Si son de la misma liga, agrupamos por equipo
-        const teamA = (a.teams && a.teams[0]) ? a.teams[0] : (a.team || "ZZZ");
-        const teamB = (b.teams && b.teams[0]) ? b.teams[0] : (b.team || "ZZZ");
-        
-        const teamComparison = teamA.localeCompare(teamB);
-        if (teamComparison !== 0) return teamComparison;
-
-
-        // 3. ESTRUCTURA DENTRO DEL EQUIPO
-        
-        // REGLA: El Escudo ("Crest") SIEMPRE va el primero de todos
-        if (a.position === "Crest" && b.position !== "Crest") return -1;
-        if (a.position !== "Crest" && b.position === "Crest") return 1;
-
-        // REGLA: Por Media (Rating)
-        // a.rating - b.rating = De peor a mejor (60 -> 70 -> 80)
-        // b.rating - a.rating = De mejor a peor (Estrellas primero)
-        return a.rating - b.rating; 
-    });
-  }
+            // 2. Por Media (Mejores arriba)
+            return b.rating - a.rating;
+        });
+    }
 
   // Si no hay resultados
   if (filteredPlayers.length === 0) {
