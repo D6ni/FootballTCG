@@ -6792,7 +6792,7 @@ button,
       document.getElementById('username-modal-overlay').style.display = 'flex';
   });
 
-  // --- LÓGICA MODAL NOMBRE DE USUARIO (UNICIDAD GARANTIZADA) ---
+  // --- LÓGICA MODAL NOMBRE DE USUARIO (CON MODO DIOS) ---
   const usernameModal = document.getElementById('username-modal-overlay');
   const usernameConfirm = document.getElementById('btn-confirm-username');
   const usernameInput = document.getElementById('new-username-input');
@@ -6800,64 +6800,63 @@ button,
 
   if(usernameConfirm) {
       usernameConfirm.addEventListener('click', async () => {
-          // Limpiamos el input: minúsculas para el ID, normal para mostrar
+          // Normalizamos el ID (para la base de datos)
           const nameID = usernameInput.value.trim().toLowerCase(); 
+          // El nombre bonito (para mostrar en pantalla)
           const nameDisplay = usernameInput.value.trim();
 
-          // Validaciones básicas
-          if (nameID.length < 3 || nameID.length > 12) {
-              usernameError.textContent = "Username must be 3-12 characters.";
-              return;
-          }
-          if (!/^[a-zA-Z0-9_]+$/.test(nameID)) {
-              usernameError.textContent = "Only letters, numbers and _ allowed.";
-              return;
+          // --- EXCEPCIÓN CREADOR ---
+          // Si escribes EXACTAMENTE esto, te saltas todas las reglas.
+          const isCreator = nameDisplay === "D6ni 👑"; 
+
+          if (!isCreator) {
+              // REGLAS PARA LOS MORTALES
+              if (nameID.length < 3 || nameID.length > 12) {
+                  usernameError.textContent = "Username must be 3-12 characters.";
+                  return;
+              }
+              if (!/^[a-zA-Z0-9_]+$/.test(nameID)) {
+                  usernameError.textContent = "Only letters, numbers and _ allowed.";
+                  return;
+              }
           }
 
           usernameError.textContent = "Checking availability...";
           usernameConfirm.disabled = true;
 
           try {
-              // --- LA MAGIA: TRANSACCIÓN DE FIREBASE ---
-              // Esto asegura que dos personas no cojan el mismo nombre al mismo milisegundo
               await runTransaction(db, async (transaction) => {
                   
-                  // 1. Miramos si el nombre ya existe en la colección 'usernames'
+                  // Usamos nameID como clave. Si es el creador, la clave será "d6ni 👑"
                   const usernameRef = doc(db, "usernames", nameID);
                   const usernameSnap = await transaction.get(usernameRef);
 
                   if (usernameSnap.exists()) {
-                      throw "Username already taken!"; // Cancelamos todo si existe
+                      throw "Username already taken!";
                   }
 
-                  // 2. Miramos si el usuario YA TIENE un nombre (para que no lo cambie 2 veces)
                   const userRef = doc(db, "users", window.currentUser.uid);
                   const userSnap = await transaction.get(userRef);
                   if (userSnap.exists() && userSnap.data().username) {
                       throw "You already have a username!";
                   }
 
-                  // 3. Si todo está libre, escribimos los datos
-                  transaction.set(usernameRef, { uid: window.currentUser.uid }); // Reservar nombre
-                  transaction.update(userRef, { username: nameDisplay });        // Guardar en perfil
+                  transaction.set(usernameRef, { uid: window.currentUser.uid }); 
+                  transaction.update(userRef, { username: nameDisplay });        
               });
 
-              // Éxito visual
               usernameModal.style.display = 'none';
-              // Ocultamos el botón de editar inmediatamente
               const btnEdit = document.getElementById('btn-edit-username');
               if(btnEdit) btnEdit.style.display = 'none'; 
               
-              // Actualizamos el nombre en pantalla
               if(displayUsername) displayUsername.textContent = nameDisplay;
 
           } catch (e) {
-              console.error("Error setting username:", e);
-              // Si el error es nuestro string personalizado, lo mostramos
+              console.error(e);
               if (typeof e === 'string') {
                   usernameError.textContent = e;
               } else {
-                  usernameError.textContent = "Username taken or error. Try another.";
+                  usernameError.textContent = "Error. Try another name.";
               }
               usernameConfirm.disabled = false;
           }
