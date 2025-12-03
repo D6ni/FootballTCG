@@ -7088,11 +7088,16 @@ const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
 // --- INICIALIZACIÓN DE DATOS DE JUGADOR (MODO TEST O NORMAL) ---
 
-let collection;
-let packInventory;
+window.collection = {}; 
+window.packInventory = {};
 window.playerCurrency = 0; // Empieza en 0, Firebase lo actualizará en medio segundo
 let playerCurrency = 0;    // Mantener compatibilidad si usas esta variable localmente
-let gradedCollection;
+window.gradedCollection = [];
+
+var collection = window.collection;
+var packInventory = window.packInventory;
+var playerCurrency = window.playerCurrency;
+var gradedCollection = window.gradedCollection;
 
 const gradingScale = [
   { threshold: 0.015, score: "10+", name: "PRISTINE" },     // 
@@ -9256,18 +9261,38 @@ showToast(`Sold for ${totalEarnings} 💎`, 'info');
 }
 
 // Necesitamos una función para guardar la colección, por si no la tienes
-// --- GUARDAR ÁLBUM EN NUBE ---
 async function saveCollection() {
-  // 1. Guardar en local
-  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+  // 1. Guardar en local (Caché visual)
+  localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
 
-  // 2. Guardar en Firebase
+  // 2. Protección: No guardar si aún no hemos cargado (Evita borrar datos al inicio)
+  if (!window.isCloudDataLoaded) return;
+
+  // 3. Guardar en Firebase
   if (window.currentUser) {
       try {
           const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          await window.fs.setDoc(userRef, { collection: collection }, { merge: true });
+          // IMPORTANTE: Enviamos window.collection
+          await window.fs.setDoc(userRef, { collection: window.collection }, { merge: true });
+          console.log("☁️ Colección guardada en la nube.");
       } catch (e) {
-          console.error("Error guardando colección en nube:", e);
+          console.error("Error guardando colección:", e);
+      }
+  }
+}
+
+async function savePackInventory() {
+  localStorage.setItem('myFootballPacks', JSON.stringify(window.packInventory));
+
+  if (!window.isCloudDataLoaded) return; 
+
+  if (window.currentUser) {
+      try {
+          const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+          // IMPORTANTE: Enviamos window.packInventory
+          await window.fs.setDoc(userRef, { packs: window.packInventory }, { merge: true });
+      } catch (e) {
+          console.error("Error guardando packs:", e);
       }
   }
 }
