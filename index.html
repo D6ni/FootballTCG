@@ -6912,23 +6912,20 @@ button,
               if(btnEditUser) btnEditUser.style.display = 'none';
           }
 
-          // 3. PACKS Y COLECCIÓN
+          // PACKS
           if (data.packs) {
               window.packInventory = data.packs;
+              // Guardamos copia de seguridad local
               localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
-              // Refrescar tienda si está abierta
-              const packsOverlay = document.getElementById('packs-overlay');
-              if(packsOverlay && packsOverlay.classList.contains('visible') && typeof renderPacksView === 'function') {
-                 renderPacksView();
-              }
           }
 
+          // COLECCIÓN (ESTO ES LO IMPORTANTE)
           if (data.collection) {
               window.collection = data.collection;
+              // Guardamos copia de seguridad local
               localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
-              // Refrescar álbum si hace falta
-              if (typeof updateAlbumStats === 'function') updateAlbumStats();
-              if (typeof updateCounter === 'function') updateCounter();
+              
+              console.log("📥 Colección descargada:", Object.keys(window.collection).length, "jugadores.");
           }
 
           // Desbloquear pantalla de carga
@@ -7088,9 +7085,15 @@ const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
 
 // --- INICIALIZACIÓN DE DATOS (VERSIÓN ONLINE LIMPIA) ---
-window.collection = {};
-window.packInventory = { 'common-pack': 0, 'rare-pack': 0, 'collectors-pack': 0 };
-window.playerCurrency = 0; 
+if (!window.collection) {
+    window.collection = {};
+}
+if (!window.packInventory) {
+    window.packInventory = { 'common-pack': 0, 'rare-pack': 0, 'collectors-pack': 0 };
+}
+if (typeof window.playerCurrency === 'undefined') {
+    window.playerCurrency = 0;
+}
 window.gradedCollection = [];
 window.isCloudDataLoaded = false;
 
