@@ -8959,58 +8959,66 @@ for (const packId in packInventory) {
 }
 }
 
-// --- purchasePacks CORREGIDA (Usa dinero real + Toast) ---
-// 1. FUNCIÓN DE EJECUCIÓN DE COMPRA
-function purchasePacks(packId, quantity) {
+// --- purchasePacks SEGURA (Solo Firebase toca el dinero) ---
+async function purchasePacks(packId, quantity) {
   console.log(`🛒 Intento de compra: ${quantity}x ${packId}`);
 
-  // Validación básica
+  // 1. Validaciones
   if (!Number.isInteger(quantity) || quantity <= 0) {
     showToast("Invalid quantity.", "error");
     return;
   }
 
   const pack = packTypes[packId];
-  if (!pack) { console.error("Pack no existe"); return; }
-
   const totalCost = pack.cost * quantity;
+  const currentGems = window.playerCurrency || 0;
 
-  // --- CORRECCIÓN CRÍTICA: LEER DINERO DE FIREBASE ---
-  // Usamos window.playerCurrency. Si es undefined, usamos 0.
-  const currentGems = window.playerCurrency || 0; 
-
-  console.log(`💎 Dinero disponible: ${currentGems} | Coste total: ${totalCost}`);
-
-  if (currentGems >= totalCost) {
-    // A. RESTAR DINERO (Visual inmediato)
-    window.playerCurrency -= totalCost;
-    window.spendGemsOnline(totalCost); 
-    
-    // B. RESTAR DINERO (Nube)
-    // Verificamos que la función exista antes de llamar
-    if (typeof spendGemsOnline === 'function') {
-        spendGemsOnline(totalCost);
-    } else {
-        console.warn("spendGemsOnline no encontrada, solo se restó localmente.");
-    }
-
-    // C. AÑADIR PACKS
-    packInventory[packId] = (packInventory[packId] || 0) + quantity;
-    savePackInventory(); // Guarda en nube automáticamente
-
-    // D. UI Y FEEDBACK
-    renderPacksView();
-    closePackPurchaseView();
-
-    const buttonSound = document.getElementById('buttonClickSound');
-    if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play(); }
-    
-    showToast(`Success! Bought ${quantity} ${pack.name}.`, "success");
-
-  } else {
-    console.warn("❌ Compra rechazada: Fondos insuficientes.");
+  // 2. Chequeo local rápido
+  if (currentGems < totalCost) {
     showToast("Not enough gems!", "error");
+    // Desbloquear botones si falló el chequeo local
+    enableBuyButtons(); 
+    return;
   }
+
+  // 3. INTENTO DE TRANSACCIÓN EN LA NUBE
+  // No restamos nada localmente. Esperamos a ver si Firebase lo acepta.
+  if (typeof spendGemsOnline === 'function') {
+      try {
+          // Intentamos restar. Si Firebase dice que no hay fondos (por las reglas), esto fallará.
+          await spendGemsOnline(totalCost); 
+          
+          // --- SI LLEGAMOS AQUÍ, EL PAGO FUE EXITOSO ---
+          
+          // 4. Entregar Packs
+          packInventory[packId] = (packInventory[packId] || 0) + quantity;
+          await savePackInventory(); 
+
+          // 5. Feedback
+          renderPacksView();
+          closePackPurchaseView();
+          
+          const buttonSound = document.getElementById('buttonClickSound');
+          if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play(); }
+          
+          showToast(`Success! Bought ${quantity} ${pack.name}.`, "success");
+
+      } catch (e) {
+          console.error("Error en compra:", e);
+          showToast("Transaction failed. Check your balance.", "error");
+          enableBuyButtons(); // Desbloquear si falló
+      }
+  } else {
+      console.error("Critical: spendGemsOnline not found");
+  }
+}
+
+// Helper para desbloquear botones si algo falla
+function enableBuyButtons() {
+    const btnBuy = document.getElementById('btn-buy-action');
+    const btnMax = document.getElementById('btn-buy-max-action');
+    if(btnBuy) { btnBuy.disabled = false; btnBuy.textContent = "Buy"; }
+    if(btnMax) btnMax.disabled = false;
 }
 
 // Variable global para recordar qué pack estamos abriendo
