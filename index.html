@@ -12719,35 +12719,44 @@ function addCardToCollection(cardCode, isGolden, variant) {
     updateAlbumStats();
 }
 
-  function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
-    const goldenBool = String(isGolden) === 'true';
+  // --- removeCardFromCollection CORREGIDA (Borra de Nube) ---
+function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
+    // Normalizar booleanos
+    const goldenBool = (isGolden === true || isGolden === "true");
     const variantKey = `${goldenBool}_${variant}`;
     
-    if (!collection[cardCode] || !collection[cardCode][variantKey]) {
-        return false; // No tienes la carta
-      }
-
-      const cardStack = collection[cardCode][variantKey];
-
-      if (cardStack.count < quantity) {
-        return false; // No tienes suficientes copias
-      }
-
-      cardStack.count -= quantity;
-
-    // Si llega a 0, borramos la entrada
-      if (cardStack.count <= 0) {
-        delete collection[cardCode][variantKey];
-        // Si el jugador no tiene variantes, borramos al jugador del objeto
-        if (Object.keys(collection[cardCode]).length === 0) {
-          delete collection[cardCode];
-        }
-      }
-
-      saveCollection();
-      updateAlbumStats();
-      return true;
+    // Verificación de seguridad
+    if (!window.collection[cardCode] || !window.collection[cardCode][variantKey]) {
+        console.error("Intento de vender carta que no tienes:", cardCode, variantKey);
+        return false; 
     }
+
+    const cardStack = window.collection[cardCode][variantKey];
+
+    if (cardStack.count < quantity) {
+        console.error("No tienes suficientes copias:", cardStack.count, " < ", quantity);
+        return false; 
+    }
+
+    // Restar cantidad
+    cardStack.count -= quantity;
+
+    // Si llega a 0, borramos la entrada completamente
+    if (cardStack.count <= 0) {
+        delete window.collection[cardCode][variantKey];
+        
+        // Si el jugador se queda sin variantes, borramos al jugador del objeto
+        if (Object.keys(window.collection[cardCode]).length === 0) {
+            delete window.collection[cardCode];
+        }
+    }
+
+    // --- GUARDADO CRÍTICO ---
+    saveCollection(); // <--- ESTO ENVÍA EL BORRADO A FIREBASE
+    updateAlbumStats();
+    
+    return true;
+}
 
 // --- LÓGICA DEL NAVEGADOR DE MERCADO ---
 
