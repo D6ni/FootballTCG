@@ -6077,7 +6077,7 @@ button,
 </div>
 
 <!-- 2. BARRA DE USUARIO (Centrada debajo) -->
-<!-- 2. BARRA DE USUARIO (Alineación Perfecta) -->
+<!-- 3. BARRA DE USUARIO (Alineación Total: Nombre - Lápiz - Logout) -->
 <div id="user-auth-ui" style="
     display: flex; 
     justify-content: center; 
@@ -6110,38 +6110,46 @@ button,
     <!-- B. PERFIL JUGADOR (Si estás conectado) -->
     <div id="user-profile-info" style="
         display: none; 
-        align-items: center; /* Centrado vertical MAESTRO */
+        align-items: center; 
         justify-content: center; 
-        gap: 18px; /* Un poco más de espacio entre elementos */
+        gap: 15px; 
         background: rgba(0, 0, 0, 0.6); 
-        padding: 6px 20px; 
+        padding: 0 20px; /* Padding vertical 0 para controlar altura con height */
+        height: 40px;    /* Altura fija del contenedor */
         border-radius: 50px; 
         border: 1px solid #444; 
         box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        height: 32px; /* Altura fija para controlar el centro */
     ">
         
-        <!-- Nombre y Lápiz -->
+        <!-- Grupo Nombre + Lápiz -->
         <div style="display: flex; align-items: center; gap: 8px; height: 100%;">
+            
+            <!-- Nombre -->
             <span id="display-username" style="
                 color: #ffc84a; 
                 font-weight: 800; 
                 font-size: 15px; 
                 letter-spacing: 0.5px;
-                line-height: 1; /* Evita desplazamientos de texto */
-                padding-top: 2px; /* Pequeño ajuste óptico */
+                /* Truco: line-height 1 elimina espacio extra arriba/abajo */
+                line-height: 1; 
             ">User</span>
             
+            <!-- Lápiz -->
             <button id="btn-edit-username" title="Change Name" style="
                 background: none; 
                 border: none; 
                 cursor: pointer; 
-                font-size: 14px; 
+                font-size: 12px; /* Tamaño del icono */
                 opacity: 0.7; 
-                padding: 0;
+                padding: 5px;    /* Zona de clic */
+                margin: 0;
+                
+                /* CENTRADO DEL ICONO */
                 display: flex;
                 align-items: center;
-                height: 100%;
+                justify-content: center;
+                height: 24px;    /* Misma altura visual que el botón logout */
+                width: 24px;
             ">✏️</button>
         </div>
 
@@ -6153,17 +6161,19 @@ button,
             background: #c0392b; 
             color: white; 
             border: none; 
-            padding: 0 14px; /* Padding solo lateral */
+            padding: 0 14px; 
             height: 24px;    /* Altura fija exacta */
             border-radius: 12px; 
             cursor: pointer; 
             font-size: 10px; 
             font-weight: 800;
             letter-spacing: 0.5px;
-            display: flex;       /* Flexbox dentro del botón */
-            align-items: center; /* Centra el texto del botón verticalmente */
+            
+            /* CENTRADO DEL TEXTO */
+            display: flex;       
+            align-items: center; 
             justify-content: center;
-            margin: 0;           /* Elimina márgenes fantasma */
+            margin: 0;
         ">
             LOGOUT
         </button>
@@ -9056,50 +9066,61 @@ function saveCurrency() {
 
 const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
-// --- SUSTITUYE TU FUNCIÓN showPackPurchaseView POR ESTA ---
+// --- showPackPurchaseView MEJORADA (Evita doble clic) ---
 function showPackPurchaseView(packId) {
   const pack = packTypes[packId];
   const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
-  // Rellenar datos visuales
   document.getElementById('purchase-pack-img').src = `packs/packs/${packId}.png`;
   document.getElementById('purchase-pack-name').textContent = pack.name;
   document.getElementById('purchase-pack-cost').innerHTML = `${pack.cost} 💎`;
 
   const controlsContainer = document.querySelector('.purchase-controls');
-
-  // Calcular Máximo Real
   const currentGems = window.playerCurrency || 0;
+  
   let maxQuantity = 0;
   if (pack.cost > 0) {
     maxQuantity = Math.floor(currentGems / pack.cost);
   }
 
-  // Generar HTML de los botones
   controlsContainer.innerHTML = `
     <input type="number" id="buy-quantity-input" placeholder="1" min="1" max="${maxQuantity || 1}" value="1">
     <button id="btn-buy-action" class="buy-btn">Buy</button>
     <button id="btn-buy-max-action" class="buy-btn buy-max-btn">Buy Max (${maxQuantity})</button>
   `;
 
-  // Asignar eventos (usamos IDs nuevos para evitar conflictos)
-  
+  // --- HELPER PARA BLOQUEAR BOTONES ---
+  const disableButtons = () => {
+      document.getElementById('btn-buy-action').disabled = true;
+      document.getElementById('btn-buy-max-action').disabled = true;
+      document.getElementById('btn-buy-action').textContent = "Processing...";
+  };
+
   // BOTÓN BUY NORMAL
-  document.getElementById('btn-buy-action').onclick = () => {
+  document.getElementById('btn-buy-action').onclick = async () => {
     const input = document.getElementById('buy-quantity-input');
     let qty = parseInt(input.value, 10);
     if (!qty || qty < 1) qty = 1;
-    purchasePacks(packId, qty);
+    
+    // Chequeo rápido local antes de enviar
+    if ((window.playerCurrency || 0) < (pack.cost * qty)) {
+        showToast("Not enough gems!", 'error');
+        return;
+    }
+
+    disableButtons(); // <--- BLOQUEO INMEDIATO
+    await purchasePacks(packId, qty);
+    // No hace falta desbloquear porque la ventana se cierra o se refresca
   };
 
   // BOTÓN BUY MAX
-  document.getElementById('btn-buy-max-action').onclick = () => {
-    // Recalcular al momento del clic por seguridad
+  document.getElementById('btn-buy-max-action').onclick = async () => {
     const freshGems = window.playerCurrency || 0;
     const realMax = Math.floor(freshGems / pack.cost);
 
     if (realMax > 0) {
-      purchasePacks(packId, realMax);
+      disableButtons(); // <--- BLOQUEO INMEDIATO
+      await purchasePacks(packId, realMax);
     } else {
       showToast("Not enough gems to buy even one!", 'error');
     }
