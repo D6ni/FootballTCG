@@ -7850,7 +7850,7 @@ function createShowcase() {
             if (a.position !== "Crest" && b.position === "Crest") return 1;
 
             // 2. Por Media (Mejores arriba)
-            return b.rating - a.rating;
+            return a.rating - b.rating;
         });
     }
 
