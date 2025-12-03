@@ -6782,7 +6782,7 @@ button,
       document.getElementById('username-modal-overlay').style.display = 'flex';
   });
 
-  // --- LÓGICA MODAL NOMBRE DE USUARIO ---
+  // --- LÓGICA MODAL NOMBRE DE USUARIO (UNICIDAD GARANTIZADA) ---
   const usernameModal = document.getElementById('username-modal-overlay');
   const usernameConfirm = document.getElementById('btn-confirm-username');
   const usernameInput = document.getElementById('new-username-input');
@@ -6790,38 +6790,65 @@ button,
 
   if(usernameConfirm) {
       usernameConfirm.addEventListener('click', async () => {
-          const name = usernameInput.value.trim().toLowerCase();
-          const display = usernameInput.value.trim();
+          // Limpiamos el input: minúsculas para el ID, normal para mostrar
+          const nameID = usernameInput.value.trim().toLowerCase(); 
+          const nameDisplay = usernameInput.value.trim();
 
-          if (name.length < 3 || name.length > 12) {
-              usernameError.textContent = "3-12 characters required.";
+          // Validaciones básicas
+          if (nameID.length < 3 || nameID.length > 12) {
+              usernameError.textContent = "Username must be 3-12 characters.";
               return;
           }
+          if (!/^[a-zA-Z0-9_]+$/.test(nameID)) {
+              usernameError.textContent = "Only letters, numbers and _ allowed.";
+              return;
+          }
+
+          usernameError.textContent = "Checking availability...";
           usernameConfirm.disabled = true;
 
           try {
-              // Comprobar si existe
-              const usernameRef = doc(db, "usernames", name);
-              const usernameSnap = await getDoc(usernameRef);
+              // --- LA MAGIA: TRANSACCIÓN DE FIREBASE ---
+              // Esto asegura que dos personas no cojan el mismo nombre al mismo milisegundo
+              await runTransaction(db, async (transaction) => {
+                  
+                  // 1. Miramos si el nombre ya existe en la colección 'usernames'
+                  const usernameRef = doc(db, "usernames", nameID);
+                  const usernameSnap = await transaction.get(usernameRef);
 
-              // Si existe y NO es mío
-              if (usernameSnap.exists() && usernameSnap.data().uid !== window.currentUser.uid) {
-                  usernameError.textContent = "Username taken!";
-                  usernameConfirm.disabled = false;
-                  return;
-              }
+                  if (usernameSnap.exists()) {
+                      throw "Username already taken!"; // Cancelamos todo si existe
+                  }
 
-              // Guardar
-              const userRef = doc(db, "users", window.currentUser.uid);
-              await setDoc(usernameRef, { uid: window.currentUser.uid }); // Reservar nombre
-              await setDoc(userRef, { username: display }, { merge: true }); // Guardar en perfil
+                  // 2. Miramos si el usuario YA TIENE un nombre (para que no lo cambie 2 veces)
+                  const userRef = doc(db, "users", window.currentUser.uid);
+                  const userSnap = await transaction.get(userRef);
+                  if (userSnap.exists() && userSnap.data().username) {
+                      throw "You already have a username!";
+                  }
 
+                  // 3. Si todo está libre, escribimos los datos
+                  transaction.set(usernameRef, { uid: window.currentUser.uid }); // Reservar nombre
+                  transaction.update(userRef, { username: nameDisplay });        // Guardar en perfil
+              });
+
+              // Éxito visual
               usernameModal.style.display = 'none';
-              usernameConfirm.disabled = false;
+              // Ocultamos el botón de editar inmediatamente
+              const btnEdit = document.getElementById('btn-edit-username');
+              if(btnEdit) btnEdit.style.display = 'none'; 
               
+              // Actualizamos el nombre en pantalla
+              if(displayUsername) displayUsername.textContent = nameDisplay;
+
           } catch (e) {
-              console.error(e);
-              usernameError.textContent = "Error saving name.";
+              console.error("Error setting username:", e);
+              // Si el error es nuestro string personalizado, lo mostramos
+              if (typeof e === 'string') {
+                  usernameError.textContent = e;
+              } else {
+                  usernameError.textContent = "Username taken or error. Try another.";
+              }
               usernameConfirm.disabled = false;
           }
       });
@@ -6858,12 +6885,22 @@ button,
               updateGlobalCurrencyUI(data.gems);
           }
 
-          // 2. USERNAME
+          // 2. USERNAME Y BLOQUEO DE EDICIÓN
+          const btnEditUser = document.getElementById('btn-edit-username');
+
           if (!user.isAnonymous && !data.username) {
+              // Si es Google y NO tiene nombre -> Abrimos el modal obligado
               if(usernameModal) usernameModal.style.display = 'flex';
-          } else if (data.username) {
+              // Mostramos el lápiz por si acaso lo cierra
+              if(btnEditUser) btnEditUser.style.display = 'flex'; 
+          } 
+          else if (data.username) {
+              // Si YA TIENE nombre -> Lo ponemos y QUITAMOS EL LÁPIZ
               if(displayUsername) displayUsername.textContent = data.username;
               if(usernameModal) usernameModal.style.display = 'none';
+              
+              // --- AQUÍ ESTÁ EL CAMBIO: OCULTAR PARA SIEMPRE ---
+              if(btnEditUser) btnEditUser.style.display = 'none';
           }
 
           // 3. PACKS Y COLECCIÓN
