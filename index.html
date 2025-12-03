@@ -6067,23 +6067,96 @@ button,
   <audio id="rouletteSpinSound" src="sounds/roulette.mp3" preload="auto"></audio>
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
   <div id="player-currency-display" class="player-currency">0 💎</div>
-  <div class="button-container">
-    <button id="btn-login-google" style="background: #fff; color: #444; font-weight: bold; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: sans-serif;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 
-        Sign in
-    </button>
+  <!-- 1. BOTONES DEL JUEGO -->
+<div class="button-container">
     <button id="openPacksViewBtn">BUY / OPEN PACKS</button>
     <button id="showcaseBtn">MY ALBUM</button>
     <button id="openMarketBtn">TRANSFER MARKET</button>
     <button id="roulette-btn">ROULETTE GAME</button>
-    <div id="user-profile-info" style="display: none; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid #444;">
-    <div style="display: flex; align-items: center; gap: 5px;">
-    <span id="display-username" style="color: #ffc84a; font-weight: bold; font-size: 14px;">User</span>
-    <button id="btn-edit-username" style="background: none; border: none; cursor: pointer; font-size: 12px; padding: 0; opacity: 0.7;">✏️</button>
+    <!-- <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button> -->
 </div>
-        <button id="btn-logout" style="background: #c0392b; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">LOGOUT</button>
-    <!--    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>     -->
-  </div>
+
+<!-- 2. BARRA DE USUARIO (Centrada debajo) -->
+<div id="user-auth-ui" style="
+    display: flex; 
+    justify-content: center; 
+    width: 100%; 
+    margin-top: 15px; 
+    margin-bottom: 20px; 
+    z-index: 50;
+">
+    
+    <!-- A. BOTÓN LOGIN (Si no estás conectado) -->
+    <button id="btn-login-google" style="
+        background: #fff; 
+        color: #333; 
+        font-weight: bold; 
+        border: none; 
+        padding: 10px 20px; 
+        border-radius: 30px; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        font-family: sans-serif;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: transform 0.2s;
+    ">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 
+        Sign in
+    </button>
+
+    <!-- B. PERFIL JUGADOR (Si estás conectado) -->
+    <div id="user-profile-info" style="
+        display: none; 
+        align-items: center; 
+        justify-content: space-between; 
+        gap: 15px; 
+        background: rgba(0, 0, 0, 0.6); 
+        padding: 8px 20px; 
+        border-radius: 50px; 
+        border: 1px solid #444; 
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    ">
+        
+        <!-- Nombre y Lápiz -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="display-username" style="
+                color: #ffc84a; 
+                font-weight: 800; 
+                font-size: 15px; 
+                letter-spacing: 0.5px;
+            ">User</span>
+            
+            <button id="btn-edit-username" title="Change Name" style="
+                background: none; 
+                border: none; 
+                cursor: pointer; 
+                font-size: 14px; 
+                opacity: 0.7; 
+                padding: 0;
+            ">✏️</button>
+        </div>
+
+        <!-- Línea Separadora -->
+        <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.2);"></div>
+
+        <!-- Botón Logout -->
+        <button id="btn-logout" style="
+            background: #c0392b; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: bold;
+        ">
+            LOGOUT
+        </button>
+    </div>
+
+</div>
 
 <!--BORRAR PRUEBA FLOATS-->
 <div id="debug-tools">
