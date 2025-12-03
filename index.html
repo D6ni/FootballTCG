@@ -7544,20 +7544,21 @@ specialSound.play().catch(error => {
 }
 }
 
+// --- FUNCIÓN flipCard CORREGIDA (Guarda en Nube) ---
 function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
+  // Lógica de fin de pack
   if (flippedCardsInPack === currentPackContentSize) {
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
 
     openingControls.style.display = 'flex';
-
     nextPackContainer.innerHTML = ''; 
 
-    for (const packId in packInventory) {
-      if (packInventory[packId] > 0) {
+    for (const packId in window.packInventory) {
+      if (window.packInventory[packId] > 0) {
         const pack = packTypes[packId];
         const packEl = document.createElement('div');
         packEl.className = 'pack-item';
@@ -7571,7 +7572,7 @@ function flipCard(card, index) {
 
         const quantityEl = document.createElement('div');
         quantityEl.className = 'pack-quantity';
-        quantityEl.textContent = `x${packInventory[packId]}`;
+        quantityEl.textContent = `x${window.packInventory[packId]}`;
         packEl.appendChild(quantityEl);
 
         packEl.addEventListener('click', () => {
@@ -7590,6 +7591,7 @@ function flipCard(card, index) {
     packOpeningState = 'pack_complete';
   }
 
+  // Sonido
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
     flipSound.currentTime = 0;
@@ -7597,41 +7599,50 @@ function flipCard(card, index) {
     flipSound.play();
   }
 
+  // Lógica de Colección
   const cardObj = card.cardData;
   playSpecialCardSound(cardObj);
   const playerId = cardObj.playerData.cardCode;
-  const variantKey = `${cardObj.golden}_${cardObj.variant}`;
-  const isNewVariant = !collection[playerId]?.[variantKey];
+  
+  // Usar strings para booleanos
+  const isGoldenStr = String(cardObj.golden); 
+  const variantKey = `${isGoldenStr}_${cardObj.variant}`;
+
+  // Usamos window.collection para asegurar que es la global
+  if (!window.collection[playerId]) {
+    window.collection[playerId] = {};
+  }
+  
+  // Detectar si es nueva variante
+  const isNewVariant = !window.collection[playerId][variantKey];
 
   if (isNewVariant) {
     const newIndicator = document.createElement('div');
     newIndicator.className = 'new-indicator';
     newIndicator.textContent = 'NEW';
     card.appendChild(newIndicator);
-    setTimeout(() => {
-      newIndicator.remove();
-    }, 4200);
+    setTimeout(() => { newIndicator.remove(); }, 4200);
 
     const uniqueId = getUniqueCardId(cardObj);
     newCards.add(uniqueId); 
     saveNewCards(); 
-  }
-
-  if (!collection[playerId]) {
-    collection[playerId] = {};
-  }
-  if (!collection[playerId][variantKey]) {
-    collection[playerId][variantKey] = {
+    
+    // Crear entrada inicial
+    window.collection[playerId][variantKey] = {
       count: 1,
       cardData: cardObj
     };
   } else {
-    collection[playerId][variantKey].count++;
+    // Incrementar
+    window.collection[playerId][variantKey].count++;
   }
 
+  // --- GUARDADO CRÍTICO EN NUBE ---
+  saveCollection(); // <--- ESTO EVITA QUE SE PIERDAN AL RECARGAR
+  updateAlbumStats();
+  // --------------------------------
 
-  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
-
+  // Animaciones y Estilos
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
@@ -7639,18 +7650,13 @@ function flipCard(card, index) {
   card.style.transition = 'transform 0.7s ease, left 0.7s ease, top 0.7s ease';
   card.classList.add("flipped", "is-animating");
 
-  // ---> INICIO DEL CAMBIO <---
-  // Una vez la carta se voltea, su nueva función al hacer clic será abrir la vista de inspección.
+  // Click para inspeccionar
   card.onclick = () => {
-    // Buscamos los datos actualizados de la carta en nuestra colección (para tener el 'count' correcto)
-    const cardStackData = collection[playerId]?.[variantKey];
+    const cardStackData = window.collection[playerId]?.[variantKey];
     if (cardStackData) {
       showInspectView(card, cardStackData, false);
-    } else {
-      console.error("No se pudo encontrar la carta en la colección para inspeccionarla.");
     }
   };
-  // ---> FIN DEL CAMBIO <---
 
   setTimeout(() => {
     card.classList.remove("is-animating");
@@ -7658,12 +7664,13 @@ function flipCard(card, index) {
     addInteractiveTilt(card);
   }, 700);
 
-  if (isGolden) {
-    counters[rarity][variant].golden++;
-  } else {
-    counters[rarity][variant].normal++;
+  // Contadores visuales locales (Opcional si usas los de Firebase)
+  if (counters[rarity] && counters[rarity][variant]) {
+      if (isGolden) counters[rarity][variant].golden++;
+      else counters[rarity][variant].normal++;
   }
 
+  // Posicionamiento en abanico
   const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
   const cardSpacing = containerWidth / currentPackContentSize;
   const spread = (containerWidth - cardSpacing) / 2;
