@@ -7266,47 +7266,55 @@ function pickByProb(list) {
     return list[list.length - 1];
 }
 
-function generateCard(targetSet = 'S00') {
-  // 1. Calcular si es Golden
+function generateCard(targetSet) {
+  // 1. Limpieza del input: Quitamos espacios y lo pasamos a Mayúsculas
+  // Si targetSet es null, usamos 'S00'
+  const cleanSet = (targetSet || 'S00').toString().trim().toUpperCase();
+  
   const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
+  const probObj = isGolden ? pickByProb(goldenProbs) : pickByProb(regularProbs);
+  const desiredRarity = probObj ? probObj.r : 'common';
+
+  // 2. FILTRO INTELIGENTE (Ignora mayúsculas/minúsculas)
+  let playersOfSet = playersDB.filter(p => {
+      // Aseguramos que el jugador tenga set, lo limpiamos y comparamos
+      return p.set && p.set.toString().trim().toUpperCase() === cleanSet;
+  });
   
-  // 2. Determinar Rareza (usando las probabilidades globales)
-  // NOTA: Si un set pequeño (como SR1) no tiene cartas 'common', esto podría fallar.
-  // Ver punto 3 para la solución de seguridad.
-  let rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
-  
-  // 3. Filtrar jugadores por SET y RAREZA
-  let playersOfSet = playersDB.filter(p => p.set === targetSet);
-  
-  // Seguridad: Si el set no existe o está vacío en la DB, volvemos a S00 para no romper el juego
+  // SEGURIDAD: Si falló el set, usamos toda la DB para no romper el juego
   if (playersOfSet.length === 0) {
-    console.warn(`Set ${targetSet} is empty via generateCard. Fallback to S00.`);
-    playersOfSet = playersDB.filter(p => p.set === 'S00');
+    console.warn(`⚠️ Set '${cleanSet}' no encontrado (Revisa mayúsculas en database.js). Usando toda la DB.`);
+    playersOfSet = playersDB;
   }
 
-  // Buscamos jugadores de la rareza elegida DENTRO del set
-  let playersOfRarity = playersOfSet.filter(p => p.rarity === rarity);
+  // 3. Filtrar por Rareza
+  let playersOfRarity = playersOfSet.filter(p => p.rarity === desiredRarity);
 
-  // 4. Lógica de Fallback (Importante para Sets pequeños como SR1)
-  // Si el dado dice "Common" pero el set SR1 solo tiene "Relics", no encontraría nada.
-  // Si no encuentra cartas de esa rareza, elige CUALQUIER carta de ese set aleatoriamente.
+  // Fallback de rareza
   if (playersOfRarity.length === 0) {
     playersOfRarity = playersOfSet;
-      // Actualizamos la rareza a la de la carta que vamos a coger a la fuerza
-      // (Se actualizará correctamente al leer el objeto player)
   }
 
-  // 5. Elegir Jugador
+  // 4. ULTIMA DEFENSA (Si la DB está vacía o algo grave pasa)
+  if (playersOfRarity.length === 0) {
+      console.error("❌ ERROR CRÍTICO: No hay cartas disponibles.");
+      return { 
+          playerData: { name: "Error Card", img: "images/placeholder.png", rating: 0, rarity: "common", cardCode: "ERR", set: "ERR" }, 
+          rarity: "common", golden: false, variant: "none" 
+      };
+  }
+
   const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
   
-  // Corregir la rareza si usamos el fallback (por si salió Common pero el jugador es Relic)
-  rarity = player.rarity;
-
-  // 6. Variante
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
 
-  return { playerData: player, rarity, golden: isGolden, variant };
+  return { 
+      playerData: player, 
+      rarity: player.rarity, 
+      golden: isGolden, 
+      variant: variant 
+  };
 }
 
 //para el rare pack
