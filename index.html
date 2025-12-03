@@ -7091,7 +7091,7 @@ const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 window.collection = {}; 
 window.packInventory = {};
 window.playerCurrency = 0; // Empieza en 0, Firebase lo actualizará en medio segundo
-let playerCurrency = 0;    // Mantener compatibilidad si usas esta variable localmente
+// let playerCurrency = 0;    // Mantener compatibilidad si usas esta variable localmente
 window.gradedCollection = [];
 
 var collection = window.collection;
@@ -14128,3 +14128,4 @@ async function checkAndFinalizeAuction(listing) {
 <div id="toast-notification"></div>
 </body>
 </html>
+
