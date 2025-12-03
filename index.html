@@ -6076,7 +6076,11 @@ button,
     <button id="showcaseBtn">MY ALBUM</button>
     <button id="openMarketBtn">TRANSFER MARKET</button>
     <button id="roulette-btn">ROULETTE GAME</button>
+    <div id="user-profile-info" style="display: none; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid #444;">
+    <div style="display: flex; align-items: center; gap: 5px;">
     <span id="display-username" style="color: #ffc84a; font-weight: bold; font-size: 14px;">User</span>
+    <button id="btn-edit-username" style="background: none; border: none; cursor: pointer; font-size: 12px; padding: 0; opacity: 0.7;">✏️</button>
+</div>
         <button id="btn-logout" style="background: #c0392b; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">LOGOUT</button>
     <!--    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>     -->
   </div>
@@ -6238,7 +6242,7 @@ button,
         <h2 style="color: #fff; margin-top: 0;">Welcome, Legend!</h2>
         <p style="color: #ccc;">Choose a unique username for the market.</p>
         
-        <input type="text" id="new-username-input" placeholder="Username (e.g. CR7Lover)" maxlength="12" 
+        <input type="text" id="new-username-input" placeholder="Username (e.g. MessiLover)" maxlength="12" 
                style="padding: 10px; font-size: 18px; width: 80%; border-radius: 6px; border: 1px solid #555; background: #111; color: #fff; text-align: center;">
         
         <div id="username-error" style="color: #e74c3c; margin-top: 10px; font-size: 13px; min-height: 20px;"></div>
@@ -6608,17 +6612,15 @@ button,
 <!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  
-  // --- IMPORTAMOS GoogleAuthProvider, signInWithPopup y signOut ---
   import { 
     getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  
   import { 
     getFirestore, collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, 
     query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  // --- TU CONFIGURACIÓN ---
   const firebaseConfig = {
   apiKey: "AIzaSyDqy1Q9WUPiuVcKZZhMY0BfMGkbQ6uGVfs",
   authDomain: "football-tcg-b9295.firebaseapp.com",
@@ -6631,14 +6633,17 @@ button,
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider(); // Proveedor de Google
+  const googleProvider = new GoogleAuthProvider();
 
+  // Exponer a global
   window.db = db;
   window.auth = auth;
   window.currentUser = null;
   window.fs = { collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp };
 
-  // --- UI HELPERS ---
+  // --- FUNCIONES GLOBALES DE DINERO (SOLUCIÓN PROBLEMA F5) ---
+  
+  // Actualizar UI
   window.updateGlobalCurrencyUI = function(amount) {
     window.playerCurrency = amount; 
     const display = document.getElementById('player-currency-display');
@@ -6648,174 +6653,186 @@ button,
     if (marketDisplay) marketDisplay.textContent = formatted;
   };
 
+  // Guardar Ganancias (Ventas/Partidos)
+  window.earnGemsOnline = async function(amount) {
+    if (!window.currentUser) return;
+    const userRef = doc(db, "users", window.currentUser.uid);
+    try {
+        await updateDoc(userRef, { gems: increment(amount) });
+        console.log(`☁️ Guardado: +${amount} gemas`);
+    } catch(e) { console.error("Error guardando gemas:", e); }
+  };
+
+  // Guardar Gastos (Packs/Market/Ruleta)
+  window.spendGemsOnline = async function(amount) {
+    if (!window.currentUser) return;
+    const userRef = doc(db, "users", window.currentUser.uid);
+    try {
+        await updateDoc(userRef, { gems: increment(-amount) });
+        console.log(`☁️ Guardado: -${amount} gemas`);
+    } catch(e) { console.error("Error gastando gemas:", e); }
+  };
+
+
   // --- LÓGICA DE LOGIN ---
   const btnLogin = document.getElementById('btn-login-google');
   const btnLogout = document.getElementById('btn-logout');
   const userProfile = document.getElementById('user-profile-info');
   const displayUsername = document.getElementById('display-username');
+  const btnEditUser = document.getElementById('btn-edit-username');
 
-  // Login con Google
-  btnLogin.addEventListener('click', () => {
-      signInWithPopup(auth, googleProvider).catch((error) => {
-          console.error("Error Login:", error);
-          alert("Login failed: " + error.message);
-      });
+  // Google Login
+  if(btnLogin) btnLogin.addEventListener('click', () => {
+      signInWithPopup(auth, googleProvider).catch((error) => alert("Login failed: " + error.message));
   });
 
   // Logout
-  btnLogout.addEventListener('click', () => {
-      signOut(auth).then(() => {
-          location.reload(); // Recargar para volver a modo anónimo limpio
-      });
+  if(btnLogout) btnLogout.addEventListener('click', () => {
+      signOut(auth).then(() => location.reload());
   });
 
-  // --- LÓGICA DE NOMBRE DE USUARIO ÚNICO ---
+  // Editar Usuario
+  if(btnEditUser) btnEditUser.addEventListener('click', () => {
+      document.getElementById('username-modal-overlay').style.display = 'flex';
+  });
+
+  // --- LÓGICA MODAL NOMBRE DE USUARIO ---
   const usernameModal = document.getElementById('username-modal-overlay');
+  const usernameConfirm = document.getElementById('btn-confirm-username');
   const usernameInput = document.getElementById('new-username-input');
   const usernameError = document.getElementById('username-error');
-  const usernameConfirm = document.getElementById('btn-confirm-username');
 
-  usernameConfirm.addEventListener('click', async () => {
-      const name = usernameInput.value.trim().toLowerCase(); // Guardamos en minúsculas para buscar fácil
-      const display = usernameInput.value.trim(); // Guardamos con mayúsculas para mostrar
+  if(usernameConfirm) {
+      usernameConfirm.addEventListener('click', async () => {
+          const name = usernameInput.value.trim().toLowerCase();
+          const display = usernameInput.value.trim();
 
-      if (name.length < 3 || name.length > 12) {
-          usernameError.textContent = "Username must be 3-12 characters.";
-          return;
-      }
-      if (!/^[a-zA-Z0-9_]+$/.test(name)) {
-          usernameError.textContent = "Only letters, numbers and _ allowed.";
-          return;
-      }
-
-      usernameError.textContent = "Checking availability...";
-      usernameConfirm.disabled = true;
-
-      try {
-          // 1. Comprobar si el nombre existe en la colección 'usernames'
-          const usernameRef = doc(db, "usernames", name);
-          const usernameSnap = await getDoc(usernameRef);
-
-          if (usernameSnap.exists()) {
-              usernameError.textContent = "Username taken! Try another.";
-              usernameConfirm.disabled = false;
+          if (name.length < 3 || name.length > 12) {
+              usernameError.textContent = "3-12 characters required.";
               return;
           }
+          usernameConfirm.disabled = true;
 
-          // 2. Si está libre, lo reservamos y actualizamos al usuario
-          // Usamos un Batch (lote) para que se haga todo junto
-          const batch = window.fs.runTransaction(db, async (transaction) => {
-              // Verificamos de nuevo dentro de la transacción por seguridad
-              const check = await transaction.get(usernameRef);
-              if (check.exists()) throw "Taken";
+          try {
+              // Comprobar si existe
+              const usernameRef = doc(db, "usernames", name);
+              const usernameSnap = await getDoc(usernameRef);
 
+              // Si existe y NO es mío
+              if (usernameSnap.exists() && usernameSnap.data().uid !== window.currentUser.uid) {
+                  usernameError.textContent = "Username taken!";
+                  usernameConfirm.disabled = false;
+                  return;
+              }
+
+              // Guardar
               const userRef = doc(db, "users", window.currentUser.uid);
+              await setDoc(usernameRef, { uid: window.currentUser.uid }); // Reservar nombre
+              await setDoc(userRef, { username: display }, { merge: true }); // Guardar en perfil
+
+              usernameModal.style.display = 'none';
+              usernameConfirm.disabled = false;
               
-              // Guardar reserva de nombre
-              transaction.set(usernameRef, { uid: window.currentUser.uid });
-              
-              // Guardar nombre en perfil de usuario
-              transaction.set(userRef, { username: display }, { merge: true });
-          });
+          } catch (e) {
+              console.error(e);
+              usernameError.textContent = "Error saving name.";
+              usernameConfirm.disabled = false;
+          }
+      });
+  }
 
-          // Éxito
-          usernameModal.style.display = 'none';
-          displayUsername.textContent = display;
-          
-      } catch (e) {
-          console.error(e);
-          usernameError.textContent = "Error or username taken. Try again.";
-          usernameConfirm.disabled = false;
-      }
-  });
-
-
-  // --- LISTENER DE AUTH ---
+  // --- LISTENER PRINCIPAL (Carga de Datos) ---
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      console.log("🟢 Usuario:", user.uid, "Anon:", user.isAnonymous);
+      console.log("🟢 Usuario conectado:", user.uid);
       window.currentUser = user;
 
-      // Gestionar Botones UI
+      // UI Botones
       if (user.isAnonymous) {
-          btnLogin.style.display = 'flex';
-          userProfile.style.display = 'none';
+          if(btnLogin) btnLogin.style.display = 'flex';
+          if(userProfile) userProfile.style.display = 'none';
       } else {
-          btnLogin.style.display = 'none';
-          userProfile.style.display = 'flex';
+          if(btnLogin) btnLogin.style.display = 'none';
+          if(userProfile) userProfile.style.display = 'flex';
       }
 
       const userRef = doc(db, "users", user.uid);
       
-      // Listener de DATOS DEL USUARIO
-      onSnapshot(userRef, (docSnap) => {
+      // ESCUCHAR DATOS (Aquí arreglamos las 500 gemas)
+      onSnapshot(userRef, async (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          // A. Chequeo de Nombre de Usuario
-          // Si no es anónimo Y no tiene nombre -> Mostrar Modal
-          if (!user.isAnonymous && !data.username) {
-              usernameModal.style.display = 'flex';
-          } else if (data.username) {
-              displayUsername.textContent = data.username;
-              usernameModal.style.display = 'none';
+          // 1. CHEQUEO DE SEGURIDAD DE GEMAS
+          // Si el usuario existe pero no tiene gemas definidas (bug anterior), le damos 500
+          if (data.gems === undefined || data.gems === null) {
+              console.log("⚠️ Usuario sin gemas. Asignando 500 iniciales.");
+              await setDoc(userRef, { gems: 500 }, { merge: true });
+          } else {
+              updateGlobalCurrencyUI(data.gems);
           }
 
-          // B. Cargar Datos
-          if (data.gems !== undefined) updateGlobalCurrencyUI(data.gems);
-          
+          // 2. USERNAME
+          if (!user.isAnonymous && !data.username) {
+              if(usernameModal) usernameModal.style.display = 'flex';
+          } else if (data.username) {
+              if(displayUsername) displayUsername.textContent = data.username;
+              if(usernameModal) usernameModal.style.display = 'none';
+          }
+
+          // 3. PACKS Y COLECCIÓN
           if (data.packs) {
               window.packInventory = data.packs;
               localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
-              if(document.getElementById('packs-overlay').classList.contains('visible')) {
-                 if(typeof renderPacksView === 'function') renderPacksView();
+              // Refrescar tienda si está abierta
+              const packsOverlay = document.getElementById('packs-overlay');
+              if(packsOverlay && packsOverlay.classList.contains('visible') && typeof renderPacksView === 'function') {
+                 renderPacksView();
               }
           }
 
           if (data.collection) {
               window.collection = data.collection;
               localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
+              // Refrescar álbum si hace falta
               if (typeof updateAlbumStats === 'function') updateAlbumStats();
               if (typeof updateCounter === 'function') updateCounter();
           }
-          
-          // Desbloquear juego
+
+          // Desbloquear pantalla de carga
           window.isCloudDataLoaded = true;
           const loader = document.getElementById('cloud-loader');
           if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
 
         } else {
-          // Crear usuario nuevo (por defecto Anonimo o Google nuevo)
-          setDoc(userRef, { gems: 500, packs: { 'common-pack': 3 }, collection: {} });
+          // USUARIO NUEVO (Reset Total)
+          console.log("🌟 Nuevo usuario. Creando perfil inicial.");
+          const cleanStart = { 
+              gems: 500,  // <-- AQUÍ SE DEFINEN LAS 500 INICIALES
+              packs: { 'common-pack': 3 }, 
+              collection: {} 
+          };
+          setDoc(userRef, cleanStart);
         }
       });
 
-      // --- LISTENERS DE MERCADO (Tus ventas y Entregas) ---
-      // Pegar aquí los listeners de Market y Deliveries que ya teníamos
-      
-      // Listener Ventas
+      // --- Listeners de Mercado y Entregas (Mantenemos lo que ya funcionaba) ---
       const mySalesQuery = query(collection(db, "market"), where("sellerId", "==", user.uid));
-      onSnapshot(mySalesQuery, (snapshot) => {
-        const marketOverlay = document.getElementById('market-browser-overlay');
-        if (marketOverlay && marketOverlay.classList.contains('visible')) {
-            if (typeof currentMarketTab !== 'undefined' && (currentMarketTab === 'history' || currentMarketTab === 'sell')) {
-               if(typeof renderHistoryView === 'function') renderHistoryView();
-               if(typeof searchMarket === 'function') searchMarket(true);
-            }
-        }
+      onSnapshot(mySalesQuery, () => {
+         // Refrescar vistas si es necesario
+         if(typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history' && typeof renderHistoryView === 'function') renderHistoryView();
       });
 
-      // Listener Entregas
       const deliveriesQuery = query(collection(db, "deliveries"), where("recipientId", "==", user.uid));
       onSnapshot(deliveriesQuery, (snapshot) => {
-        snapshot.docChanges().forEach(async (change) => {
+        snapshot.docChanges().forEach((change) => {
             if (change.type === "added") {
-                const delivery = change.doc.data();
-                if(typeof addCardToCollection === 'function') {
-                    addCardToCollection(delivery.cardCode, delivery.isGolden, delivery.variant);
-                    // Opcional: mostrar toast
-                    deleteDoc(doc(db, "deliveries", change.doc.id));
-                }
+                const d = change.doc.data();
+                if(typeof addCardToCollection === 'function') addCardToCollection(d.cardCode, d.isGolden, d.variant);
+                deleteDoc(doc(db, "deliveries", change.doc.id));
+                // Toast opcional
+                const toastMsg = d.type === 'auction_win' ? "🏆 Auction Won! Card added." : "Item returned.";
+                if(typeof showToast === 'function') showToast(toastMsg, "success");
             }
         });
       });
@@ -8834,7 +8851,7 @@ function purchasePacks(packId, quantity) {
   if (currentGems >= totalCost) {
     // A. RESTAR DINERO (Visual inmediato)
     window.playerCurrency -= totalCost;
-    window.updateGlobalCurrencyUI(window.playerCurrency);
+    window.spendGemsOnline(totalCost); 
     
     // B. RESTAR DINERO (Nube)
     // Verificamos que la función exista antes de llamar
