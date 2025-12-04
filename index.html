@@ -6059,37 +6059,52 @@ button,
   }
 }
 
-/* --- ESTILOS ESPECÍFICOS PARA EL SET SR1 (ROJO) --- */
+/* =======================================================
+   ESTILOS MAESTROS POR SET (Overrides)
+   ======================================================= */
 
-/* 1. Forzamos el color de la variable a ROJO INTENSO */
-/* Aplica tanto a la carta normal como a la graduada */
-.card.set-SR1,
-.graded-card.set-SR1,
+/* --- CONFIGURACIÓN SET SR1 (ROJO SANGRE) --- */
+/* Afecta a: Cartas, Slabs, Placeholders y Contenedores */
+.set-SR1, 
+.card.set-SR1, 
+.graded-card.set-SR1, 
 .slab-container.set-SR1 {
-  --rarity-color: #AD0000 !important;
+    /* Cambiamos la variable global: esto cambia bordes, sombras, brillos y textos */
+    --rarity-color: #AD0000 !important;
 }
 
-/* 2. Forzamos el fondo rojizo en la cara frontal */
-.card.set-SR1 .front,
+/* Fondo específico para la carta (Sobrescribe rarezas) */
+.card.set-SR1 .front, 
 .graded-card.set-SR1 .front {
-  background: linear-gradient(170deg, #AD0000, #4a0000) !important;
+    background: linear-gradient(170deg, #AD0000, #4a0000) !important;
 }
 
-/* 3. Ajuste para la sombra (Glow) si la carta está volteada */
+/* Sombra/Glow específico para cartas giradas */
 .card.set-SR1.flipped .front,
 .graded-card.set-SR1 .front {
-  box-shadow: 0 0 10px 4px #AD0000 !important;
+    box-shadow: 0 0 10px 4px #AD0000 !important;
 }
 
-/* 4. Ajuste para el brillo exterior si NO está volteada (en el sobre) */
-.card.set-SR1:not(.flipped) {
-  box-shadow: 0 0 20px 5px #AD0000 !important;
-}
-
-/* 5. Asegurar que el Slab de grading también pille el borde rojo */
+/* Borde del Slab de Grading */
 .slab-container.set-SR1 .slab-label {
     border-color: #AD0000 !important;
-    border-bottom: none !important; /* Mantener estilo slab */
+}
+
+/* Placeholders del Álbum (Bordes discontinuos) */
+.card.missing.set-SR1 {
+    border-color: #AD0000 !important;
+    background: rgba(40, 0, 0, 0.4) !important; /* Un fondo rojizo sutil */
+    color: #ffaaaa !important; /* Texto rojizo */
+}
+
+
+/* --- EJEMPLO PARA FUTURO SET SW0 (VERDE TOXICO) --- */
+/* Solo tendrías que copiar esto y cambiar SR1 por SW0 y el color */
+.set-SW0, .card.set-SW0, .slab-container.set-SW0 {
+    --rarity-color: #39FF14 !important;
+}
+.card.set-SW0 .front {
+    background: linear-gradient(170deg, #39FF14, #0b4f00) !important;
 }
 
 </style>
@@ -7967,7 +7982,7 @@ function createShowcase() {
     // CASO B: MISSING (Placeholder)
     else {
         const placeholder = document.createElement('div');
-        placeholder.className = `card showcase-card missing ${player.rarity}`;
+        placeholder.className = `card showcase-card missing ${player.rarity} set-${player.set}`;
         
         const teamName = Array.isArray(player.teams) ? player.teams[0] : player.team;
 
@@ -11137,7 +11152,7 @@ function createSlabElement(gradedCard) {
 
   const slabEl = document.createElement('div');
   // ---> CAMBIO 1: Añadimos la clase de la rareza directamente al contenedor principal.
-  slabEl.className = `slab-container ${playerData.rarity}`; 
+  slabEl.className = `slab-container ${playerData.rarity} set-${playerData.set}`; 
 
   const cardDataForCreation = { ...gradedCard, playerData: playerData };
   const cardEl = createCardElementForSlab(cardDataForCreation);
