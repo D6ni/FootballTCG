@@ -6059,6 +6059,39 @@ button,
   }
 }
 
+/* --- ESTILOS ESPECÍFICOS PARA EL SET SR1 (ROJO) --- */
+
+/* 1. Forzamos el color de la variable a ROJO INTENSO */
+/* Aplica tanto a la carta normal como a la graduada */
+.card.set-SR1,
+.graded-card.set-SR1,
+.slab-container.set-SR1 {
+  --rarity-color: #AD0000 !important;
+}
+
+/* 2. Forzamos el fondo rojizo en la cara frontal */
+.card.set-SR1 .front,
+.graded-card.set-SR1 .front {
+  background: linear-gradient(170deg, #AD0000, #4a0000) !important;
+}
+
+/* 3. Ajuste para la sombra (Glow) si la carta está volteada */
+.card.set-SR1.flipped .front,
+.graded-card.set-SR1 .front {
+  box-shadow: 0 0 10px 4px #AD0000 !important;
+}
+
+/* 4. Ajuste para el brillo exterior si NO está volteada (en el sobre) */
+.card.set-SR1:not(.flipped) {
+  box-shadow: 0 0 20px 5px #AD0000 !important;
+}
+
+/* 5. Asegurar que el Slab de grading también pille el borde rojo */
+.slab-container.set-SR1 .slab-label {
+    border-color: #AD0000 !important;
+    border-bottom: none !important; /* Mantener estilo slab */
+}
+
 </style>
 </head>
 <body>
@@ -14104,62 +14137,60 @@ async function earnGemsOnline(amount) {
 
 // --- NUEVA FUNCIÓN: FINALIZAR SUBASTA (Backend Logic en Frontend) ---
 async function checkAndFinalizeAuction(listing) {
-    // Solo si es subasta y ha caducado
     if (!listing.isAuction || Date.now() < listing.endTime) return;
 
-    console.log(`⏳ Finalizando subasta caducada: ${listing.id}`);
+    // console.log(`⏳ Finalizando subasta: ${listing.id}`);
 
     try {
         const listingRef = window.fs.doc(window.db, "market", listing.id);
 
         await window.fs.runTransaction(window.db, async (transaction) => {
             const doc = await transaction.get(listingRef);
-            if (!doc.exists()) return; // Ya la borró otro
+            if (!doc.exists()) return; 
 
             const data = doc.data();
             
-            // 1. SI HUBO PUJAS (Alguien ganó)
+            // 1. SI HUBO PUJAS (Venta Exitosa)
             if (data.highestBidder) {
-                // A. Dar dinero al VENDEDOR
+                // A. Pagar al Vendedor
                 const sellerRef = window.fs.doc(window.db, "users", data.sellerId);
                 transaction.set(sellerRef, { gems: window.fs.increment(data.currentBid) }, { merge: true });
 
-                // B. La carta se transfiere "virtualmente".
-                // Como Firebase no guarda la colección de cartas de cada usuario (eso está en localStorage),
-                // no podemos "meterle" la carta al ganador directamente en su navegador.
-                
-                // TRUCO: Creamos un documento de "Notificación de Entrega" en Firebase.
-                // Cuando el ganador entre a la web, verá esta notificación y recibirá la carta.
-                const deliveryRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
-                transaction.set(deliveryRef, {
+                // B. Entregar al Ganador
+                const winRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
+                transaction.set(winRef, {
                     recipientId: data.highestBidder,
-                    cardCode: data.cardCode,
-                    isGolden: data.isGolden,
-                    variant: data.variant,
-                    price: data.currentBid,
-                    type: 'auction_win',
-                    timestamp: window.fs.serverTimestamp()
+                    cardCode: data.cardCode, isGolden: data.isGolden, variant: data.variant,
+                    price: data.currentBid, type: 'auction_win', timestamp: window.fs.serverTimestamp()
                 });
+
+                // C. --- NUEVO: Log para el VENDEDOR (Si soy yo quien lo ejecuta) ---
+                // Si la persona que cierra la subasta es el dueño, se guarda en su historial local al momento.
+                if (window.currentUser && window.currentUser.uid === data.sellerId) {
+                    const player = playersDB.find(p => p.cardCode === data.cardCode);
+                    if (player) {
+                        // Importante: Guardamos en localStorage directamente porque logMarketTransaction es local
+                        logMarketTransaction('sell', {
+                            playerData: player, rarity: player.rarity, variant: data.variant, golden: data.isGolden
+                        }, data.currentBid, true);
+                        showToast(`💰 Auction sold! ${player.name} for ${data.currentBid} 💎`, 'success');
+                    }
+                }
+
             } 
-            // 2. SI NADIE PUJÓ (Se devuelve al vendedor)
+            // 2. SI NADIE PUJÓ (Devolución)
             else {
-                // Creamos notificación de devolución para el vendedor
-                const deliveryRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
-                transaction.set(deliveryRef, {
+                const returnRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
+                transaction.set(returnRef, {
                     recipientId: data.sellerId,
-                    cardCode: data.cardCode,
-                    isGolden: data.isGolden,
-                    variant: data.variant,
-                    type: 'auction_return', // Devolución
-                    timestamp: window.fs.serverTimestamp()
+                    cardCode: data.cardCode, isGolden: data.isGolden, variant: data.variant,
+                    type: 'auction_return', timestamp: window.fs.serverTimestamp()
                 });
             }
 
-            // 3. BORRAR LA SUBASTA DEL MERCADO
+            // 3. BORRAR DEL MERCADO (Esto hace que desaparezca de la lista)
             transaction.delete(listingRef);
         });
-        
-        console.log("✅ Subasta cerrada correctamente.");
 
     } catch (e) {
         console.error("Error cerrando subasta:", e);
