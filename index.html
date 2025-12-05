@@ -7461,9 +7461,9 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
 
 // Llamamos 3 veces a nuestra nueva función para crear las opciones
     const cardOptions = [
-      generateRelicChoice(),
-      generateRelicChoice(),
-      generateRelicChoice()
+      generateSR1Choice(),
+      generateSR1Choice(),
+      generateSR1Choice()
     ];
 
 // En lugar de renderizar cartas, mostramos nuestro nuevo modal de elección
@@ -10743,35 +10743,20 @@ document.addEventListener('keydown', (event) => {
 });
 
 
-function generateRelicChoice() {
-  // 1. Tirada de probabilidad (33% vs 67%)
-  const isRouletteSet = Math.random() < 0.33; 
-  
-  let potentialPlayers = [];
+function generateSR1Choice() {
+  // 1. Filtrar SOLO cartas del set SR1 (ignorando mayúsculas)
+  let potentialPlayers = playersDB.filter(p => p.set && p.set.toLowerCase() === 'sr1');
 
-  if (isRouletteSet) {
-    // --- CAMINO ROJO: Buscar cartas del Set SR1 ---
-    potentialPlayers = playersDB.filter(p => p.set === 'SR1');
-    
-    // Seguridad: Si no has metido cartas SR1 aun, usa Relics para no romper el juego
-    if (potentialPlayers.length === 0) {
-      console.warn("Set SR1 vacío, usando Relics como fallback.");
-      potentialPlayers = playersDB.filter(p => p.rarity === 'relic');
-    }
-  } else {
-    // --- CAMINO AZUL: Buscar cualquier Reliquia (que NO sea SR1) ---
-    potentialPlayers = playersDB.filter(p => p.rarity === 'relic' && p.set !== 'SR1');
-    
-    // Seguridad
-    if (potentialPlayers.length === 0) {
-      potentialPlayers = playersDB.filter(p => p.rarity === 'legendary');
-    }
+  // SEGURIDAD: Si no hay cartas SR1 (ej: DB vacía), usar cualquier carta para no romper el juego
+  if (potentialPlayers.length === 0) {
+      console.warn("No SR1 cards found. Using random fallback.");
+      potentialPlayers = playersDB;
   }
 
-  // 2. Elegir jugador al azar del grupo seleccionado
+  // 2. Elegir jugador al azar de esa lista
   const chosenPlayer = potentialPlayers[Math.floor(Math.random() * potentialPlayers.length)];
 
-  // 3. Calcular variantes (Probabilidad especial para este sobre premio)
+  // 3. Calcular variantes (Mismas probabilidades especiales que tenías)
   const isGolden = Math.random() < 0.1; // 10% Golden
   
   let variant = 'none';
