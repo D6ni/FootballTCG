@@ -10842,67 +10842,72 @@ function showChoiceView(cardOptions) {
   choiceOverlay.classList.add('visible');
 }
 
-/**
-* Se ejecuta cuando el jugador elige una carta del modal de elección.
-* Añade la carta a la colección, anima la salida y cierra el modal.
-*/
+// --- selectCardFromChoice CORREGIDA (Guarda en Nube) ---
 function selectCardFromChoice(chosenCard) {
-// --- INICIO DE LA MEJORA VISUAL ---
-
-// Deshabilitamos los clics para evitar acciones duplicadas
+  // 1. Efecto Visual (Desvanecer las otras)
   const allChoiceCards = document.querySelectorAll('#choice-cards-container .card');
-  allChoiceCards.forEach(card => card.onclick = null);
+  allChoiceCards.forEach(card => card.onclick = null); // Bloquear clics
 
   allChoiceCards.forEach(card => {
-// Si la carta NO es la elegida...
-    if (card.cardData.playerData.id !== chosenCard.playerData.id) {
+    // Comparamos por cardCode para saber cuál es la elegida
+    if (card.cardData.playerData.cardCode !== chosenCard.playerData.cardCode) {
       card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
       card.style.opacity = '0.2';
-card.style.transform += ' scale(0.9)'; // La hacemos un poco más pequeña
-} else {
-// La carta elegida "salta" un poco para confirmación
-  card.style.transform += ' scale(1.1)';
-}
-});
+      card.style.transform += ' scale(0.9)';
+    } else {
+      card.style.transform += ' scale(1.1)'; // Resaltar elegida
+    }
+  });
 
-// --- FIN DE LA MEJORA VISUAL ---
-
-// Esperamos a que la animación termine antes de continuar
+  // 2. Esperar animación y Guardar
   setTimeout(() => {
-// --- ¡AQUÍ ESTÁ EL ERROR! ---
-// LÍNEA INCORRECTA:
-// const playerId = chosenCard.playerData.id;
+    const playerId = chosenCard.playerData.cardCode;
+    // Aseguramos formato de clave string ('true'/'false')
+    const isGoldenStr = String(chosenCard.golden);
+    const variantKey = `${isGoldenStr}_${chosenCard.variant}`;
 
-// LÍNEA CORREGIDA:
-const playerId = chosenCard.playerData.cardCode; // <-- ¡CAMBIO CLAVE!
+    // Inicializar jugador si no existe
+    if (!window.collection[playerId]) {
+      window.collection[playerId] = {};
+    }
 
-const variantKey = `${chosenCard.golden}_${chosenCard.variant}`;
+    // A. Lógica si es NUEVA
+    if (!window.collection[playerId][variantKey]) {
+      window.collection[playerId][variantKey] = { 
+          count: 1, 
+          cardData: chosenCard 
+      };
+      
+      // Marcar como nueva para el álbum
+      const uniqueId = getUniqueCardId(chosenCard);
+      newCards.add(uniqueId);
+      saveNewCards();
+    } 
+    // B. Lógica si es REPETIDA
+    else {
+      window.collection[playerId][variantKey].count++;
+    }
 
-if (!collection[playerId]) {
-  collection[playerId] = {};
-}
-if (!collection[playerId][variantKey]) {
-  collection[playerId][variantKey] = { count: 1, cardData: chosenCard };
-} else {
-  collection[playerId][variantKey].count++;
-}
+    // 3. --- GUARDADO EN FIREBASE ---
+    saveCollection(); 
+    updateAlbumStats();
+    
+    // 4. Feedback y Cierre
+    showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
 
-// 2. Guardar la colección y actualizar UI
-saveCollection();
-showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
+    const choiceOverlay = document.getElementById('choice-overlay');
+    choiceOverlay.classList.remove('visible');
+    document.getElementById('choice-cards-container').innerHTML = '';
 
-// 3. Ocultar y limpiar el modal
-const choiceOverlay = document.getElementById('choice-overlay');
-choiceOverlay.classList.remove('visible');
-document.getElementById('choice-cards-container').innerHTML = '';
+    // Reactivar botones de la tienda
+    const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+    if (openPacksViewBtn) openPacksViewBtn.disabled = false;
 
-// 4. Habilitar de nuevo el botón de abrir sobres y volver a la tienda
-const openPacksViewBtn = document.getElementById('openPacksViewBtn');
-if (openPacksViewBtn) openPacksViewBtn.disabled = false;
+    // Volver a la tienda automáticamente
+    const backToStoreBtn = document.getElementById('back-to-store-btn');
+    if (backToStoreBtn) backToStoreBtn.click();
 
-const backToStoreBtn = document.getElementById('back-to-store-btn');
-if (backToStoreBtn) backToStoreBtn.click();
-}, 800);
+  }, 800);
 }
 
 // grading
