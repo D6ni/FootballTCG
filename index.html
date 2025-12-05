@@ -7805,7 +7805,8 @@ function createShowcase() {
              player.name.toLowerCase().includes(term) ||
              player.position.toLowerCase().includes(term) ||
              player.country.toLowerCase().includes(term) ||
-             player.rarity.toLowerCase().includes(term);
+             player.rarity.toLowerCase().includes(term) ||
+             (player.set && player.set.toLowerCase().includes(term));
         
         if (basicMatch) return true;
 
@@ -12871,7 +12872,7 @@ async function searchMarket(isAutoRefresh = false) {
         if (goldenFilterValue === 'false' && isGoldenBool) return false;
 
         if (searchTerms.length > 0) {
-            const playerText = `${player.name} ${player.position} ${player.country} ${player.rarity} ${player.team || ""} ${player.teams ? player.teams.join(" ") : ""}`.toLowerCase();
+            const playerText = `${player.name} ${player.position} ${player.country} ${player.rarity} ${player.set || ""} ${player.team || ""} ${player.teams ? player.teams.join(" ") : ""}`.toLowerCase();
             const matchesText = searchTerms.every(term => playerText.includes(term));
             const matchesSpecial = searchTerms.some(term => (term === 'gold' && isGoldenBool) || (variant !== 'none' && variant.includes(term)));
             if (!matchesText && !matchesSpecial) return false;
