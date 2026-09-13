@@ -6749,40 +6749,37 @@ button,
 </div>
 
 <!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
+<!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { 
-    getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut 
+    getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import { 
     getFirestore, collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, 
     query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // --- TU CONFIGURACIÓN ---
   const firebaseConfig = {
-  apiKey: "AIzaSyDqy1Q9WUPiuVcKZZhMY0BfMGkbQ6uGVfs",
-  authDomain: "football-tcg-b9295.firebaseapp.com",
-  projectId: "football-tcg-b9295",
-  storageBucket: "football-tcg-b9295.firebasestorage.app",
-  messagingSenderId: "907190312198",
-  appId: "1:907190312198:web:df9e615de84454e425d287"
-};
+    apiKey: "AIzaSyDqy1Q9WUPiuVcKZZhMY0BfMGkbQ6uGVfs",
+    authDomain: "football-tcg-b9295.firebaseapp.com",
+    projectId: "football-tcg-b9295",
+    storageBucket: "football-tcg-b9295.firebasestorage.app",
+    messagingSenderId: "907190312198",
+    appId: "1:907190312198:web:df9e615de84454e425d287"
+  };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const googleProvider = new GoogleAuthProvider();
 
-  // Exponer a global
   window.db = db;
   window.auth = auth;
   window.currentUser = null;
   window.fs = { collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp };
 
-  // --- FUNCIONES GLOBALES DE DINERO (SOLUCIÓN PROBLEMA F5) ---
-  
-  // Actualizar UI
+  // --- FUNCIONES GLOBALES DE DINERO ---
   window.updateGlobalCurrencyUI = function(amount) {
     window.playerCurrency = amount; 
     const display = document.getElementById('player-currency-display');
@@ -6792,50 +6789,41 @@ button,
     if (marketDisplay) marketDisplay.textContent = formatted;
   };
 
-  // Guardar Ganancias (Ventas/Partidos)
   window.earnGemsOnline = async function(amount) {
     if (!window.currentUser) return;
     const userRef = doc(db, "users", window.currentUser.uid);
     try {
         await updateDoc(userRef, { gems: increment(amount) });
-        console.log(`☁️ Guardado: +${amount} gemas`);
     } catch(e) { console.error("Error guardando gemas:", e); }
   };
 
-  // Guardar Gastos (Packs/Market/Ruleta)
   window.spendGemsOnline = async function(amount) {
     if (!window.currentUser) return;
     const userRef = doc(db, "users", window.currentUser.uid);
     try {
         await updateDoc(userRef, { gems: increment(-amount) });
-        console.log(`☁️ Guardado: -${amount} gemas`);
     } catch(e) { console.error("Error gastando gemas:", e); }
   };
 
-
-  // --- LÓGICA DE LOGIN ---
+  // --- LÓGICA DE LOGIN EXCLUSIVO GMAIL ---
   const btnLogin = document.getElementById('btn-login-google');
   const btnLogout = document.getElementById('btn-logout');
   const userProfile = document.getElementById('user-profile-info');
   const displayUsername = document.getElementById('display-username');
   const btnEditUser = document.getElementById('btn-edit-username');
 
-  // Google Login
   if(btnLogin) btnLogin.addEventListener('click', () => {
-      signInWithPopup(auth, googleProvider).catch((error) => alert("Login failed: " + error.message));
+      signInWithPopup(auth, googleProvider).catch((error) => {
+          alert("Login error: " + error.message);
+      });
   });
 
-  // Logout
   if(btnLogout) btnLogout.addEventListener('click', () => {
+      localStorage.clear();
       signOut(auth).then(() => location.reload());
   });
 
-  // Editar Usuario
-  if(btnEditUser) btnEditUser.addEventListener('click', () => {
-      document.getElementById('username-modal-overlay').style.display = 'flex';
-  });
-
-  // --- LÓGICA MODAL NOMBRE DE USUARIO (CON MODO DIOS) ---
+  // --- LÓGICA MODAL NOMBRE DE USUARIO ---
   const usernameModal = document.getElementById('username-modal-overlay');
   const usernameConfirm = document.getElementById('btn-confirm-username');
   const usernameInput = document.getElementById('new-username-input');
@@ -6843,17 +6831,11 @@ button,
 
   if(usernameConfirm) {
       usernameConfirm.addEventListener('click', async () => {
-          // Normalizamos el ID (para la base de datos)
-          const nameID = usernameInput.value.trim().toLowerCase(); 
-          // El nombre bonito (para mostrar en pantalla)
           const nameDisplay = usernameInput.value.trim();
-
-          // --- EXCEPCIÓN CREADOR ---
-          // Si escribes EXACTAMENTE esto, te saltas todas las reglas.
+          const nameID = nameDisplay.toLowerCase(); 
           const isCreator = nameDisplay === "D6ni 👑"; 
 
           if (!isCreator) {
-              // REGLAS PARA LOS MORTALES
               if (nameID.length < 3 || nameID.length > 12) {
                   usernameError.textContent = "Username must be 3-12 characters.";
                   return;
@@ -6869,8 +6851,6 @@ button,
 
           try {
               await runTransaction(db, async (transaction) => {
-                  
-                  // Usamos nameID como clave. Si es el creador, la clave será "d6ni 👑"
                   const usernameRef = doc(db, "usernames", nameID);
                   const usernameSnap = await transaction.get(usernameRef);
 
@@ -6885,116 +6865,81 @@ button,
                   }
 
                   transaction.set(usernameRef, { uid: window.currentUser.uid }); 
-                  transaction.update(userRef, { username: nameDisplay });        
+                  transaction.set(userRef, { username: nameDisplay }, { merge: true });        
               });
 
               usernameModal.style.display = 'none';
-              const btnEdit = document.getElementById('btn-edit-username');
-              if(btnEdit) btnEdit.style.display = 'none'; 
-              
+              if(btnEditUser) btnEditUser.style.display = 'none'; 
               if(displayUsername) displayUsername.textContent = nameDisplay;
 
           } catch (e) {
               console.error(e);
-              if (typeof e === 'string') {
-                  usernameError.textContent = e;
-              } else {
-                  usernameError.textContent = "Error. Try another name.";
-              }
+              usernameError.textContent = typeof e === 'string' ? e : "Error creating name.";
               usernameConfirm.disabled = false;
           }
       });
   }
 
-  // --- LISTENER PRINCIPAL (Carga de Datos) ---
+  // --- CONTROLADOR DE SESIÓN (OBLIGATORIO GMAIL) ---
   onAuthStateChanged(auth, async (user) => {
+    const mainButtons = document.querySelector('.button-container');
+
     if (user) {
-      console.log("🟢 Usuario conectado:", user.uid);
+      console.log("🟢 Conectado con Google:", user.uid);
       window.currentUser = user;
 
-      // UI Botones
-      if (user.isAnonymous) {
-          if(btnLogin) btnLogin.style.display = 'flex';
-          if(userProfile) userProfile.style.display = 'none';
-      } else {
-          if(btnLogin) btnLogin.style.display = 'none';
-          if(userProfile) userProfile.style.display = 'flex';
-      }
+      if(btnLogin) btnLogin.style.display = 'none';
+      if(userProfile) userProfile.style.display = 'flex';
+      if(mainButtons) mainButtons.style.display = 'flex';
 
       const userRef = doc(db, "users", user.uid);
-      
-      // ESCUCHAR DATOS (Aquí arreglamos las 500 gemas)
+
       onSnapshot(userRef, async (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          // 1. CHEQUEO DE SEGURIDAD DE GEMAS
-          // Si el usuario existe pero no tiene gemas definidas (bug anterior), le damos 500
           if (data.gems === undefined || data.gems === null) {
-              console.log("⚠️ Usuario sin gemas. Asignando 500 iniciales.");
               await setDoc(userRef, { gems: 500 }, { merge: true });
           } else {
               updateGlobalCurrencyUI(data.gems);
           }
 
-          // 2. USERNAME Y BLOQUEO DE EDICIÓN
-          const btnEditUser = document.getElementById('btn-edit-username');
-
-          if (!user.isAnonymous && !data.username) {
-              // Si es Google y NO tiene nombre -> Abrimos el modal obligado
+          // Modal de Nombre si no lo tiene
+          if (!data.username) {
               if(usernameModal) usernameModal.style.display = 'flex';
-              // Mostramos el lápiz por si acaso lo cierra
-              if(btnEditUser) btnEditUser.style.display = 'flex'; 
-          } 
-          else if (data.username) {
-              // Si YA TIENE nombre -> Lo ponemos y QUITAMOS EL LÁPIZ
+          } else {
               if(displayUsername) displayUsername.textContent = data.username;
               if(usernameModal) usernameModal.style.display = 'none';
-              
-              // --- AQUÍ ESTÁ EL CAMBIO: OCULTAR PARA SIEMPRE ---
               if(btnEditUser) btnEditUser.style.display = 'none';
           }
 
-          // PACKS
           if (data.packs) {
               window.packInventory = data.packs;
-              // Guardamos copia de seguridad local
-              localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
+              packInventory = data.packs;
           }
 
-          // COLECCIÓN (ESTO ES LO IMPORTANTE)
           if (data.collection) {
               window.collection = data.collection;
-              // Guardamos copia de seguridad local
-              localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
-              
-              console.log("📥 Colección descargada:", Object.keys(window.collection).length, "jugadores.");
+              collection = data.collection;
           }
 
-          // Desbloquear pantalla de carga
           window.isCloudDataLoaded = true;
-          const loader = document.getElementById('cloud-loader');
-          if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
 
         } else {
-          // USUARIO NUEVO (Reset Total)
-          console.log("🌟 Nuevo usuario. Creando perfil inicial.");
+          // Documento inicial del nuevo jugador
+          console.log("🌟 Creando perfil en nube para nuevo jugador.");
           const cleanStart = { 
-              gems: 500,  // <-- AQUÍ SE DEFINEN LAS 500 INICIALES
+              gems: 500,
               packs: { 'common-pack': 3 }, 
-              collection: {} 
+              collection: {},
+              email: user.email,
+              createdAt: serverTimestamp()
           };
-          setDoc(userRef, cleanStart);
+          await setDoc(userRef, cleanStart);
         }
       });
 
-      // --- Listeners de Mercado y Entregas (Mantenemos lo que ya funcionaba) ---
-      const mySalesQuery = query(collection(db, "market"), where("sellerId", "==", user.uid));
-      onSnapshot(mySalesQuery, () => {
-         // Refrescar vistas si es necesario
-         if(typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history' && typeof renderHistoryView === 'function') renderHistoryView();
-      });
-
+      // Listener de buzón de entregas (deliveries)
       const deliveriesQuery = query(collection(db, "deliveries"), where("recipientId", "==", user.uid));
       onSnapshot(deliveriesQuery, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
@@ -7002,15 +6947,19 @@ button,
                 const d = change.doc.data();
                 if(typeof addCardToCollection === 'function') addCardToCollection(d.cardCode, d.isGolden, d.variant);
                 deleteDoc(doc(db, "deliveries", change.doc.id));
-                // Toast opcional
-                const toastMsg = d.type === 'auction_win' ? "🏆 Auction Won! Card added." : "Item returned.";
-                if(typeof showToast === 'function') showToast(toastMsg, "success");
+                if(typeof showToast === 'function') showToast("Item received from market!", "success");
             }
         });
       });
 
     } else {
-      signInAnonymously(auth).catch((e) => console.error(e));
+      // NO HAY SESIÓN -> Bloqueamos la interfaz del juego
+      console.log("🔴 Usuario no logueado");
+      window.currentUser = null;
+      if(btnLogin) btnLogin.style.display = 'flex';
+      if(userProfile) userProfile.style.display = 'none';
+      if(mainButtons) mainButtons.style.display = 'none';
+      if(usernameModal) usernameModal.style.display = 'none';
     }
   });
 </script>
