@@ -3352,6 +3352,23 @@ gap: 20px;
     font-size: 14px;
   }
 
+  /* Indicadores interactivos (cuando posees la carta) */
+.variant-indicator.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.variant-indicator.clickable:hover {
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+/* Indicador de la variante actualmente seleccionada en el álbum */
+.variant-indicator.current-active {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
   .album-entry-wrapper {
     margin-right: 28px;
   }
@@ -6059,54 +6076,6 @@ button,
   }
 }
 
-/* =======================================================
-   ESTILOS MAESTROS POR SET (Overrides)
-   ======================================================= */
-
-/* --- CONFIGURACIÓN SET SR1 (ROJO SANGRE) --- */
-/* Afecta a: Cartas, Slabs, Placeholders y Contenedores */
-.set-sr1, 
-.card.set-sr1, 
-.graded-card.set-sr1, 
-.slab-container.set-sr1 {
-    /* Cambiamos la variable global: esto cambia bordes, sombras, brillos y textos */
-    --rarity-color: #AD0000 !important;
-}
-
-/* Fondo específico para la carta (Sobrescribe rarezas) */
-.card.set-sr1 .front, 
-.graded-card.set-sr1 .front {
-    background: linear-gradient(170deg, #AD0000, #4a0000) !important;
-}
-
-/* Sombra/Glow específico para cartas giradas */
-.card.set-sr1.flipped .front,
-.graded-card.set-sr1 .front {
-    box-shadow: 0 0 10px 4px #AD0000 !important;
-}
-
-/* Borde del Slab de Grading */
-.slab-container.set-sr1 .slab-label {
-    border-color: #AD0000 !important;
-}
-
-/* Placeholders del Álbum (Bordes discontinuos) */
-.card.missing.set-sr1 {
-    border-color: #AD0000 !important;
-    background: rgba(40, 0, 0, 0.4) !important; /* Un fondo rojizo sutil */
-    color: #ffaaaa !important; /* Texto rojizo */
-}
-
-
-/* --- EJEMPLO PARA FUTURO SET SW0 (VERDE TOXICO) --- */
-/* Solo tendrías que copiar esto y cambiar SR1 por SW0 y el color */
-.set-SW0, .card.set-SW0, .slab-container.set-SW0 {
-    --rarity-color: #39FF14 !important;
-}
-.card.set-SW0 .front {
-    background: linear-gradient(170deg, #39FF14, #0b4f00) !important;
-}
-
 </style>
 </head>
 <body>
@@ -6115,119 +6084,13 @@ button,
   <audio id="rouletteSpinSound" src="sounds/roulette.mp3" preload="auto"></audio>
   <h1><img src="images/Logo.png" alt="Football TCG Logo"></h1>
   <div id="player-currency-display" class="player-currency">0 💎</div>
-  <!-- 1. BOTONES DEL JUEGO -->
-<div class="button-container">
+  <div class="button-container">
     <button id="openPacksViewBtn">BUY / OPEN PACKS</button>
     <button id="showcaseBtn">MY ALBUM</button>
     <button id="openMarketBtn">TRANSFER MARKET</button>
     <button id="roulette-btn">ROULETTE GAME</button>
-    <!-- <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button> -->
-</div>
-
-<!-- 2. BARRA DE USUARIO (Centrada debajo) -->
-<!-- 3. BARRA DE USUARIO (Alineación Total: Nombre - Lápiz - Logout) -->
-<div id="user-auth-ui" style="
-    display: flex; 
-    justify-content: center; 
-    width: 100%; 
-    margin-top: 15px; 
-    margin-bottom: 20px; 
-    z-index: 50;
-">
-    
-    <!-- A. BOTÓN LOGIN (Si no estás conectado) -->
-    <button id="btn-login-google" style="
-        background: #fff; 
-        color: #333; 
-        font-weight: bold; 
-        border: none; 
-        padding: 10px 20px; 
-        border-radius: 30px; 
-        cursor: pointer; 
-        display: flex; 
-        align-items: center; 
-        gap: 10px; 
-        font-family: sans-serif;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-    ">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 
-        Sign in
-    </button>
-
-    <!-- B. PERFIL JUGADOR (Si estás conectado) -->
-    <div id="user-profile-info" style="
-        display: none; 
-        align-items: center; 
-        justify-content: center; 
-        gap: 15px; 
-        background: rgba(0, 0, 0, 0.6); 
-        padding: 0 20px; /* Padding vertical 0 para controlar altura con height */
-        height: 40px;    /* Altura fija del contenedor */
-        border-radius: 50px; 
-        border: 1px solid #444; 
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    ">
-        
-        <!-- Grupo Nombre + Lápiz -->
-        <div style="display: flex; align-items: center; gap: 8px; height: 100%;">
-            
-            <!-- Nombre -->
-            <span id="display-username" style="
-                color: #ffc84a; 
-                font-weight: 800; 
-                font-size: 15px; 
-                letter-spacing: 0.5px;
-                /* Truco: line-height 1 elimina espacio extra arriba/abajo */
-                line-height: 1; 
-            ">User</span>
-            
-            <!-- Lápiz -->
-            <button id="btn-edit-username" title="Change Name" style="
-                background: none; 
-                border: none; 
-                cursor: pointer; 
-                font-size: 12px; /* Tamaño del icono */
-                opacity: 0.7; 
-                padding: 5px;    /* Zona de clic */
-                margin: 0;
-                
-                /* CENTRADO DEL ICONO */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 24px;    /* Misma altura visual que el botón logout */
-                width: 24px;
-            ">✏️</button>
-        </div>
-
-        <!-- Línea Separadora -->
-        <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2);"></div>
-
-        <!-- Botón Logout -->
-        <button id="btn-logout" style="
-            background: #c0392b; 
-            color: white; 
-            border: none; 
-            padding: 0 14px; 
-            height: 24px;    /* Altura fija exacta */
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 10px; 
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            
-            /* CENTRADO DEL TEXTO */
-            display: flex;       
-            align-items: center; 
-            justify-content: center;
-            margin: 0;
-        ">
-            LOGOUT
-        </button>
-    </div>
-
-</div>
+    <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button>
+  </div>
 
 <!--BORRAR PRUEBA FLOATS-->
 <div id="debug-tools">
@@ -6378,23 +6241,6 @@ button,
 
   </div>
   <button id="close-market-browser-btn">X</button>
-</div>
-
-<!-- MODAL SET USERNAME -->
-<div id="username-modal-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center;">
-    <div style="background: #1d1f24; padding: 30px; border-radius: 12px; border: 1px solid #444; text-align: center; max-width: 400px; width: 90%;">
-        <h2 style="color: #fff; margin-top: 0;">Welcome, Legend!</h2>
-        <p style="color: #ccc;">Choose a unique username for the market.</p>
-        
-        <input type="text" id="new-username-input" placeholder="Username (e.g. MessiLover)" maxlength="12" 
-               style="padding: 10px; font-size: 18px; width: 80%; border-radius: 6px; border: 1px solid #555; background: #111; color: #fff; text-align: center;">
-        
-        <div id="username-error" style="color: #e74c3c; margin-top: 10px; font-size: 13px; min-height: 20px;"></div>
-        
-        <button id="btn-confirm-username" style="background: #1f7; color: #000; font-weight: bold; padding: 12px 30px; border: none; border-radius: 6px; margin-top: 20px; cursor: pointer; font-size: 16px;">
-            START PLAYING
-        </button>
-    </div>
 </div>
 
 <!-- =========== NUEVA VISTA DE DETALLE DE JUGADOR (AÑADE ESTO) =========== -->
@@ -6753,279 +6599,12 @@ button,
 </div>
 </div>
 
-<!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { 
-    getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut 
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { 
-    getFirestore, collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, 
-    query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp 
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-  // --- TU CONFIGURACIÓN ---
-  const firebaseConfig = {
-  apiKey: "AIzaSyDqy1Q9WUPiuVcKZZhMY0BfMGkbQ6uGVfs",
-  authDomain: "football-tcg-b9295.firebaseapp.com",
-  projectId: "football-tcg-b9295",
-  storageBucket: "football-tcg-b9295.firebasestorage.app",
-  messagingSenderId: "907190312198",
-  appId: "1:907190312198:web:df9e615de84454e425d287"
-};
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider();
-
-  // Exponer a global
-  window.db = db;
-  window.auth = auth;
-  window.currentUser = null;
-  window.fs = { collection, addDoc, setDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot, increment, runTransaction, serverTimestamp };
-
-  // --- FUNCIONES GLOBALES DE DINERO (SOLUCIÓN PROBLEMA F5) ---
-  
-  // Actualizar UI
-  window.updateGlobalCurrencyUI = function(amount) {
-    window.playerCurrency = amount; 
-    const display = document.getElementById('player-currency-display');
-    const marketDisplay = document.getElementById('market-balance-display');
-    const formatted = `${amount.toLocaleString()} 💎`;
-    if (display) display.textContent = formatted;
-    if (marketDisplay) marketDisplay.textContent = formatted;
-  };
-
-  // Guardar Ganancias (Ventas/Partidos)
-  window.earnGemsOnline = async function(amount) {
-    if (!window.currentUser) return;
-    const userRef = doc(db, "users", window.currentUser.uid);
-    try {
-        await updateDoc(userRef, { gems: increment(amount) });
-        console.log(`☁️ Guardado: +${amount} gemas`);
-    } catch(e) { console.error("Error guardando gemas:", e); }
-  };
-
-  // Guardar Gastos (Packs/Market/Ruleta)
-  window.spendGemsOnline = async function(amount) {
-    if (!window.currentUser) return;
-    const userRef = doc(db, "users", window.currentUser.uid);
-    try {
-        await updateDoc(userRef, { gems: increment(-amount) });
-        console.log(`☁️ Guardado: -${amount} gemas`);
-    } catch(e) { console.error("Error gastando gemas:", e); }
-  };
-
-
-  // --- LÓGICA DE LOGIN ---
-  const btnLogin = document.getElementById('btn-login-google');
-  const btnLogout = document.getElementById('btn-logout');
-  const userProfile = document.getElementById('user-profile-info');
-  const displayUsername = document.getElementById('display-username');
-  const btnEditUser = document.getElementById('btn-edit-username');
-
-  // Google Login
-  if(btnLogin) btnLogin.addEventListener('click', () => {
-      signInWithPopup(auth, googleProvider).catch((error) => alert("Login failed: " + error.message));
-  });
-
-  // Logout
-  if(btnLogout) btnLogout.addEventListener('click', () => {
-      signOut(auth).then(() => location.reload());
-  });
-
-  // Editar Usuario
-  if(btnEditUser) btnEditUser.addEventListener('click', () => {
-      document.getElementById('username-modal-overlay').style.display = 'flex';
-  });
-
-  // --- LÓGICA MODAL NOMBRE DE USUARIO (CON MODO DIOS) ---
-  const usernameModal = document.getElementById('username-modal-overlay');
-  const usernameConfirm = document.getElementById('btn-confirm-username');
-  const usernameInput = document.getElementById('new-username-input');
-  const usernameError = document.getElementById('username-error');
-
-  if(usernameConfirm) {
-      usernameConfirm.addEventListener('click', async () => {
-          // Normalizamos el ID (para la base de datos)
-          const nameID = usernameInput.value.trim().toLowerCase(); 
-          // El nombre bonito (para mostrar en pantalla)
-          const nameDisplay = usernameInput.value.trim();
-
-          // --- EXCEPCIÓN CREADOR ---
-          // Si escribes EXACTAMENTE esto, te saltas todas las reglas.
-          const isCreator = nameDisplay === "D6ni 👑"; 
-
-          if (!isCreator) {
-              // REGLAS PARA LOS MORTALES
-              if (nameID.length < 3 || nameID.length > 12) {
-                  usernameError.textContent = "Username must be 3-12 characters.";
-                  return;
-              }
-              if (!/^[a-zA-Z0-9_]+$/.test(nameID)) {
-                  usernameError.textContent = "Only letters, numbers and _ allowed.";
-                  return;
-              }
-          }
-
-          usernameError.textContent = "Checking availability...";
-          usernameConfirm.disabled = true;
-
-          try {
-              await runTransaction(db, async (transaction) => {
-                  
-                  // Usamos nameID como clave. Si es el creador, la clave será "d6ni 👑"
-                  const usernameRef = doc(db, "usernames", nameID);
-                  const usernameSnap = await transaction.get(usernameRef);
-
-                  if (usernameSnap.exists()) {
-                      throw "Username already taken!";
-                  }
-
-                  const userRef = doc(db, "users", window.currentUser.uid);
-                  const userSnap = await transaction.get(userRef);
-                  if (userSnap.exists() && userSnap.data().username) {
-                      throw "You already have a username!";
-                  }
-
-                  transaction.set(usernameRef, { uid: window.currentUser.uid }); 
-                  transaction.update(userRef, { username: nameDisplay });        
-              });
-
-              usernameModal.style.display = 'none';
-              const btnEdit = document.getElementById('btn-edit-username');
-              if(btnEdit) btnEdit.style.display = 'none'; 
-              
-              if(displayUsername) displayUsername.textContent = nameDisplay;
-
-          } catch (e) {
-              console.error(e);
-              if (typeof e === 'string') {
-                  usernameError.textContent = e;
-              } else {
-                  usernameError.textContent = "Error. Try another name.";
-              }
-              usernameConfirm.disabled = false;
-          }
-      });
-  }
-
-  // --- LISTENER PRINCIPAL (Carga de Datos) ---
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      console.log("🟢 Usuario conectado:", user.uid);
-      window.currentUser = user;
-
-      // UI Botones
-      if (user.isAnonymous) {
-          if(btnLogin) btnLogin.style.display = 'flex';
-          if(userProfile) userProfile.style.display = 'none';
-      } else {
-          if(btnLogin) btnLogin.style.display = 'none';
-          if(userProfile) userProfile.style.display = 'flex';
-      }
-
-      const userRef = doc(db, "users", user.uid);
-      
-      // ESCUCHAR DATOS (Aquí arreglamos las 500 gemas)
-      onSnapshot(userRef, async (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-
-          // 1. CHEQUEO DE SEGURIDAD DE GEMAS
-          // Si el usuario existe pero no tiene gemas definidas (bug anterior), le damos 500
-          if (data.gems === undefined || data.gems === null) {
-              console.log("⚠️ Usuario sin gemas. Asignando 500 iniciales.");
-              await setDoc(userRef, { gems: 500 }, { merge: true });
-          } else {
-              updateGlobalCurrencyUI(data.gems);
-          }
-
-          // 2. USERNAME Y BLOQUEO DE EDICIÓN
-          const btnEditUser = document.getElementById('btn-edit-username');
-
-          if (!user.isAnonymous && !data.username) {
-              // Si es Google y NO tiene nombre -> Abrimos el modal obligado
-              if(usernameModal) usernameModal.style.display = 'flex';
-              // Mostramos el lápiz por si acaso lo cierra
-              if(btnEditUser) btnEditUser.style.display = 'flex'; 
-          } 
-          else if (data.username) {
-              // Si YA TIENE nombre -> Lo ponemos y QUITAMOS EL LÁPIZ
-              if(displayUsername) displayUsername.textContent = data.username;
-              if(usernameModal) usernameModal.style.display = 'none';
-              
-              // --- AQUÍ ESTÁ EL CAMBIO: OCULTAR PARA SIEMPRE ---
-              if(btnEditUser) btnEditUser.style.display = 'none';
-          }
-
-          // PACKS
-          if (data.packs) {
-              window.packInventory = data.packs;
-              // Guardamos copia de seguridad local
-              localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
-          }
-
-          // COLECCIÓN (ESTO ES LO IMPORTANTE)
-          if (data.collection) {
-              window.collection = data.collection;
-              // Guardamos copia de seguridad local
-              localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
-              
-              console.log("📥 Colección descargada:", Object.keys(window.collection).length, "jugadores.");
-          }
-
-          // Desbloquear pantalla de carga
-          window.isCloudDataLoaded = true;
-          const loader = document.getElementById('cloud-loader');
-          if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
-
-        } else {
-          // USUARIO NUEVO (Reset Total)
-          console.log("🌟 Nuevo usuario. Creando perfil inicial.");
-          const cleanStart = { 
-              gems: 500,  // <-- AQUÍ SE DEFINEN LAS 500 INICIALES
-              packs: { 'common-pack': 3 }, 
-              collection: {} 
-          };
-          setDoc(userRef, cleanStart);
-        }
-      });
-
-      // --- Listeners de Mercado y Entregas (Mantenemos lo que ya funcionaba) ---
-      const mySalesQuery = query(collection(db, "market"), where("sellerId", "==", user.uid));
-      onSnapshot(mySalesQuery, () => {
-         // Refrescar vistas si es necesario
-         if(typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history' && typeof renderHistoryView === 'function') renderHistoryView();
-      });
-
-      const deliveriesQuery = query(collection(db, "deliveries"), where("recipientId", "==", user.uid));
-      onSnapshot(deliveriesQuery, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const d = change.doc.data();
-                if(typeof addCardToCollection === 'function') addCardToCollection(d.cardCode, d.isGolden, d.variant);
-                deleteDoc(doc(db, "deliveries", change.doc.id));
-                // Toast opcional
-                const toastMsg = d.type === 'auction_win' ? "🏆 Auction Won! Card added." : "Item returned.";
-                if(typeof showToast === 'function') showToast(toastMsg, "success");
-            }
-        });
-      });
-
-    } else {
-      signInAnonymously(auth).catch((e) => console.error(e));
-    }
-  });
-</script>
-
 <script src="database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
 
 <script>
 //variables globales
-const TEST_MODE_FILL_ALBUM = false; /*MODO TEST*/
+const TEST_MODE_FILL_ALBUM = true; /*MODO TEST*/
 const ENABLE_DEBUG_GRADING_TOOLS = false; // quitar generador floats
 
 
@@ -7131,26 +6710,12 @@ function buildProbLists(config) {
 
 const { regularProbs, goldenProbs, variantProbs } = buildProbLists(CONFIG);
 
+// --- INICIALIZACIÓN DE DATOS DE JUGADOR (MODO TEST O NORMAL) ---
 
-// --- INICIALIZACIÓN DE DATOS (VERSIÓN ONLINE LIMPIA) ---
-if (!window.collection) {
-    window.collection = {};
-}
-if (!window.packInventory) {
-    window.packInventory = { 'common-pack': 0, 'rare-pack': 0, 'collectors-pack': 0 };
-}
-if (typeof window.playerCurrency === 'undefined') {
-    window.playerCurrency = 0;
-}
-window.gradedCollection = [];
-window.isCloudDataLoaded = false;
-
-// ALIAS PARA COMPATIBILIDAD (Sin usar 'let')
-var collection = window.collection;
-var packInventory = window.packInventory;
-var playerCurrency = window.playerCurrency;
-var gradedCollection = window.gradedCollection;
-
+let collection;
+let packInventory;
+let playerCurrency;
+let gradedCollection;
 
 const gradingScale = [
   { threshold: 0.015, score: "10+", name: "PRISTINE" },     // 
@@ -7212,6 +6777,7 @@ collection[playerCardCode] = {}; // Usamos el cardCode como clave principal
 });
 });
 
+  playerCurrency = 999999;
   packInventory = {
     'common-pack': 99,
     'rare-pack': 99,
@@ -7226,13 +6792,11 @@ collection[playerCardCode] = {}; // Usamos el cardCode como clave principal
 // (El resto del código no cambia)
   console.log("--- MODO NORMAL: Cargando datos guardados. ---");
   const savedCollection = localStorage.getItem('myFootballCollection');
-  window.collection = savedCollection ? JSON.parse(savedCollection) : {};
   collection = savedCollection ? JSON.parse(savedCollection) : {};
   const savedPacks = localStorage.getItem('myFootballPacks');
-  window.packInventory = savedPacks ? JSON.parse(savedPacks) : { 'common-pack': 0 };
   packInventory = savedPacks ? JSON.parse(savedPacks) : { 'common-pack': 3 };
-  //const savedCurrency = localStorage.getItem('myPlayerCurrency');
-  playerCurrency = 0;
+  const savedCurrency = localStorage.getItem('myPlayerCurrency');
+  playerCurrency = savedCurrency ? parseInt(savedCurrency, 10) : 500; //DINERO INICIAL
 }
 
 
@@ -7317,55 +6881,47 @@ function pickByProb(list) {
     return list[list.length - 1];
 }
 
-function generateCard(targetSet) {
-  // 1. Limpieza del input: Quitamos espacios y lo pasamos a Mayúsculas
-  // Si targetSet es null, usamos 'S00'
-  const cleanSet = (targetSet || 'S00').toString().trim().toUpperCase();
-  
+function generateCard(targetSet = 'S00') {
+  // 1. Calcular si es Golden
   const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
-  const probObj = isGolden ? pickByProb(goldenProbs) : pickByProb(regularProbs);
-  const desiredRarity = probObj ? probObj.r : 'common';
-
-  // 2. FILTRO INTELIGENTE (Ignora mayúsculas/minúsculas)
-  let playersOfSet = playersDB.filter(p => {
-      // Aseguramos que el jugador tenga set, lo limpiamos y comparamos
-      return p.set && p.set.toString().trim().toUpperCase() === cleanSet;
-  });
   
-  // SEGURIDAD: Si falló el set, usamos toda la DB para no romper el juego
+  // 2. Determinar Rareza (usando las probabilidades globales)
+  // NOTA: Si un set pequeño (como SR1) no tiene cartas 'common', esto podría fallar.
+  // Ver punto 3 para la solución de seguridad.
+  let rarity = isGolden ? pickByProb(goldenProbs).r : pickByProb(regularProbs).r;
+  
+  // 3. Filtrar jugadores por SET y RAREZA
+  let playersOfSet = playersDB.filter(p => p.set === targetSet);
+  
+  // Seguridad: Si el set no existe o está vacío en la DB, volvemos a S00 para no romper el juego
   if (playersOfSet.length === 0) {
-    console.warn(`⚠️ Set '${cleanSet}' no encontrado (Revisa mayúsculas en database.js). Usando toda la DB.`);
-    playersOfSet = playersDB;
+    console.warn(`Set ${targetSet} is empty via generateCard. Fallback to S00.`);
+    playersOfSet = playersDB.filter(p => p.set === 'S00');
   }
 
-  // 3. Filtrar por Rareza
-  let playersOfRarity = playersOfSet.filter(p => p.rarity === desiredRarity);
+  // Buscamos jugadores de la rareza elegida DENTRO del set
+  let playersOfRarity = playersOfSet.filter(p => p.rarity === rarity);
 
-  // Fallback de rareza
+  // 4. Lógica de Fallback (Importante para Sets pequeños como SR1)
+  // Si el dado dice "Common" pero el set SR1 solo tiene "Relics", no encontraría nada.
+  // Si no encuentra cartas de esa rareza, elige CUALQUIER carta de ese set aleatoriamente.
   if (playersOfRarity.length === 0) {
     playersOfRarity = playersOfSet;
+      // Actualizamos la rareza a la de la carta que vamos a coger a la fuerza
+      // (Se actualizará correctamente al leer el objeto player)
   }
 
-  // 4. ULTIMA DEFENSA (Si la DB está vacía o algo grave pasa)
-  if (playersOfRarity.length === 0) {
-      console.error("❌ ERROR CRÍTICO: No hay cartas disponibles.");
-      return { 
-          playerData: { name: "Error Card", img: "images/placeholder.png", rating: 0, rarity: "common", cardCode: "ERR", set: "ERR" }, 
-          rarity: "common", golden: false, variant: "none" 
-      };
-  }
-
+  // 5. Elegir Jugador
   const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
   
+  // Corregir la rareza si usamos el fallback (por si salió Common pero el jugador es Relic)
+  rarity = player.rarity;
+
+  // 6. Variante
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
 
-  return { 
-      playerData: player, 
-      rarity: player.rarity, 
-      golden: isGolden, 
-      variant: variant 
-  };
+  return { playerData: player, rarity, golden: isGolden, variant };
 }
 
 //para el rare pack
@@ -7461,9 +7017,9 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
 
 // Llamamos 3 veces a nuestra nueva función para crear las opciones
     const cardOptions = [
-      generateSR1Choice(),
-      generateSR1Choice(),
-      generateSR1Choice()
+      generateRelicChoice(),
+      generateRelicChoice(),
+      generateRelicChoice()
     ];
 
 // En lugar de renderizar cartas, mostramos nuestro nuevo modal de elección
@@ -7595,21 +7151,20 @@ specialSound.play().catch(error => {
 }
 }
 
-// --- FUNCIÓN flipCard CORREGIDA (Guarda en Nube) ---
 function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
-  // Lógica de fin de pack
   if (flippedCardsInPack === currentPackContentSize) {
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
 
     openingControls.style.display = 'flex';
+
     nextPackContainer.innerHTML = ''; 
 
-    for (const packId in window.packInventory) {
-      if (window.packInventory[packId] > 0) {
+    for (const packId in packInventory) {
+      if (packInventory[packId] > 0) {
         const pack = packTypes[packId];
         const packEl = document.createElement('div');
         packEl.className = 'pack-item';
@@ -7623,7 +7178,7 @@ function flipCard(card, index) {
 
         const quantityEl = document.createElement('div');
         quantityEl.className = 'pack-quantity';
-        quantityEl.textContent = `x${window.packInventory[packId]}`;
+        quantityEl.textContent = `x${packInventory[packId]}`;
         packEl.appendChild(quantityEl);
 
         packEl.addEventListener('click', () => {
@@ -7642,7 +7197,6 @@ function flipCard(card, index) {
     packOpeningState = 'pack_complete';
   }
 
-  // Sonido
   const flipSound = document.getElementById('flipSound');
   if (flipSound) {
     flipSound.currentTime = 0;
@@ -7650,50 +7204,41 @@ function flipCard(card, index) {
     flipSound.play();
   }
 
-  // Lógica de Colección
   const cardObj = card.cardData;
   playSpecialCardSound(cardObj);
   const playerId = cardObj.playerData.cardCode;
-  
-  // Usar strings para booleanos
-  const isGoldenStr = String(cardObj.golden); 
-  const variantKey = `${isGoldenStr}_${cardObj.variant}`;
-
-  // Usamos window.collection para asegurar que es la global
-  if (!window.collection[playerId]) {
-    window.collection[playerId] = {};
-  }
-  
-  // Detectar si es nueva variante
-  const isNewVariant = !window.collection[playerId][variantKey];
+  const variantKey = `${cardObj.golden}_${cardObj.variant}`;
+  const isNewVariant = !collection[playerId]?.[variantKey];
 
   if (isNewVariant) {
     const newIndicator = document.createElement('div');
     newIndicator.className = 'new-indicator';
     newIndicator.textContent = 'NEW';
     card.appendChild(newIndicator);
-    setTimeout(() => { newIndicator.remove(); }, 4200);
+    setTimeout(() => {
+      newIndicator.remove();
+    }, 4200);
 
     const uniqueId = getUniqueCardId(cardObj);
     newCards.add(uniqueId); 
     saveNewCards(); 
-    
-    // Crear entrada inicial
-    window.collection[playerId][variantKey] = {
+  }
+
+  if (!collection[playerId]) {
+    collection[playerId] = {};
+  }
+  if (!collection[playerId][variantKey]) {
+    collection[playerId][variantKey] = {
       count: 1,
       cardData: cardObj
     };
   } else {
-    // Incrementar
-    window.collection[playerId][variantKey].count++;
+    collection[playerId][variantKey].count++;
   }
 
-  // --- GUARDADO CRÍTICO EN NUBE ---
-  saveCollection(); // <--- ESTO EVITA QUE SE PIERDAN AL RECARGAR
-  updateAlbumStats();
-  // --------------------------------
 
-  // Animaciones y Estilos
+  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
+
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
@@ -7701,13 +7246,18 @@ function flipCard(card, index) {
   card.style.transition = 'transform 0.7s ease, left 0.7s ease, top 0.7s ease';
   card.classList.add("flipped", "is-animating");
 
-  // Click para inspeccionar
+  // ---> INICIO DEL CAMBIO <---
+  // Una vez la carta se voltea, su nueva función al hacer clic será abrir la vista de inspección.
   card.onclick = () => {
-    const cardStackData = window.collection[playerId]?.[variantKey];
+    // Buscamos los datos actualizados de la carta en nuestra colección (para tener el 'count' correcto)
+    const cardStackData = collection[playerId]?.[variantKey];
     if (cardStackData) {
       showInspectView(card, cardStackData, false);
+    } else {
+      console.error("No se pudo encontrar la carta en la colección para inspeccionarla.");
     }
   };
+  // ---> FIN DEL CAMBIO <---
 
   setTimeout(() => {
     card.classList.remove("is-animating");
@@ -7715,13 +7265,12 @@ function flipCard(card, index) {
     addInteractiveTilt(card);
   }, 700);
 
-  // Contadores visuales locales (Opcional si usas los de Firebase)
-  if (counters[rarity] && counters[rarity][variant]) {
-      if (isGolden) counters[rarity][variant].golden++;
-      else counters[rarity][variant].normal++;
+  if (isGolden) {
+    counters[rarity][variant].golden++;
+  } else {
+    counters[rarity][variant].normal++;
   }
 
-  // Posicionamiento en abanico
   const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
   const cardSpacing = containerWidth / currentPackContentSize;
   const spread = (containerWidth - cardSpacing) / 2;
@@ -7805,8 +7354,7 @@ function createShowcase() {
              player.name.toLowerCase().includes(term) ||
              player.position.toLowerCase().includes(term) ||
              player.country.toLowerCase().includes(term) ||
-             player.rarity.toLowerCase().includes(term) ||
-             (player.set && player.set.toLowerCase().includes(term));
+             player.rarity.toLowerCase().includes(term);
         
         if (basicMatch) return true;
 
@@ -7852,56 +7400,15 @@ function createShowcase() {
     return true;
   });
 
-  // --- 4. ORDENACIÓN AUTOMÁTICA (EXTRAE LA LIGA DE LA IMAGEN) ---
-    
-    if (currentRatingSort !== 'none') {
-        // Orden manual por botón (OVR)
-        filteredPlayers.sort((a, b) => {
-            if (currentRatingSort === 'desc') return b.rating - a.rating;
-            return a.rating - b.rating;
-        });
-    } 
-    else {
-        // ORDEN POR DEFECTO DEL ÁLBUM
-        filteredPlayers.sort((a, b) => {
-            
-            // A. DETECTAR LIGA AUTOMÁTICAMENTE
-            // La ruta es: images/cards/sets/S00/NOMBRE-LIGA/equipo...
-            // Al hacer split('/'), los índices son:
-            // 0: images, 1: cards, 2: sets, 3: S00, 4: NOMBRE-LIGA
-            const getLeagueName = (card) => {
-                const parts = card.img.split('/');
-                // Cogemos la parte 4. Si la ruta es rara, devolvemos "z_otros" para que vaya al final.
-                return (parts.length > 4) ? parts[4].toLowerCase() : "z_otros";
-            };
-
-            const leagueA = getLeagueName(a);
-            const leagueB = getLeagueName(b);
-
-            // Comparamos los nombres de las carpetas alfabéticamente
-            // Ej: "bundesliga" irá antes que "la-liga", y este antes que "premier-league"
-            const leagueCompare = leagueA.localeCompare(leagueB);
-            if (leagueCompare !== 0) return leagueCompare;
-
-
-            // B. ORDENAR POR EQUIPO (Dentro de la misma liga)
-            const teamA = (a.teams && a.teams.length > 0) ? a.teams[0] : (a.team || "ZZZ");
-            const teamB = (b.teams && b.teams.length > 0) ? b.teams[0] : (b.team || "ZZZ");
-
-            const teamCompare = teamA.localeCompare(teamB);
-            if (teamCompare !== 0) return teamCompare;
-
-
-            // C. ESTRUCTURA INTERNA (Escudo -> Media)
-            
-            // 1. Escudo primero
-            if (a.position === "Crest" && b.position !== "Crest") return -1;
-            if (a.position !== "Crest" && b.position === "Crest") return 1;
-
-            // 2. Por Media (Mejores arriba)
-            return a.rating - b.rating;
-        });
-    }
+  // --- 4. ORDENACIÓN ---
+  if (currentRatingSort !== 'none') {
+    filteredPlayers.sort((playerA, playerB) => {
+        const ratingA = playerA.rating; 
+        const ratingB = playerB.rating;
+        if (currentRatingSort === 'desc') { return ratingB - ratingA; } 
+        else { return ratingA - ratingB; }
+    });
+  }
 
   // Si no hay resultados
   if (filteredPlayers.length === 0) {
@@ -7962,17 +7469,64 @@ function createShowcase() {
           }
 
           // Indicadores
+          // Indicadores Interactivos
           const indicatorsContainer = document.createElement('div');
           indicatorsContainer.className = 'variant-indicator-container';
           const variantMap = { 'none': 'R', 'foil': 'F', 'holo': 'H', 'poli': 'P', 'negative': 'N' };
+          
           for (const [variantName, letter] of Object.entries(variantMap)) {
-            const normalOwned = ownedVariants[`false_${variantName}`];
-            const goldenOwned = ownedVariants[`true_${variantName}`];
+            const hasNormal = !!ownedVariants[`false_${variantName}`];
+            const hasGolden = !!ownedVariants[`true_${variantName}`];
+            
             const indicator = document.createElement('div');
             indicator.className = 'variant-indicator';
             indicator.textContent = letter;
-            if (normalOwned) { indicator.classList.add('owned'); }
-            if (goldenOwned) { indicator.classList.add('golden'); }
+
+            if (hasNormal) { indicator.classList.add('owned'); }
+            if (hasGolden) { indicator.classList.add('golden'); }
+
+            if (representativeVariantKey === `false_${variantName}` || representativeVariantKey === `true_${variantName}`) {
+              indicator.classList.add('current-active');
+            }
+
+            if (hasNormal || hasGolden) {
+              indicator.classList.add('clickable');
+              indicator.title = `Switch to ${variantName.toUpperCase()}`;
+
+              indicator.onclick = (e) => {
+                e.stopPropagation();
+
+                const buttonSound = document.getElementById('buttonClickSound');
+                if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play(); }
+
+                const currentKey = playerFavorites[player.cardCode] || representativeVariantKey;
+                let nextKey = null;
+
+                if (hasNormal && hasGolden) {
+                  if (currentKey === `false_${variantName}`) {
+                    nextKey = `true_${variantName}`;
+                  } else {
+                    nextKey = `false_${variantName}`;
+                  }
+                } else if (hasNormal) {
+                  nextKey = `false_${variantName}`;
+                } else if (hasGolden) {
+                  nextKey = `true_${variantName}`;
+                }
+
+                if (nextKey) {
+                  playerFavorites[player.cardCode] = nextKey;
+                  savePlayerFavorites();
+                  
+                  const isGold = nextKey.startsWith('true');
+                  const label = variantName === 'none' ? 'Standard' : capitalize(variantName);
+                  showToast(`${player.name}: ${isGold ? 'Golden ' : ''}${label}`, 'info', 1500);
+
+                  createShowcase();
+                }
+              };
+            }
+
             indicatorsContainer.appendChild(indicator);
           }
           
@@ -7983,7 +7537,7 @@ function createShowcase() {
     // CASO B: MISSING (Placeholder)
     else {
         const placeholder = document.createElement('div');
-        placeholder.className = `card showcase-card missing ${player.rarity} set-${player.set}`;
+        placeholder.className = `card showcase-card missing ${player.rarity}`;
         
         const teamName = Array.isArray(player.teams) ? player.teams[0] : player.team;
 
@@ -8055,7 +7609,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkDailyReward();
   checkForFirstVisit();
   MarketBackend.init();      // Crea la base de datos y los precios base
-  //MarketSimulation.start();  // Arranca los bots para que compren y vendan
+  MarketSimulation.start();  // Arranca los bots para que compren y vendan
 
   const dailyRewardOverlay = document.getElementById('daily-reward-overlay');
   const claimRewardBtn = document.getElementById('claim-reward-btn');
@@ -8431,6 +7985,21 @@ createShowcase();     // Vuelve a dibujar el álbum con la nueva ordenación
   // Ocultar el botón de búsqueda antiguo si existe, ya que ahora es automático
   const oldSearchBtn = document.getElementById('btn-market-search');
   if (oldSearchBtn) oldSearchBtn.style.display = 'none';
+
+// --- AUTO-REFRESCO DEL MERCADO ---
+  setInterval(() => {
+    const marketOverlay = document.getElementById('market-browser-overlay');
+    const isMarketOpen = marketOverlay && marketOverlay.classList.contains('visible');
+    
+    if (isMarketOpen && currentMarketTab !== 'history') {
+      const searchInput = document.getElementById('market-search-input');
+        // Solo si el usuario NO está escribiendo
+      if (document.activeElement !== searchInput) { 
+            // PASAMOS TRUE AQUÍ para indicar que es automático
+        searchMarket(true); 
+      }
+    }
+}, 2000); // 2 segundos
 
 // --- LÓGICA DEL BOTÓN CLEAR (MERCADO) ---
   const clearMarketBtn = document.getElementById('market-clear-filters-btn');
@@ -8927,22 +8496,9 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
 
 
 // ========= FUNCIONES TIENDA ========= //
-      // --- GUARDAR PACKS EN NUBE ---
-async function savePackInventory() {
-  // 1. Guardar en local (por velocidad visual)
-  localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
-
-  // 2. Guardar en Firebase (Seguridad)
-  if (window.currentUser) {
-      try {
-          const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          // Usamos merge: true para no borrar el dinero ni el álbum
-          await window.fs.setDoc(userRef, { packs: packInventory }, { merge: true });
-      } catch (e) {
-          console.error("Error guardando packs en nube:", e);
+      function savePackInventory() {
+        localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
       }
-  }
-}
 
       function renderPacksView() {
         const storeGrid = document.getElementById('pack-store-grid');
@@ -9013,66 +8569,41 @@ for (const packId in packInventory) {
 }
 }
 
-// --- purchasePacks SEGURA (Solo Firebase toca el dinero) ---
-async function purchasePacks(packId, quantity) {
-  console.log(`🛒 Intento de compra: ${quantity}x ${packId}`);
-
-  // 1. Validaciones
+function purchasePacks(packId, quantity) {
+// Validamos que la cantidad sea un número positivo
   if (!Number.isInteger(quantity) || quantity <= 0) {
-    showToast("Invalid quantity.", "error");
+    alert("Please enter a valid quantity.");
     return;
   }
 
   const pack = packTypes[packId];
   const totalCost = pack.cost * quantity;
-  const currentGems = window.playerCurrency || 0;
 
-  // 2. Chequeo local rápido
-  if (currentGems < totalCost) {
-    showToast("Not enough gems!", "error");
-    // Desbloquear botones si falló el chequeo local
-    enableBuyButtons(); 
-    return;
-  }
+  if (playerCurrency >= totalCost) {
+// 1. Resta el dinero y guarda
+    playerCurrency -= totalCost;
+    saveCurrency();
+    updateCurrencyDisplay();
 
-  // 3. INTENTO DE TRANSACCIÓN EN LA NUBE
-  // No restamos nada localmente. Esperamos a ver si Firebase lo acepta.
-  if (typeof spendGemsOnline === 'function') {
-      try {
-          // Intentamos restar. Si Firebase dice que no hay fondos (por las reglas), esto fallará.
-          await spendGemsOnline(totalCost); 
-          
-          // --- SI LLEGAMOS AQUÍ, EL PAGO FUE EXITOSO ---
-          
-          // 4. Entregar Packs
-          packInventory[packId] = (packInventory[packId] || 0) + quantity;
-          await savePackInventory(); 
+// 2. Añade los packs al inventario y guarda
+    packInventory[packId] = (packInventory[packId] || 0) + quantity;
+    savePackInventory();
 
-          // 5. Feedback
-          renderPacksView();
-          closePackPurchaseView();
-          
-          const buttonSound = document.getElementById('buttonClickSound');
-          if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play(); }
-          
-          showToast(`Success! Bought ${quantity} ${pack.name}.`, "success");
+// 3. Actualiza la vista de la tienda
+    renderPacksView();
 
-      } catch (e) {
-          console.error("Error en compra:", e);
-          showToast("Transaction failed. Check your balance.", "error");
-          enableBuyButtons(); // Desbloquear si falló
-      }
+// 4. Cierra el modal de compra
+    closePackPurchaseView();
+
+// 5. Reproduce un sonido (opcional, pero un buen detalle)
+    const buttonSound = document.getElementById('buttonClickSound');
+    if (buttonSound) {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
+    }
   } else {
-      console.error("Critical: spendGemsOnline not found");
+    alert("You don't have enough currency for this purchase!");
   }
-}
-
-// Helper para desbloquear botones si algo falla
-function enableBuyButtons() {
-    const btnBuy = document.getElementById('btn-buy-action');
-    const btnMax = document.getElementById('btn-buy-max-action');
-    if(btnBuy) { btnBuy.disabled = false; btnBuy.textContent = "Buy"; }
-    if(btnMax) btnMax.disabled = false;
 }
 
 // Variable global para recordar qué pack estamos abriendo
@@ -9124,71 +8655,52 @@ function updateCurrencyDisplay() {
 }
 
 function saveCurrency() {
+  localStorage.setItem('myPlayerCurrency', playerCurrency.toString());
 }
 
 const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
-// --- showPackPurchaseView MEJORADA (Evita doble clic) ---
 function showPackPurchaseView(packId) {
   const pack = packTypes[packId];
   const purchaseOverlay = document.getElementById('pack-purchase-overlay');
 
+// Rellenamos el modal con la información del pack
   document.getElementById('purchase-pack-img').src = `packs/packs/${packId}.png`;
   document.getElementById('purchase-pack-name').textContent = pack.name;
   document.getElementById('purchase-pack-cost').innerHTML = `${pack.cost} 💎`;
 
+// --- HTML ACTUALIZADO PARA LOS CONTROLES ---
   const controlsContainer = document.querySelector('.purchase-controls');
-  const currentGems = window.playerCurrency || 0;
-  
-  let maxQuantity = 0;
-  if (pack.cost > 0) {
-    maxQuantity = Math.floor(currentGems / pack.cost);
+
+// Calculamos la cantidad máxima aquí para poder mostrarla en el botón
+let maxQuantity = 100; // Límite por defecto
+if (pack.cost > 0) {
+  maxQuantity = Math.floor(playerCurrency / pack.cost);
+}
+
+controlsContainer.innerHTML = `
+<input type="number" id="buy-quantity-input" placeholder="1" min="1" max="100">
+<button id="buy-btn" class="buy-btn">Buy</button>
+<button id="buy-max-btn" class="buy-btn buy-max-btn">Buy Max (${maxQuantity})</button>
+`;
+
+// --- LÓGICA DE BOTONES (Sin cambios, pero la incluimos para que sea un solo bloque) ---
+document.getElementById('buy-btn').onclick = () => {
+  const quantityInput = document.getElementById('buy-quantity-input');
+  let quantity = parseInt(quantityInput.value, 10) || 1;
+  purchasePacks(packId, quantity);
+};
+
+document.getElementById('buy-max-btn').onclick = () => {
+  if (maxQuantity > 0) {
+    purchasePacks(packId, maxQuantity);
+  } else {
+    showToast("Not enough 💎 to buy even one!", 'error');
   }
+};
 
-  controlsContainer.innerHTML = `
-    <input type="number" id="buy-quantity-input" placeholder="1" min="1" max="${maxQuantity || 1}" value="1">
-    <button id="btn-buy-action" class="buy-btn">Buy</button>
-    <button id="btn-buy-max-action" class="buy-btn buy-max-btn">Buy Max (${maxQuantity})</button>
-  `;
-
-  // --- HELPER PARA BLOQUEAR BOTONES ---
-  const disableButtons = () => {
-      document.getElementById('btn-buy-action').disabled = true;
-      document.getElementById('btn-buy-max-action').disabled = true;
-      document.getElementById('btn-buy-action').textContent = "Processing...";
-  };
-
-  // BOTÓN BUY NORMAL
-  document.getElementById('btn-buy-action').onclick = async () => {
-    const input = document.getElementById('buy-quantity-input');
-    let qty = parseInt(input.value, 10);
-    if (!qty || qty < 1) qty = 1;
-    
-    // Chequeo rápido local antes de enviar
-    if ((window.playerCurrency || 0) < (pack.cost * qty)) {
-        showToast("Not enough gems!", 'error');
-        return;
-    }
-
-    disableButtons(); // <--- BLOQUEO INMEDIATO
-    await purchasePacks(packId, qty);
-    // No hace falta desbloquear porque la ventana se cierra o se refresca
-  };
-
-  // BOTÓN BUY MAX
-  document.getElementById('btn-buy-max-action').onclick = async () => {
-    const freshGems = window.playerCurrency || 0;
-    const realMax = Math.floor(freshGems / pack.cost);
-
-    if (realMax > 0) {
-      disableButtons(); // <--- BLOQUEO INMEDIATO
-      await purchasePacks(packId, realMax);
-    } else {
-      showToast("Not enough gems to buy even one!", 'error');
-    }
-  };
-
-  purchaseOverlay.classList.add('visible');
+// Mostramos el overlay
+purchaseOverlay.classList.add('visible');
 }
 
 function closePackPurchaseView() {
@@ -9299,7 +8811,6 @@ function sellCard(cardCode, variantKey, quantity, pricePerCard) {
 // 1. Calcular ganancias y actualizar moneda
   const totalEarnings = quantity * pricePerCard;
   playerCurrency += totalEarnings;
-  earnGemsOnline(totalEarnings);
   saveCurrency();
   updateCurrencyDisplay();
 
@@ -9329,50 +8840,8 @@ showToast(`Sold for ${totalEarnings} 💎`, 'info');
 }
 
 // Necesitamos una función para guardar la colección, por si no la tienes
-async function saveCollection() {
-  // 1. Guardar en local
-  localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
-
-  // 2. Seguridad
-  if (!window.isCloudDataLoaded || !window.currentUser) return;
-
-  try {
-      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-      
-      // CAMBIO CLAVE: Usamos updateDoc.
-      // Esto reemplaza el campo 'collection' entero con lo que tengas ahora en memoria.
-      // Así, si has borrado una carta, desaparecerá también de la nube.
-      await window.fs.updateDoc(userRef, { 
-          collection: window.collection 
-      });
-      
-      console.log("☁️ Guardado en nube OK.");
-  } catch (e) {
-      console.error("Error guardando colección:", e);
-      // Si falla, intentamos set con merge (fallback)
-      try {
-          const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          await window.fs.setDoc(userRef, { collection: window.collection }, { merge: true });
-      } catch(e2) {
-          console.error("Error crítico guardando:", e2);
-      }
-  }
-}
-
-async function savePackInventory() {
-  localStorage.setItem('myFootballPacks', JSON.stringify(window.packInventory));
-
-  if (!window.isCloudDataLoaded) return; 
-
-  if (window.currentUser) {
-      try {
-          const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          // IMPORTANTE: Enviamos window.packInventory
-          await window.fs.setDoc(userRef, { packs: window.packInventory }, { merge: true });
-      } catch (e) {
-          console.error("Error guardando packs:", e);
-      }
-  }
+function saveCollection() {
+  localStorage.setItem('myFootballCollection', JSON.stringify(collection));
 }
 
 // Guardar / Cargar lineup
@@ -9889,7 +9358,6 @@ function sellAllDuplicates() {
 // Su lógica de modificación de datos sigue siendo la misma.
   function executeSale() {
 playerCurrency += totalPotentialEarnings; // Usamos el total ya calculado
-earnGemsOnline(totalPotentialEarnings);
 
 // Iteramos de nuevo para actualizar los contadores
 for (const playerId in collection) {
@@ -10265,7 +9733,6 @@ async function simulateMatch(homeLineup) {
     result = `DRAW. You earned ${reward} 💎`;
   }
   playerCurrency += reward;
-  earnGemsOnline(reward);
   saveCurrency();
   updateCurrencyDisplay();
   showToast(result, 'info', 4000); 
@@ -10491,7 +9958,6 @@ function spinWheel() {
 
   if (!isFreeSpin) {
     playerCurrency -= betAmount;
-    spendGemsOnline(betAmount);
     updateCurrencyDisplay();
     saveCurrency();
   }
@@ -10670,7 +10136,6 @@ showToast(customMessage, 'success', 5000);
 
 if (gemWinnings > 0) {
   playerCurrency += gemWinnings;
-  earnGemsOnline(gemWinnings);
 }
 savePackInventory();
 saveCurrency();
@@ -10744,20 +10209,35 @@ document.addEventListener('keydown', (event) => {
 });
 
 
-function generateSR1Choice() {
-  // 1. Filtrar SOLO cartas del set SR1 (ignorando mayúsculas)
-  let potentialPlayers = playersDB.filter(p => p.set && p.set.toLowerCase() === 'sr1');
+function generateRelicChoice() {
+  // 1. Tirada de probabilidad (33% vs 67%)
+  const isRouletteSet = Math.random() < 0.33; 
+  
+  let potentialPlayers = [];
 
-  // SEGURIDAD: Si no hay cartas SR1 (ej: DB vacía), usar cualquier carta para no romper el juego
-  if (potentialPlayers.length === 0) {
-      console.warn("No SR1 cards found. Using random fallback.");
-      potentialPlayers = playersDB;
+  if (isRouletteSet) {
+    // --- CAMINO ROJO: Buscar cartas del Set SR1 ---
+    potentialPlayers = playersDB.filter(p => p.set === 'SR1');
+    
+    // Seguridad: Si no has metido cartas SR1 aun, usa Relics para no romper el juego
+    if (potentialPlayers.length === 0) {
+      console.warn("Set SR1 vacío, usando Relics como fallback.");
+      potentialPlayers = playersDB.filter(p => p.rarity === 'relic');
+    }
+  } else {
+    // --- CAMINO AZUL: Buscar cualquier Reliquia (que NO sea SR1) ---
+    potentialPlayers = playersDB.filter(p => p.rarity === 'relic' && p.set !== 'SR1');
+    
+    // Seguridad
+    if (potentialPlayers.length === 0) {
+      potentialPlayers = playersDB.filter(p => p.rarity === 'legendary');
+    }
   }
 
-  // 2. Elegir jugador al azar de esa lista
+  // 2. Elegir jugador al azar del grupo seleccionado
   const chosenPlayer = potentialPlayers[Math.floor(Math.random() * potentialPlayers.length)];
 
-  // 3. Calcular variantes (Mismas probabilidades especiales que tenías)
+  // 3. Calcular variantes (Probabilidad especial para este sobre premio)
   const isGolden = Math.random() < 0.1; // 10% Golden
   
   let variant = 'none';
@@ -10843,72 +10323,67 @@ function showChoiceView(cardOptions) {
   choiceOverlay.classList.add('visible');
 }
 
-// --- selectCardFromChoice CORREGIDA (Guarda en Nube) ---
+/**
+* Se ejecuta cuando el jugador elige una carta del modal de elección.
+* Añade la carta a la colección, anima la salida y cierra el modal.
+*/
 function selectCardFromChoice(chosenCard) {
-  // 1. Efecto Visual (Desvanecer las otras)
+// --- INICIO DE LA MEJORA VISUAL ---
+
+// Deshabilitamos los clics para evitar acciones duplicadas
   const allChoiceCards = document.querySelectorAll('#choice-cards-container .card');
-  allChoiceCards.forEach(card => card.onclick = null); // Bloquear clics
+  allChoiceCards.forEach(card => card.onclick = null);
 
   allChoiceCards.forEach(card => {
-    // Comparamos por cardCode para saber cuál es la elegida
-    if (card.cardData.playerData.cardCode !== chosenCard.playerData.cardCode) {
+// Si la carta NO es la elegida...
+    if (card.cardData.playerData.id !== chosenCard.playerData.id) {
       card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
       card.style.opacity = '0.2';
-      card.style.transform += ' scale(0.9)';
-    } else {
-      card.style.transform += ' scale(1.1)'; // Resaltar elegida
-    }
-  });
+card.style.transform += ' scale(0.9)'; // La hacemos un poco más pequeña
+} else {
+// La carta elegida "salta" un poco para confirmación
+  card.style.transform += ' scale(1.1)';
+}
+});
 
-  // 2. Esperar animación y Guardar
+// --- FIN DE LA MEJORA VISUAL ---
+
+// Esperamos a que la animación termine antes de continuar
   setTimeout(() => {
-    const playerId = chosenCard.playerData.cardCode;
-    // Aseguramos formato de clave string ('true'/'false')
-    const isGoldenStr = String(chosenCard.golden);
-    const variantKey = `${isGoldenStr}_${chosenCard.variant}`;
+// --- ¡AQUÍ ESTÁ EL ERROR! ---
+// LÍNEA INCORRECTA:
+// const playerId = chosenCard.playerData.id;
 
-    // Inicializar jugador si no existe
-    if (!window.collection[playerId]) {
-      window.collection[playerId] = {};
-    }
+// LÍNEA CORREGIDA:
+const playerId = chosenCard.playerData.cardCode; // <-- ¡CAMBIO CLAVE!
 
-    // A. Lógica si es NUEVA
-    if (!window.collection[playerId][variantKey]) {
-      window.collection[playerId][variantKey] = { 
-          count: 1, 
-          cardData: chosenCard 
-      };
-      
-      // Marcar como nueva para el álbum
-      const uniqueId = getUniqueCardId(chosenCard);
-      newCards.add(uniqueId);
-      saveNewCards();
-    } 
-    // B. Lógica si es REPETIDA
-    else {
-      window.collection[playerId][variantKey].count++;
-    }
+const variantKey = `${chosenCard.golden}_${chosenCard.variant}`;
 
-    // 3. --- GUARDADO EN FIREBASE ---
-    saveCollection(); 
-    updateAlbumStats();
-    
-    // 4. Feedback y Cierre
-    showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
+if (!collection[playerId]) {
+  collection[playerId] = {};
+}
+if (!collection[playerId][variantKey]) {
+  collection[playerId][variantKey] = { count: 1, cardData: chosenCard };
+} else {
+  collection[playerId][variantKey].count++;
+}
 
-    const choiceOverlay = document.getElementById('choice-overlay');
-    choiceOverlay.classList.remove('visible');
-    document.getElementById('choice-cards-container').innerHTML = '';
+// 2. Guardar la colección y actualizar UI
+saveCollection();
+showToast(`You chose ${chosenCard.playerData.name}! Added to your album.`, 'success');
 
-    // Reactivar botones de la tienda
-    const openPacksViewBtn = document.getElementById('openPacksViewBtn');
-    if (openPacksViewBtn) openPacksViewBtn.disabled = false;
+// 3. Ocultar y limpiar el modal
+const choiceOverlay = document.getElementById('choice-overlay');
+choiceOverlay.classList.remove('visible');
+document.getElementById('choice-cards-container').innerHTML = '';
 
-    // Volver a la tienda automáticamente
-    const backToStoreBtn = document.getElementById('back-to-store-btn');
-    if (backToStoreBtn) backToStoreBtn.click();
+// 4. Habilitar de nuevo el botón de abrir sobres y volver a la tienda
+const openPacksViewBtn = document.getElementById('openPacksViewBtn');
+if (openPacksViewBtn) openPacksViewBtn.disabled = false;
 
-  }, 800);
+const backToStoreBtn = document.getElementById('back-to-store-btn');
+if (backToStoreBtn) backToStoreBtn.click();
+}, 800);
 }
 
 // grading
@@ -11143,7 +10618,7 @@ function createSlabElement(gradedCard) {
 
   const slabEl = document.createElement('div');
   // ---> CAMBIO 1: Añadimos la clase de la rareza directamente al contenedor principal.
-  slabEl.className = `slab-container ${playerData.rarity} set-${playerData.set}`; 
+  slabEl.className = `slab-container ${playerData.rarity}`; 
 
   const cardDataForCreation = { ...gradedCard, playerData: playerData };
   const cardEl = createCardElementForSlab(cardDataForCreation);
@@ -12046,211 +11521,386 @@ function startFirstTimeUserTour() {
 // Estructura: { "Messi_true_foil": { listings: [], salesHistory: [] } }
   const marketDatabase = {};
 
-  // --- market-backend.js (VERSIÓN ONLINE FIREBASE) ---
-class MarketBackend {
+  class MarketBackend {
 
-  static init() {
-    console.log("Initializing Firebase Market connection...");
-    // Ya no necesitamos 'restore' ni 'seed' local.
-  }
+  // --- NUEVO: GUARDAR VENTAS ACTIVAS EN LOCALSTORAGE ---
+    static savePlayerListingsToStorage() {
+      const activeListings = [];
 
-  // Generador de Clave Única (Igual que antes)
-  static getMarketKey(cardCode, isGolden, variant) {
-    return `${cardCode}_${isGolden}_${variant}`;
-  }
+        // Buscamos en todo el mercado tus ventas
+      for (const [key, data] of Object.entries(marketDatabase)) {
+        const myListings = data.listings.filter(l => l.sellerId === 'PLAYER');
 
-  // OBTENER LISTADOS (Lectura desde Firebase)
-  static async getListings(cardCode, isGolden, variant) {
-    const key = this.getMarketKey(cardCode, isGolden, variant);
+        myListings.forEach(l => {
+                // Guardamos el objeto del listing Y la clave del mercado para saber dónde ponerlo luego
+          activeListings.push({
+            marketKey: key,
+            listingData: l
+          });
+        });
+      }
+
+      localStorage.setItem('myActiveListings', JSON.stringify(activeListings));
+    }
+
+    // --- NUEVO: RESTAURAR VENTAS AL INICIAR ---
+    static restorePlayerListings() {
+      const saved = localStorage.getItem('myActiveListings');
+      if (!saved) return;
+
+      try {
+        const activeListings = JSON.parse(saved);
+
+        activeListings.forEach(item => {
+          const { marketKey, listingData } = item;
+
+                // Aseguramos que la entrada en la DB existe (debería, por el init)
+          if (!marketDatabase[marketKey]) {
+            marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, averagePrice: 0 };
+          }
+
+                // Insertamos tu venta recuperada
+          marketDatabase[marketKey].listings.push(listingData);
+
+                // Recalculamos precios y ordenamos
+          marketDatabase[marketKey].listings.sort((a, b) => a.price - b.price);
+          marketDatabase[marketKey].floorPrice = marketDatabase[marketKey].listings[0].price;
+        });
+
+        console.log(`Restored ${activeListings.length} player listings.`);
+      } catch (e) {
+        console.error("Error restoring listings:", e);
+      }
+    }
     
-    // Consulta a Firebase: Dame items con este marketKey, ordenados por precio
-    const q = window.fs.query(
-      window.fs.collection(window.db, "market"), 
-      window.fs.where("marketKey", "==", key),
-      window.fs.orderBy("price", "asc")
-    );
+    // --- NUEVO: GUARDAR SUBASTAS DONDE PARTICIPAS ---
+    static saveInteractedAuctions() {
+        // Necesitamos la variable global myActiveBets
+        if (typeof myActiveBets === 'undefined') return;
 
-    try {
-      const querySnapshot = await window.fs.getDocs(q);
-      const listings = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Convertimos el timestamp de firebase a milisegundos normales
-        const time = data.timestamp ? data.timestamp.toMillis() : Date.now();
-        listings.push({ id: doc.id, ...data, timestamp: time });
-      });
+        const trackedAuctions = [];
+        
+        myActiveBets.forEach(bet => {
+            const data = marketDatabase[bet.key];
+            if (data) {
+                const auction = data.listings.find(l => l.id === bet.id);
+                // Solo guardamos si la subasta sigue existiendo y no ha terminado hace mucho
+                if (auction && (!auction.endTime || Date.now() < auction.endTime + 86400000)) { 
+                    trackedAuctions.push({
+                        marketKey: bet.key,
+                        auctionData: auction
+                    });
+                }
+            }
+        });
 
-      // Calcular estadísticas básicas
-      const floorPrice = listings.length > 0 ? listings[0].price : 0;
+        localStorage.setItem('myTrackedAuctions', JSON.stringify(trackedAuctions));
+    }
 
+    // --- NUEVO: RESTAURAR SUBASTAS ---
+    static restoreInteractedAuctions() {
+        const saved = localStorage.getItem('myTrackedAuctions');
+        if (!saved) return;
+
+        try {
+            const trackedAuctions = JSON.parse(saved);
+            trackedAuctions.forEach(item => {
+                const { marketKey, auctionData } = item;
+
+                // Asegurar que la entrada de mercado existe
+                if (!marketDatabase[marketKey]) {
+                    marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, averagePrice: 0 };
+                }
+
+                // Evitar duplicados (por si el seed aleatorio generó una ID idéntica, improbable pero posible)
+                const exists = marketDatabase[marketKey].listings.some(l => l.id === auctionData.id);
+                if (!exists) {
+                    // Si la subasta ya acabó mientras estábamos fuera, nos aseguramos de que no aparezca como activa en lógica futura
+                    // pero la mantenemos para que el historial pueda procesar si ganaste o perdiste.
+                    marketDatabase[marketKey].listings.push(auctionData);
+                }
+            });
+            console.log(`Restored ${trackedAuctions.length} interacted auctions.`);
+        } catch (e) {
+            console.error("Error restoring auctions:", e);
+        }
+    }
+
+    // --- INIT ACTUALIZADO ---
+    static init() {
+        console.log("Initializing Global Market...");
+        
+        // 1. Estructura vacía
+        playersDB.forEach(player => {
+            const variants = ['none', 'foil', 'holo', 'poli', 'negative'];
+            const goldenStates = [false, true];
+            variants.forEach(v => {
+                goldenStates.forEach(g => {
+                    const marketKey = this.getMarketKey(player.cardCode, g, v);
+                    if (!marketDatabase[marketKey]) {
+                        marketDatabase[marketKey] = { listings: [], salesHistory: [], floorPrice: 0, volume24h: 0 };
+                    }
+                });
+            });
+        });
+
+        // 2. Datos Falsos
+        this.seedInitialMarket();
+        this.seedInitialAuctions(); 
+
+        // 3. Restaurar Datos Reales del Jugador
+        this.restorePlayerListings();     // Tus ventas
+        this.restoreInteractedAuctions(); // TUS SUBASTAS (NUEVO)
+    }
+
+    // --- NUEVO: OBTENER VENTAS ACTIVAS DEL JUGADOR ---
+    static getPlayerListings() {
+      const playerListings = [];
+
+        // Recorremos toda la base de datos del mercado
+      for (const [key, data] of Object.entries(marketDatabase)) {
+            // Filtramos las que sean sellerId === 'PLAYER'
+        const myListings = data.listings.filter(l => l.sellerId === 'PLAYER');
+
+        if (myListings.length > 0) {
+          const [code, isGoldenStr, variant] = key.split('_');
+          const player = playersDB.find(p => p.cardCode === code);
+
+                // Formateamos los datos para la vista
+          myListings.forEach(l => {
+            playerListings.push({
+                        id: l.id,           // ID del listing
+                        marketKey: key,     // Clave para saber dónde buscar
+                        price: l.price,
+                        timestamp: l.timestamp,
+                        cardName: player.name,
+                        rarity: player.rarity,
+                        variant: variant,
+                        isGolden: isGoldenStr === 'true'
+                      });
+          });
+        }
+      }
+
+        // Ordenar por más reciente
+      return playerListings.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    // --- NUEVO: CANCELAR VENTA ---
+    static cancelListing(listingId, marketKey) {
+      const data = marketDatabase[marketKey];
+      if (!data) return { success: false, message: "Market data not found." };
+
+      const index = data.listings.findIndex(l => l.id === listingId);
+      if (index === -1) return { success: false, message: "Listing not found (maybe sold?)." };
+
+        // 1. Eliminar del mercado
+      data.listings.splice(index, 1);
+
+        // 2. Recalcular Floor Price
+      data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+
+      this.savePlayerListingsToStorage();
+
+      return { success: true };
+    }
+
+    // Generador de Clave Única (Standardiza el ID del producto)
+    static getMarketKey(cardCode, isGolden, variant) {
+      return `${cardCode}_${isGolden}_${variant}`;
+    }
+
+    // --- API ENDPOINTS SIMULADOS (Llamadas Async para simular latencia de red) ---
+
+    // GET /api/market/listings/:marketKey
+    static async getListings(cardCode, isGolden, variant) {
+      const key = this.getMarketKey(cardCode, isGolden, variant);
+      let data = marketDatabase[key];
+
+        // SEGURIDAD: Si por alguna razón la carta no se inicializó (ej: base de datos nueva),
+        // la inicializamos al vuelo para evitar que se cuelgue.
+      if (!data) {
+        console.warn(`Market entry missing for ${key}, initializing lazy...`);
+        marketDatabase[key] = {
+          listings: [],
+          salesHistory: [],
+          floorPrice: 0,
+          volume24h: 0
+        };
+        data = marketDatabase[key];
+      }
+
+        // Devolvemos los listados ordenados
       return {
-        listings: listings,
-        history: [], // Historial online complejo omitido por simplicidad
+        listings: data.listings.sort((a, b) => a.price - b.price),
+        history: data.salesHistory,
         stats: {
-          floorPrice: floorPrice,
-          totalListings: listings.length
+          floorPrice: data.listings.length > 0 ? data.listings[0].price : 0,
+          totalListings: data.listings.length
         }
       };
-    } catch (e) {
-      console.error("Error fetching listings:", e);
-      return { listings: [], history: [], stats: { floorPrice: 0, totalListings: 0 } };
     }
-  }
 
-  // OBTENER VENTAS DEL JUGADOR
-  static async getPlayerListings() {
-    if (!window.currentUser) return [];
-    
-    const q = window.fs.query(
-      window.fs.collection(window.db, "market"),
-      window.fs.where("sellerId", "==", window.currentUser.uid)
-    );
+    // POST /api/market/sell (ACTUALIZADO)
+static async listItemForSale(sellerId, cardCode, isGolden, variant, price, gradeData = null, isAuction = false, endTime = null) {
+        const key = this.getMarketKey(cardCode, isGolden, variant);
+        const listing = {
+            id: `lst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            sellerId: sellerId,
+            price: parseInt(price),
+            gradeData: gradeData,
+            timestamp: Date.now(),
+            isAuction: isAuction,
+            endTime: endTime,
+            currentBid: isAuction ? parseInt(price) : null,
+            highestBidder: null
+        };
 
-    const querySnapshot = await window.fs.getDocs(q);
-    const myListings = [];
-    
-    querySnapshot.forEach((doc) => {
-        const l = doc.data();
-        const [code] = l.marketKey.split('_');
-        const player = playersDB.find(p => p.cardCode === code);
-        
-        myListings.push({
-            id: doc.id,
-            marketKey: l.marketKey,
-            price: l.price,
-            timestamp: l.timestamp ? l.timestamp.toMillis() : Date.now(),
-            cardName: player ? player.name : "Unknown",
-            rarity: player ? player.rarity : "common",
-            variant: l.variant,
-            isGolden: l.isGolden,
-            // --- ESTA LÍNEA ES LA QUE FALTABA PARA EL TAG ---
-            isAuction: l.isAuction 
-        });
-    });
-    
-    // Ordenar por más reciente
-    return myListings.sort((a, b) => b.timestamp - a.timestamp);
-  }
+        marketDatabase[key].listings.push(listing);
 
-  // PUBLICAR UN ITEM (Escribir en Firebase)
-  static async listItemForSale(sellerId, cardCode, isGolden, variant, price, gradeData = null, isAuction = false, endTime = null) {
-    if (!window.currentUser) return { success: false, message: "Not logged in" };
-
-    const key = this.getMarketKey(cardCode, isGolden, variant);
-    
-    try {
-      const docRef = await window.fs.addDoc(window.fs.collection(window.db, "market"), {
-        marketKey: key,
-        sellerId: window.currentUser.uid, // Usamos el ID real de Firebase
-        price: parseInt(price),
-        gradeData: gradeData,
-        timestamp: window.fs.serverTimestamp(),
-        isAuction: isAuction,
-        endTime: endTime,
-        currentBid: isAuction ? parseInt(price) : null,
-        highestBidder: null,
-        // Datos redundantes para facilitar búsquedas futuras si hiciera falta
-        cardCode: cardCode,
-        isGolden: isGolden,
-        variant: variant
-      });
-      
-      return { success: true, listingId: docRef.id };
-    } catch (e) {
-      console.error("Error listing item:", e);
-      return { success: false, message: e.message };
-    }
-  }
-
-  // COMPRAR UN ITEM (Transacción atómica en Firebase)
-  // --- SUSTITUYE ESTA FUNCIÓN EN MarketBackend ---
-  static async buyItem(buyerId, listingId, marketKey) {
-    if (!window.currentUser) return { success: false, message: "Log in first" };
-
-    const listingRef = window.fs.doc(window.db, "market", listingId);
-    const buyerRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-
-    try {
-      await window.fs.runTransaction(window.db, async (transaction) => {
-        // 1. Leer datos
-        const listingDoc = await transaction.get(listingRef);
-        const buyerDoc = await transaction.get(buyerRef);
-
-        if (!listingDoc.exists()) {
-          throw "Card sold or deleted!";
+        if (!isAuction) {
+            marketDatabase[key].listings.sort((a, b) => a.price - b.price);
+            marketDatabase[key].floorPrice = marketDatabase[key].listings[0].price;
         }
 
-        const listingData = listingDoc.data();
-        const price = listingData.price;
+        if (sellerId === 'PLAYER') {
+            this.savePlayerListingsToStorage();
+        }
         
-        // Verificar saldo del comprador
-        if (!buyerDoc.exists() || buyerDoc.data().gems < price) {
-          throw "Not enough gems!";
+        // Si el jugador crea una subasta, también deberíamos guardarla como "interactuada" para que no desaparezca
+        if (isAuction && sellerId === 'PLAYER') {
+             this.saveInteractedAuctions();
         }
 
-        // 2. RESTAR AL COMPRADOR
-        transaction.update(buyerRef, { gems: window.fs.increment(-price) });
-
-        // 3. SUMAR AL VENDEDOR (CORREGIDO A PRUEBA DE FALLOS)
-        // Usamos sellerId del listado
-        const sellerId = listingData.sellerId;
-        const sellerRef = window.fs.doc(window.db, "users", sellerId);
-        
-        // Usamos set({ ... }, { merge: true }) en lugar de update.
-        // Esto asegura que si el vendedor no tiene cuenta bancaria creada, se le crea una ahora.
-        transaction.set(sellerRef, { gems: window.fs.increment(price) }, { merge: true });
-
-        // 4. Borrar el listado del mercado
-        transaction.delete(listingRef);
-      });
-
-      return { success: true, price: 0 };
-    } catch (e) {
-      console.error("Transacción fallida:", e);
-      // Devolvemos el mensaje de error limpio
-      return { success: false, message: typeof e === 'string' ? e : "Error de red o base de datos" };
+        return { success: true, listingId: listing.id };
     }
-  }
 
-  // CANCELAR VENTA
-  static async cancelListing(listingId, marketKey) {
-      try {
-          // Solo borramos el documento
-          await window.fs.deleteDoc(window.fs.doc(window.db, "market", listingId));
-          return { success: true };
-      } catch (e) {
-          return { success: false, message: e.message };
+    // POST /api/market/buy
+        static async buyItem(buyerId, listingId, marketKey) {
+          const data = marketDatabase[marketKey];
+          const listingIndex = data.listings.findIndex(l => l.id === listingId);
+
+          if (listingIndex === -1) {
+            return { success: false, message: "Item already sold or removed." }; // Clásico error de Steam Market
+          }
+
+          const listing = data.listings[listingIndex];
+
+        // Ejecutar transacción
+        // 1. Quitar del listado
+          data.listings.splice(listingIndex, 1);
+
+        // 2. Registrar en historial
+          data.salesHistory.push({
+            price: listing.price,
+            timestamp: Date.now()
+          });
+        if(data.salesHistory.length > 50) data.salesHistory.shift(); // Mantener historial limpio
+
+        // 3. Actualizar Floor Price
+        data.floorPrice = data.listings.length > 0 ? data.listings[0].price : 0;
+
+        // Si la carta comprada era del JUGADOR, guardamos para que desaparezca del storage
+        if (listing.sellerId === 'PLAYER') {
+          this.savePlayerListingsToStorage();
+        }
+
+        return { success: true, price: listing.price, item: listing };
       }
-  }
- // Descarga las últimas 100 ventas globales de Firebase
-  // Asegúrate de tener esto en tu class MarketBackend
-  static async getGlobalMarketListings() {
-    try {
-      console.log("📡 Conectando con Firebase...");
-      
-      // Ahora window.fs.limit funcionará
-      const q = window.fs.query(
-        window.fs.collection(window.db, "market"), 
-        window.fs.limit(50) 
-      );
-      
-      const querySnapshot = await window.fs.getDocs(q);
-      const listings = [];
-      
-      querySnapshot.forEach((doc) => {
-        listings.push({ id: doc.id, ...doc.data() });
-      });
-      
-      console.log(`✅ Firebase devolvió ${listings.length} ventas.`);
-      return listings;
-    } catch (e) {
-      console.error("❌ ERROR CRÍTICO (revisa importaciones en HTML):", e);
-      return [];
-    }
-  }
 
-}
+    // --- Generación de Datos Falsos (Seed) ---
+
+      static seedInitialMarket() {
+        console.log("Seeding Market with realistic supply...");
+        
+        for (const player of playersDB) {
+          const variants = ['none', 'foil', 'holo', 'poli', 'negative'];
+          const goldenStates = [false, true];
+
+          variants.forEach(variant => {
+            goldenStates.forEach(isGolden => {
+                    // ... (Tus filtros de rareza existentes siguen aquí) ...
+              if (variant === 'negative' && Math.random() > 0.05) return;
+              if (variant === 'poli' && Math.random() > 0.15) return;
+              if (isGolden && Math.random() > 0.20) return;
+              if (player.rarity === 'relic' && Math.random() > 0.02) return;
+
+                    // Cálculo de Stock (igual que tenías)
+              let baseSupply = 0;
+              switch(player.rarity) {
+              case 'common': baseSupply = Math.floor(Math.random() * 500) + 100; break;
+              case 'rare':   baseSupply = Math.floor(Math.random() * 150) + 20; break;
+              case 'epic':   baseSupply = Math.floor(Math.random() * 50) + 5; break;
+              case 'legendary': baseSupply = Math.floor(Math.random() * 10) + 1; break;
+              case 'relic':  baseSupply = Math.floor(Math.random() * 3) + 1; break;
+              case 'crest':  baseSupply = Math.floor(Math.random() * 20) + 1; break;
+              }
+              if (isGolden) baseSupply = Math.ceil(baseSupply * 0.1);
+              if (variant !== 'none') baseSupply = Math.ceil(baseSupply * 0.2);
+              if (baseSupply < 1) baseSupply = 1;
+
+                    // Generar Listings
+              const basePrice = this.calculateBaseBotPrice(player.rarity, isGolden, variant, player);
+              let totalPriceSum = 0;
+
+              for(let i=0; i < baseSupply; i++) {
+                const variation = (Math.random() * 0.3) - 0.05; 
+                const price = Math.floor(basePrice * (1 + variation));
+                const code = player.cardCode;
+
+                this.listItemForSale(`Bot_${Math.floor(Math.random()*10000)}`, code, isGolden, variant, price);
+                totalPriceSum += price;
+              }
+
+                    // --- NUEVO: GUARDAR EL PRECIO MEDIO INICIAL ---
+              const marketKey = this.getMarketKey(player.cardCode, isGolden, variant);
+              if (marketDatabase[marketKey] && baseSupply > 0) {
+                marketDatabase[marketKey].averagePrice = Math.floor(totalPriceSum / baseSupply);
+              }
+            });
+          });
+        }
+      }
+
+      static calculateBaseBotPrice(rarity, isGolden, variant, playerData) {
+        // 1. Valor Base por Rareza (Escala exponencial)
+        let price = 0;
+        switch(rarity) {
+        case 'common': price = 50; break;
+        case 'rare':   price = 250; break;
+        case 'epic':   price = 1500; break;
+        case 'legendary': price = 10000; break;
+        case 'relic':  price = 75000; break;
+        case 'crest':  price = 75000; break;
+        case 'roulette': price = 200000; break;
+        }
+
+        // 2. Multiplicador por Media (OVR)
+        // Un jugador de 98 de media vale más que uno de 85 de la misma rareza
+        const ratingMultiplier = 1 + ((playerData.rating - 75) * 0.05); // +5% por cada punto de media extra
+        price = price * Math.max(1, ratingMultiplier);
+
+        // 3. Multiplicador Golden (Acumulativo)
+        if (isGolden) {
+            price = price * 4; // Golden vale 4 veces más
+          }
+
+        // 4. Multiplicador Variante (Acumulativo)
+        // Una variante siempre debe sumar valor, nunca restar o igualar
+          switch(variant) {
+          case 'foil': price = price * 1.5; break;
+          case 'holo': price = price * 2.5; break;
+          case 'poli': price = price * 4.0; break;
+            case 'negative': price = price * 8.0; break; // Negative es ultra raro
+            }
+
+        // 5. Pequeña variación aleatoria para que no todos valgan idéntico (+/- 5%)
+        // Usamos 0.95 a 1.05 para que no afecte drásticamente el tier
+            const variation = 0.95 + (Math.random() * 0.1);
+
+            return Math.floor(price * variation);
+          }
+        }
 
 // --- market-simulation.js (VERSIÓN BALANCEADA: MENOS AGRESIVA) ---
 
@@ -12342,7 +11992,6 @@ class MarketSimulation {
                 // 2. DEVOLUCIÓN AL JUGADOR
                 if (targetItem.highestBidder === 'PLAYER') {
                     playerCurrency += targetItem.currentBid; 
-                    earnGemsOnline(targetItem.currentBi);
                     saveCurrency();
                     updateCurrencyDisplay();
                     showToast(`⚠️ Outbid on ${player.name}! Gems returned.`, 'info');
@@ -12372,7 +12021,6 @@ class MarketSimulation {
 
                 if (soldItem.sellerId === 'PLAYER') {
                     playerCurrency += soldItem.price;
-                    earnGemsOnline(soldItem.price);
                     saveCurrency();
                     updateCurrencyDisplay();
 
@@ -12490,50 +12138,61 @@ class MarketSimulation {
 
 // Funciones de Interacción del Jugador
 
-    // --- SUSTITUYE ESTA FUNCIÓN ENTERA ---
-window.attemptBuyItem = async (listingId, marketKey, price) => {
-    // Sonido
+    window.attemptBuyItem = async (listingId, marketKey, price) => {
+    // --- SONIDO ---
     const btnSound = document.getElementById('buttonClickSound');
     if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
 
-    // --- CORRECCIÓN AQUÍ ---
-    // Antes miraba 'playerCurrency' (que a veces se queda en 0 localmente).
-    // Ahora mira 'window.playerCurrency' (que es lo que viene de Firebase real).
-    const currentMoney = window.playerCurrency || 0;
-
-    if(currentMoney < price) {
+    // 1. Validación de dinero
+    if(playerCurrency < price) {
         showToast("Not enough gems!", "error");
         return;
     }
 
-    // Llamada al Backend
+    // 2. Intento de compra en el "Backend"
     const result = await MarketBackend.buyItem('PLAYER', listingId, marketKey);
 
     if(result.success) {
-        // No restamos el dinero manualmente aquí porque el listener de Firebase
-        // lo hará automáticamente en cuanto detecte el cambio en la nube.
+        // A. Economía
+        playerCurrency -= price;
+        saveCurrency();
+        updateCurrencyDisplay();
         
-        // Añadir a colección visual
+        // B. Colección
         const [code, goldenStr, variant] = marketKey.split('_');
         addCardToCollection(code, goldenStr, variant);
         
-        // Logs
+        // C. Historial
         const player = playersDB.find(p => p.cardCode === code);
         if (player) {
-            logMarketTransaction('buy', {
-                playerData: player, rarity: player.rarity, variant: variant, golden: goldenStr === 'true'
-            }, price);
+            const cardDataLog = {
+            playerData: player, rarity: player.rarity, variant: variant, golden: goldenStr === 'true'
+            };
+            logMarketTransaction('buy', cardDataLog, price);
         }
 
         showToast(`Bought for ${price.toLocaleString()} 💎`, "success");
         
-        // Refrescar mercado
-        searchMarket(); 
+        // D. Refrescar UI
+        if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
+            searchMarket(); 
+        }
+        const panel = document.getElementById('market-panel');
+        if (panel) {
+            const variantKey = `${goldenStr === 'true'}_${variant}`;
+            const count = collection[code]?.[variantKey]?.count || 0;
+            renderMarketUI(marketKey, count, null);
+        }
 
     } else {
         showToast(result.message, "error");
-        // Si falló, refrescamos por si la carta ya no existe
-        searchMarket();
+        if (document.getElementById('market-browser-overlay').classList.contains('visible')) {
+            searchMarket(); 
+        }
+        if (document.getElementById('market-panel')) {
+            renderMarketUI(marketKey, 0, null);
+        }
     }
 };
 
@@ -12662,39 +12321,42 @@ window.showListForSaleModal = (marketKey, suggestedPrice) => {
     });
 
 // Listener para el botón CONFIRMAR VENTA / SUBASTA
-document.getElementById('confirm-sell-listing-btn').addEventListener('click', async () => { // <--- 1. Debe ser async
+document.getElementById('confirm-sell-listing-btn').addEventListener('click', async () => {
   const priceInput = document.getElementById('sell-input-price');
   const qtyInput = document.getElementById('sell-quantity-input');
   
   const price = parseInt(priceInput.value);
   const quantity = parseInt(qtyInput.value) || 1;
 
-  if (!price || price <= 0) { showToast("Invalid Price", "error"); return; }
+  // Validaciones
+  if (!price || isNaN(price) || price <= 0) {
+    showToast("Please enter a valid price.", "error");
+    return;
+  }
+
   if (!currentSellKey) return;
 
+  // Ejecutar la venta
   const [code, golden, variant] = currentSellKey.split('_');
 
-  // 1. Quitar de la colección local (Visual)
+  // 1. Quitar de la colección
   const removed = removeCardFromCollection(code, golden, variant, quantity);
 
   if (removed) {
     const isAuction = currentSellMode === 'auction';
     let auctionEndTime = null;
+    
     if (isAuction) {
         const hours = parseInt(document.getElementById('auction-duration-select').value);
         auctionEndTime = Date.now() + (hours * 60 * 60 * 1000);
     }
 
-    // 2. Enviar a Firebase (Bucle corregido)
+    // 2. BUCLE: Crear Listings Individuales
     let listingsCreated = 0;
     
-    // --- CAMBIO: Mostrar mensaje de carga ---
-    showToast("Listing on Global Market...", "info");
-
     for (let i = 0; i < quantity; i++) {
-        // --- CAMBIO CLAVE: await ---
         await MarketBackend.listItemForSale(
-            window.currentUser ? window.currentUser.uid : 'ANON', // Usar ID real
+            'PLAYER', 
             code, 
             golden === 'true', 
             variant, 
@@ -12706,19 +12368,36 @@ document.getElementById('confirm-sell-listing-btn').addEventListener('click', as
         listingsCreated++;
     }
     
-    showToast(`Success! Listed ${quantity} items.`, "success");
+    // Mensaje de éxito
+    let msg = "";
+    if (quantity > 1) {
+        msg = isAuction 
+            ? `Started ${quantity} auctions at ${price} 💎 each.` 
+            : `Listed ${quantity} items for ${price} 💎 each.`;
+    } else {
+        msg = isAuction 
+            ? `Auction started at ${price} 💎` 
+            : `Item listed for ${price} 💎`;
+    }
+    showToast(msg, "success");
     
-    // 3. Cerrar Modal
+    // 3. Cerrar Modal y Resetear
     document.getElementById('market-sell-modal').classList.remove('visible');
     setSellMode('fixed'); 
 
-    // 4. Refrescar historial
-    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
-         searchMarket(); 
-    }
-
+    // 4. Refrescar la vista ACTUAL (Sin cambiar de pestaña)
+    if (typeof currentMarketTab !== 'undefined') {
+         setTimeout(() => {
+             // CORRECCIÓN FINAL:
+             // Simplemente recargamos la búsqueda. 
+             // Si estás en 'sell', recargará tus cartas (y las vendidas desaparecerán).
+             // NO forzamos el cambio a la pestaña de subastas.
+             searchMarket();
+         }, 100);
+   }
  } else {
-  showToast("Error: Not enough cards.", "error");
+  showToast("Error: Not enough copies to sell.", "error");
+  document.getElementById('market-sell-modal').classList.remove('visible');
  }
 });
 
@@ -12731,84 +12410,71 @@ document.getElementById('confirm-sell-listing-btn').addEventListener('click', as
 
 // --- FUNCIONES AUXILIARES PARA GESTIONAR LA COLECCIÓN DESDE EL MERCADO ---
 
-function addCardToCollection(cardCode, isGolden, variant) {
-    // Normalizar datos
-    const goldenBool = (isGolden === true || isGolden === "true");
-    const variantKey = `${goldenBool}_${variant}`;
-    const playerData = playersDB.find(p => p.cardCode === cardCode);
+    function addCardToCollection(cardCode, isGolden, variant) {
+    // Convertir isGolden a booleano por si acaso viene como string
+      const goldenBool = String(isGolden) === 'true';
+      const variantKey = `${goldenBool}_${variant}`;
+      const playerData = playersDB.find(p => p.cardCode === cardCode);
 
-    if (!playerData) return console.error("Player not found in DB:", cardCode);
+      if (!playerData) return console.error("Player not found:", cardCode);
 
-    // Asegurar estructura
-    if (!window.collection[cardCode]) {
-        window.collection[cardCode] = {};
-    }
+      if (!collection[cardCode]) {
+        collection[cardCode] = {};
+      }
 
-    // Añadir o incrementar
-    if (!window.collection[cardCode][variantKey]) {
-        window.collection[cardCode][variantKey] = {
-            count: 1,
-            cardData: {
-                playerData: playerData,
-                rarity: playerData.rarity,
-                golden: goldenBool,
-                variant: variant
-            }
+      if (!collection[cardCode][variantKey]) {
+        // Si es nueva, creamos la entrada
+        collection[cardCode][variantKey] = {
+          count: 1,
+          cardData: {
+            playerData: playerData,
+            rarity: playerData.rarity,
+            golden: goldenBool,
+            variant: variant
+          }
         };
-        // Marcar como nueva
-        const uniqueId = `${cardCode}_${goldenBool}_${variant}`;
+        // Marcamos como nueva para el álbum
+        const uniqueId = getUniqueCardId(collection[cardCode][variantKey].cardData);
         newCards.add(uniqueId);
         saveNewCards();
-    } else {
-        window.collection[cardCode][variantKey].count++;
-    }
+      } else {
+        // Si ya existe, sumamos 1
+        collection[cardCode][variantKey].count++;
+      }
 
-    // --- GUARDAR EN NUBE ---
-    saveCollection(); 
-    updateAlbumStats();
-}
+    saveCollection(); // Guardar en localStorage
+    updateAlbumStats(); // Actualizar contadores visuales
+  }
 
-  // --- removeCardFromCollection CORREGIDA (Borra de Nube) ---
-function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
-    // 1. Normalizar claves
-    const goldenBool = (isGolden === true || isGolden === "true");
+  function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
+    const goldenBool = String(isGolden) === 'true';
     const variantKey = `${goldenBool}_${variant}`;
     
-    // 2. Buscar en la colección GLOBAL
-    if (!window.collection[cardCode] || !window.collection[cardCode][variantKey]) {
-        console.error("No tienes esa carta:", cardCode);
-        return false; 
-    }
+    if (!collection[cardCode] || !collection[cardCode][variantKey]) {
+        return false; // No tienes la carta
+      }
 
-    const cardStack = window.collection[cardCode][variantKey];
+      const cardStack = collection[cardCode][variantKey];
 
-    if (cardStack.count < quantity) {
-        console.error("No tienes suficientes copias.");
-        return false; 
-    }
+      if (cardStack.count < quantity) {
+        return false; // No tienes suficientes copias
+      }
 
-    // 3. Modificar datos
-    cardStack.count -= quantity;
+      cardStack.count -= quantity;
 
-    // Si llega a 0, BORRAR la propiedad del objeto
-    if (cardStack.count <= 0) {
-        delete window.collection[cardCode][variantKey];
-        
-        // Limpieza profunda: si el jugador no tiene más variantes, borrar al jugador
-        if (Object.keys(window.collection[cardCode]).length === 0) {
-            delete window.collection[cardCode];
+    // Si llega a 0, borramos la entrada
+      if (cardStack.count <= 0) {
+        delete collection[cardCode][variantKey];
+        // Si el jugador no tiene variantes, borramos al jugador del objeto
+        if (Object.keys(collection[cardCode]).length === 0) {
+          delete collection[cardCode];
         }
-    }
+      }
 
-    // 4. GUARDAR INMEDIATAMENTE
-    console.log("Guardando cambios tras borrar...");
-    saveCollection(); 
-    
-    // 5. Actualizar visuales
-    if (typeof updateAlbumStats === 'function') updateAlbumStats();
-    
-    return true;
-}
+      saveCollection();
+      updateAlbumStats();
+      return true;
+    }
 
 // --- LÓGICA DEL NAVEGADOR DE MERCADO ---
 
@@ -12817,349 +12483,487 @@ function removeCardFromCollection(cardCode, isGolden, variant, quantity = 1) {
 
 // 1. Función para abrir el mercado
     function openMarketBrowser() {
-  const marketOverlay = document.getElementById('market-browser-overlay');
-  marketOverlay.classList.add('visible');
-  
-  // CORRECCIÓN: Usamos window.playerCurrency que es el que Firebase mantiene actualizado
-  const currentGems = window.playerCurrency || 0;
-  
-  // Actualizamos el texto del balance dentro del mercado
-  const balanceDisplay = document.getElementById('market-balance-display');
-  if (balanceDisplay) {
-      balanceDisplay.textContent = `${currentGems.toLocaleString()} 💎`;
-  }
+      marketOverlay.classList.add('visible');
+      document.getElementById('market-balance-display').textContent = `${playerCurrency.toLocaleString()} 💎`;
 
-  // Resetear a modo compra por defecto
-  switchMarketTab('buy');
-}
+    // Resetear a modo compra por defecto
+      switchMarketTab('buy');
+    }
 
 // 2. Función de Búsqueda del Mercado (MEJORADA)
-// --- searchMarket FINAL (TIEMPO REAL PARA TODO) ---
-let auctionUnsubscribe = null;
-let buyUnsubscribe = null; // NUEVO: Para escuchar compras
-
 async function searchMarket(isAutoRefresh = false) { 
-    // 1. LIMPIEZA DE LISTENERS (Importante para no mezclar datos)
-    // Si refrescamos manual o cambiamos de pestaña, apagamos las escuchas anteriores
-    if (!isAutoRefresh) {
-        if (auctionUnsubscribe) { auctionUnsubscribe(); auctionUnsubscribe = null; }
-        if (buyUnsubscribe) { buyUnsubscribe(); buyUnsubscribe = null; }
-    }
-
-    // 2. OBTENER INPUTS
+    // 1. Obtener valores de los inputs
     const rawInput = document.getElementById('market-search-input').value.toLowerCase();
+    
+    // --- CAMBIO: Separar por espacios O comas, y eliminar vacíos ---
     const searchTerms = rawInput.split(/[\s,]+/).map(t => t.trim()).filter(t => t.length > 0);
+    
+    const rarityFilter = document.getElementById('market-rarity-filter').value;
+    const setFilter = document.getElementById('market-set-filter').value; 
+    const variantFilter = document.getElementById('market-variant-filter').value;
+    const sortOption = document.getElementById('market-sort-select').value;
+    const goldenFilterValue = document.getElementById('market-golden-filter').value; 
+
     const marketGrid = document.getElementById('market-results-grid');
     
-    // UI de carga (Solo si no es refresco automático)
-    if (!isAutoRefresh && marketGrid && currentMarketTab !== 'sell') {
-        marketGrid.innerHTML = '<div id="market-loading-msg" style="color:white; width:100%; text-align:center; margin-top:50px;">Connecting to Live Market...</div>';
+    // UI de carga
+    if (!isAutoRefresh) {
+        marketGrid.innerHTML = '<div style="color:white; width:100%; text-align:center; margin-top:50px;">Searching...</div>';
+    }
+    
+    // Pausa técnica
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
+        await new Promise(r => setTimeout(r, 50));
+    } else {
+        await new Promise(r => setTimeout(r, 100));
     }
 
-    // --- HELPER DE FILTRADO (Igual que siempre) ---
-    const passesFilters = (player, isGolden, variant) => {
-        const rarityFilter = document.getElementById('market-rarity-filter').value;
-        const setFilter = document.getElementById('market-set-filter').value; 
-        const variantFilter = document.getElementById('market-variant-filter').value;
-        const goldenFilterValue = document.getElementById('market-golden-filter').value; 
+    let results = [];
 
-        if (setFilter !== 'all' && player.set !== setFilter) return false;
-        if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return false;
-        if (variantFilter !== 'all' && variant !== variantFilter) return false;
-        
-        const isGoldenBool = (isGolden === true || isGolden === "true");
-        if (goldenFilterValue === 'true' && !isGoldenBool) return false;
-        if (goldenFilterValue === 'false' && isGoldenBool) return false;
+    // --- FUNCIÓN DE COINCIDENCIA AVANZADA (HELPER) ---
+    const matchesSearch = (player, isGolden, variant) => {
+        // Si no hay términos, coincide siempre
+        if (searchTerms.length === 0) return true;
 
-        if (searchTerms.length > 0) {
-            const playerText = `${player.name} ${player.position} ${player.country} ${player.rarity} ${player.set || ""} ${player.team || ""} ${player.teams ? player.teams.join(" ") : ""}`.toLowerCase();
-            const matchesText = searchTerms.every(term => playerText.includes(term));
-            const matchesSpecial = searchTerms.some(term => (term === 'gold' && isGoldenBool) || (variant !== 'none' && variant.includes(term)));
-            if (!matchesText && !matchesSpecial) return false;
-        }
-        return true;
+        // Comprobamos que CADA término de búsqueda coincida con ALGO de la carta
+        return searchTerms.every(term => {
+            // 1. Coincidencias de texto básico (Nombre, Posición, País, Rareza)
+            if (player.name.toLowerCase().includes(term)) return true;
+            if (player.position.toLowerCase().includes(term)) return true;
+            if (player.country.toLowerCase().includes(term)) return true;
+            if (player.rarity.toLowerCase().includes(term)) return true;
+
+            // 2. Coincidencias de Equipo (soporta array o string)
+            if (Array.isArray(player.teams)) {
+                if (player.teams.some(t => t.toLowerCase().includes(term))) return true;
+            } else if (player.team) {
+                if (player.team.toLowerCase().includes(term)) return true;
+            }
+
+            // 3. Coincidencias Especiales (Golden, Variantes)
+            if ((term === 'gold' || term === 'golden') && isGolden) return true;
+            if (variant !== 'none' && variant.includes(term)) return true; // ej: busca "holo"
+
+            // Si no coincide con nada
+            return false;
+        });
     };
 
     // ============================================================
-    // A. MODO VENTA (SELL) - Local
+    // LÓGICA DE MODO VENTA (SELL) - ACTUALIZADA CON ORDENACIÓN
     // ============================================================
     if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
-        let results = [];
         Object.keys(collection).forEach(cardCode => {
             const player = playersDB.find(p => p.cardCode === cardCode);
             if (!player) return;
+
             const userVariants = collection[cardCode];
+            
             Object.keys(userVariants).forEach(variantKey => {
                 const stack = userVariants[variantKey];
-                if (passesFilters(player, stack.cardData.golden, stack.cardData.variant)) {
-                    results.push({
-                        type: 'sell', player: player, cardData: stack.cardData, count: stack.count,
-                        marketKey: `${cardCode}_${stack.cardData.golden}_${stack.cardData.variant}`,
-                        stats: { floorPrice: 0, listings: [] }
-                    });
-                }
+                const { cardData, count } = stack;
+                
+                // Filtros de Búsqueda (Texto, etc.)
+                if (!matchesSearch(player, cardData.golden, cardData.variant)) return;
+
+                // Filtros de Selectores
+                if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
+                if (variantFilter !== 'all' && cardData.variant !== variantFilter) return;
+                if (setFilter !== 'all' && player.set !== setFilter) return;
+                if (goldenFilterValue === 'false' && cardData.golden) return;
+                if (goldenFilterValue === 'true' && !cardData.golden) return;
+                
+                // --- OBTENER DATOS DE MERCADO PARA ORDENAR ---
+                const marketKey = `${cardCode}_${cardData.golden}_${cardData.variant}`;
+                const marketData = marketDatabase[marketKey];
+
+                // Si hay datos, usamos el floorPrice, si no, es 0
+                const floorPrice = (marketData && marketData.floorPrice > 0) ? marketData.floorPrice : 0;
+                
+                // Supply: Cuántas hay a la venta globalmente (competencia)
+                const marketSupply = (marketData && marketData.listings) ? marketData.listings.length : 0;
+
+                results.push({
+                    type: 'sell',
+                    player: player,
+                    cardData: cardData,
+                    count: count,
+                    marketKey: marketKey,
+                    // Guardamos estos datos para poder ordenar después
+                    floorPrice: floorPrice,
+                    marketSupply: marketSupply
+                });
             });
         });
+
+        // --- ORDENACIÓN ---
+        results.sort((a, b) => {
+            switch (sortOption) {
+                // Ordenar por PRECIO DE MERCADO (Floor Price)
+                case 'price_desc': 
+                    return b.floorPrice - a.floorPrice;
+                case 'price_asc': 
+                    return a.floorPrice - b.floorPrice;
+                
+                // CAMBIO AQUÍ: Ordenar por TU CANTIDAD (Copias que posees)
+                // supply_desc = Primero las que tienes más repetidas
+                case 'supply_desc': 
+                    return b.count - a.count;
+                // supply_asc = Primero las que tienes menos (1 copia)
+                case 'supply_asc': 
+                    return a.count - b.count;
+                
+                default: return 0;
+            }
+        });
         
-        // Ordenación local
-        const sortOption = document.getElementById('market-sort-select').value;
-        if (sortOption.startsWith('supply')) {
-            results.sort((a, b) => sortOption === 'supply_desc' ? b.count - a.count : a.count - b.count);
-        } else {
-            results.sort((a, b) => b.player.rating - a.player.rating);
-        }
         renderSellGrid(results);
         return;
     }
 
+     // ============================================================
+    // LÓGICA DE MODO SUBASTA (AUCTION) - ACTUALIZADA CON ORDENACIÓN
     // ============================================================
-    // B. MODO SUBASTA (AUCTION) - Tiempo Real
-    // ============================================================
-    if (currentMarketTab === 'auction') {
-        // Consulta sin orderBy para evitar errores de índice, ordenamos luego en JS
-        const q = window.fs.query(
-            window.fs.collection(window.db, "market"),
-            window.fs.where("isAuction", "==", true),
-            window.fs.limit(50)
-        );
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'auction') {
+        Object.keys(marketDatabase).forEach(key => {
+            const data = marketDatabase[key];
+            
+            // 1. Filtrar solo subastas activas
+            const activeAuctions = data.listings.filter(l => l.isAuction === true);
+            
+            // Calculamos el "Stock" (cuántas subastas hay de esta carta)
+            const auctionsCount = activeAuctions.length; 
+            
+            if (auctionsCount > 0) {
+                const [code, isGoldenStr, variant] = key.split('_');
+                const player = playersDB.find(p => p.cardCode === code);
+                if (!player) return;
 
-        auctionUnsubscribe = window.fs.onSnapshot(q, (snapshot) => {
-            let results = [];
-            snapshot.forEach((doc) => {
-                const listing = { id: doc.id, ...doc.data() };
+                // Aplicar filtros de búsqueda
+                if (!matchesSearch(player, isGoldenStr === 'true', variant)) return;
+                if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
+                if (variantFilter !== 'all' && variant !== variantFilter) return;
+                if (setFilter !== 'all' && player.set !== setFilter) return;
+                if (goldenFilterValue === 'false' && isGoldenStr === 'true') return;
+                if (goldenFilterValue === 'true' && isGoldenStr !== 'true') return;
 
-                // Si la subasta ha caducado, intentamos cerrarla en segundo plano
-                if (Date.now() > listing.endTime) {
-                    checkAndFinalizeAuction(listing);
-                    return; // No la mostramos en la lista porque se va a borrar
-                }
-
-                const player = playersDB.find(p => p.cardCode === listing.cardCode);
-                
-                if (player && passesFilters(player, listing.isGolden, listing.variant)) {
+                activeAuctions.forEach(auction => {
                     results.push({
                         type: 'auction',
                         player: player,
-                        marketKey: listing.marketKey,
-                        listing: listing,
-                        isGolden: listing.isGolden,
-                        variant: listing.variant,
-                        currentPrice: listing.currentBid || listing.price
+                        marketKey: key,
+                        listing: auction,
+                        isGolden: isGoldenStr === 'true',
+                        variant: variant,
+                        // DATOS PARA ORDENAR
+                        currentPrice: auction.currentBid || auction.price,
+                        marketSupply: auctionsCount // Cuántas subastas hay de esta carta
                     });
-                }
-            });
-            // Ordenar por tiempo (JS)
-            results.sort((a, b) => a.listing.endTime - b.listing.endTime);
-            renderMarketGrid(results);
-        });
-        return; 
-    }
-
-    // ============================================================
-    // C. MODO COMPRA (BUY) - ¡AHORA EN TIEMPO REAL!
-    // ============================================================
-    // Filtramos donde isAuction sea false (o no exista)
-    const qBuy = window.fs.query(
-        window.fs.collection(window.db, "market"),
-        window.fs.where("isAuction", "==", false),
-        window.fs.limit(100) // Límite de seguridad
-    );
-
-    buyUnsubscribe = window.fs.onSnapshot(qBuy, (snapshot) => {
-        let results = [];
-        snapshot.forEach((doc) => {
-            const listing = { id: doc.id, ...doc.data() };
-            const player = playersDB.find(p => p.cardCode === listing.cardCode);
-            
-            // Aplicamos filtros locales
-            if (player && passesFilters(player, listing.isGolden, listing.variant)) {
-                results.push({
-                    type: 'buy',
-                    player: player,
-                    marketKey: listing.marketKey,
-                    listing: listing,
-                    stats: { floorPrice: listing.price, listings: [listing] },
-                    isGolden: listing.isGolden,
-                    variant: listing.variant,
-                    currentPrice: listing.price
                 });
             }
         });
-
-        // Ordenar Resultados (JS)
-        const sortOption = document.getElementById('market-sort-select').value;
+        
+        // --- ORDENACIÓN ---
         results.sort((a, b) => {
-            if (sortOption === 'price_asc') return a.currentPrice - b.currentPrice;
-            if (sortOption === 'price_desc') return b.currentPrice - a.currentPrice;
-            // Por defecto, lo más nuevo primero (timestamp más alto)
-            return (b.listing.timestamp || 0) - (a.listing.timestamp || 0);
+            switch (sortOption) {
+
+              // NUEVO: Ordenar por TIEMPO RESTANTE
+                case 'time_asc': // Terminan pronto (Menor timestamp final)
+                    return a.listing.endTime - b.listing.endTime;
+                case 'time_desc': // Terminan tarde (Mayor timestamp final)
+                    return b.listing.endTime - a.listing.endTime;
+
+                // Ordenar por PRECIO (Puja Actual)
+                case 'price_asc': 
+                    return a.currentPrice - b.currentPrice;
+                case 'price_desc': 
+                    return b.currentPrice - a.currentPrice;
+                
+                // Ordenar por STOCK (Cuántas subastas hay de esa carta)
+                case 'supply_asc': 
+                    return a.marketSupply - b.marketSupply;
+                case 'supply_desc': 
+                    return b.marketSupply - a.marketSupply;
+                
+                // Por defecto: Tiempo Restante (Las que acaban antes primero)
+                default: 
+                    return a.listing.endTime - b.listing.endTime;
+            }
         });
-
+        
         renderMarketGrid(results);
-    });
-}
+        return;
+    }
 
-// Pequeño helper para que no falle el modo SELL si lo quité arriba
-function renderSellGridFromCollection() {
-    // (Tu lógica original de SELL o una llamada a renderSellGrid existente)
-    // Simplemente re-llama a searchMarket original filtrando tu colección si es necesario
-    // Por ahora dejémoslo pasar para centrarnos en BUY.
+    // ============================================================
+    // LÓGICA DE MODO COMPRA (BUY)
+    // ============================================================
+    playersDB.forEach(player => {
+        
+        // Filtro Rareza (Pre-filtro rápido)
+        if (rarityFilter !== 'all' && player.rarity !== rarityFilter) return;
+        // Filtro Set
+        if (setFilter !== 'all' && player.set !== setFilter) return;
+
+        // Configuración de variantes a revisar
+        let variantsToCheck = ['none', 'foil', 'holo', 'poli', 'negative'];
+        if (variantFilter !== 'all') variantsToCheck = [variantFilter];
+        
+        let goldenOptions = [false, true]; 
+        if (goldenFilterValue === 'true') goldenOptions = [true];
+        else if (goldenFilterValue === 'false') goldenOptions = [false];
+
+        // Bucle Principal
+        variantsToCheck.forEach(variant => {
+            goldenOptions.forEach(isGolden => {
+                
+                // --- NUEVA LÓGICA DE BÚSQUEDA ---
+                // Comprobamos si coincide CON LOS TÉRMINOS antes de mirar la DB del mercado (optimización)
+                if (searchTerms.length > 0) {
+                    if (!matchesSearch(player, isGolden, variant)) return;
+                }
+
+                const marketKey = MarketBackend.getMarketKey(player.cardCode, isGolden, variant);
+                const marketData = marketDatabase[marketKey];
+
+                if (marketData && marketData.listings.length > 0) {
+                    results.push({
+                        type: 'buy',
+                        player: player,
+                        marketKey: marketKey,
+                        stats: marketData,
+                        isGolden: isGolden,
+                        variant: variant
+                    });
+                }
+            });
+        });
+    });
+
+    // Ordenación Compra
+    results.sort((a, b) => {
+        switch (sortOption) {
+            case 'price_asc': return a.stats.floorPrice - b.stats.floorPrice;
+            case 'price_desc': return b.stats.floorPrice - a.stats.floorPrice;
+            case 'supply_asc': return a.stats.listings.length - b.stats.listings.length;
+            case 'supply_desc': return b.stats.listings.length - a.stats.listings.length;
+            default: return 0;
+        }
+    });
+
+    renderMarketGrid(results);
 }
 
 // 3. Renderizar la Rejilla (CORREGIDO: IDs únicos para subastas múltiples)
-// --- renderMarketGrid FINAL (SIN TEXTOS BASURA) ---
 function renderMarketGrid(items) {
     const marketGrid = document.getElementById('market-results-grid');
-
-    // 1. LIMPIEZA PREVENTIVA
-    // Borramos mensaje de carga si existe
-    const loadingMsg = document.getElementById('market-loading-msg');
-    if (loadingMsg) loadingMsg.remove();
-
-    // --- CORRECCIÓN: Borramos mensaje de "No items" si existe ---
-    const emptyMsg = document.getElementById('market-empty-msg');
-    if (emptyMsg) emptyMsg.remove();
-    // -----------------------------------------------------------
-
-    // 2. SI NO HAY ITEMS, MOSTRAMOS EL MENSAJE CON ID
-    if (items.length === 0) {
-        // Le ponemos ID para poder borrarlo luego
-        marketGrid.innerHTML = '<div id="market-empty-msg" style="padding:20px; color:#aaa; width:100%; text-align:center;">No items found.</div>';
-        return;
+    
+    // Limpieza inicial si la rejilla tiene mensajes de texto o está vacía
+    if (marketGrid.querySelector('div') && !marketGrid.querySelector('.market-listing-card')) {
+        marketGrid.innerHTML = '';
     }
 
     const currentIds = new Set();
 
     items.forEach(item => {
-        const elementId = item.type === 'auction' 
-            ? `auction-card-${item.listing.id}` 
-            : `market-card-${item.listing.id}`;
+        let elementId;
+
+        // --- CORRECCIÓN CLAVE AQUÍ ---
+        if (item.type === 'auction') {
+            // Si es subasta, usamos el ID único de la subasta para que no se pisen si hay varias iguales
+            elementId = `auction-card-${item.listing.id}`;
+        } else {
+            // Si es compra/venta agrupada, usamos la clave del mercado (nombre carta)
+            elementId = `market-card-${item.marketKey}`;
+        }
         
         currentIds.add(elementId);
 
         let cardEl = document.getElementById(elementId);
 
-        // Si la carta no existe, la creamos
-        if (!cardEl) {
-            cardEl = document.createElement('div');
-            cardEl.className = 'market-listing-card';
-            if (item.type === 'auction') cardEl.classList.add('auction-card-height');
-            cardEl.id = elementId;
-            marketGrid.appendChild(cardEl);
-        }
-
-        // --- RENDERIZADO DE CONTENIDO (Igual que antes) ---
-        
         // ============================================================
-        // 1. MODO SUBASTA (AUCTION) - SIN ETIQUETA DE TEXTO
+        // BLOQUE SUBASTAS
         // ============================================================
         if (item.type === 'auction') {
             const auction = item.listing;
-            const currentBid = auction.currentBid || auction.price;
-            const isMine = window.currentUser && auction.sellerId === window.currentUser.uid;
-            const hasBids = currentBid > auction.price;
-            const isWinning = !isMine && auction.highestBidder === window.currentUser.uid;
+            const currentBid = auction.currentBid || auction.price; 
+            
+            if (!cardEl) {
+                cardEl = document.createElement('div');
+                cardEl.className = 'market-listing-card auction-card-height';
+                cardEl.id = elementId;
+                marketGrid.appendChild(cardEl);
+            }
 
-            // Solo mantenemos el GLOW verde (Clase CSS)
-            if (isWinning) cardEl.classList.add('auction-winning');
-            else cardEl.classList.remove('auction-winning');
+             const isWinning = auction.highestBidder === 'PLAYER';
 
-            // Temporizador
+             const btnDisabledAttr = isWinning ? 'disabled' : '';
+             const btnText = isWinning ? 'HIGHEST BIDDER' : 'PLACE BID';
+             const btnOnclick = isWinning ? '' : `onclick="placeBid('${auction.id}', '${item.marketKey}', ${currentBid})"`;
+    
+            if (isWinning) {
+                cardEl.classList.add('auction-winning');
+                if (!cardEl.querySelector('.winning-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'winning-badge';
+                    badge.textContent = "YOU ARE WINNING";
+                    cardEl.appendChild(badge);
+                }
+            } else {
+                cardEl.classList.remove('auction-winning');
+                const badge = cardEl.querySelector('.winning-badge');
+                if (badge) badge.remove();
+            }
+
+            // Calculamos tiempo
             const now = Date.now();
             const timeLeft = auction.endTime - now;
             let timeString = "Ended";
             let timerClass = "auction-timer-inline"; 
+            
             if (timeLeft > 0) {
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                if (hours > 0) timeString = `${hours}h ${minutes}m`;
-                else timeString = `${minutes}m`;
-                if (minutes < 5 && hours === 0) timerClass += " ending-soon"; 
-            }
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
-            // Botones
-            let btnHTML = '';
-            if (isMine) {
-                if (hasBids) {
-                    btnHTML = `<button class="btn-market-bid full-width" style="background:#222; border:1px solid #444; color:#666; cursor:not-allowed;" disabled>ACTIVE BIDS</button>`;
+                if (hours > 0) {
+                    timeString = `${hours}h ${minutes}m ${seconds}s`;
                 } else {
-                    btnHTML = `<button class="btn-market-bid full-width" style="background:#c0392b;" onclick="cancelMarketListing('${auction.id}', '${item.marketKey}')">CANCEL AUCTION</button>`;
+                    timeString = `${minutes}m ${seconds}s`;
+                    if (minutes < 1) timerClass += " ending-soon"; 
                 }
-            } else {
-                const btnDisabled = isWinning ? 'disabled' : '';
-                const btnText = isWinning ? 'HIGHEST BIDDER' : 'BID NOW';
-                const btnStyle = isWinning ? 'background:#333; cursor:default;' : 'background:#9b59b6;';
-                btnHTML = `<button class="btn-market-bid full-width" style="width:100%; margin-top:10px; color:white; border:none; border-radius:4px; font-weight:bold; ${btnStyle}" onclick="placeBid('${auction.id}', '${item.marketKey}', ${currentBid})" ${btnDisabled}>${btnText}</button>`;
             }
 
-            // HTML Limpio (Sin badgeHTML)
             cardEl.innerHTML = `
-                <div class="market-card-preview" style="margin-top:20px;"></div>
-                <div class="market-listing-info" style="text-align: center;">
-                    <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:5px;">
-                        ${item.player.name} <span style="font-size:10px; color:#aaa;">(${item.variant})</span>
-                    </div>
-                    <div class="${timerClass}" style="margin:5px auto; width:fit-content; padding:2px 8px; border-radius:4px; background:#222; border:1px solid #444;">
-                        ⏱️ ${timeString}
-                    </div>
-                    <div style="margin-top: 8px;">
-                        <div style="font-size:10px; color:#aaa;">CURRENT BID</div>
-                        <div style="color:#ffc84a; font-size:20px; font-weight:900;">
-                            ${currentBid.toLocaleString()} 💎
+                <div class="market-card-preview"></div>
+                
+                <div class="market-listing-info" style="text-align: center; display: flex; flex-direction: column; gap: 5px; height: auto;">
+                    <div style="line-height: 1.2;">
+                        <div style="color:#fff; font-weight:bold; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${item.player.name}
+                        </div>
+                        <div style="font-size:10px; margin-bottom: 5px; font-weight:600;">
+                           <span style="color: #bbb;">${item.player.rarity.toUpperCase()}</span>
+                           ${item.isGolden ? '<span style="color:#ffc84a">• GOLDEN</span>' : ''}
                         </div>
                     </div>
-                    ${btnHTML}
+
+                    <div style="display: flex; justify-content: center;">
+                        <div class="${timerClass}" id="timer-${auction.id}">⏱️ ${timeString}</div>
+                    </div>
+
+                    <div style="margin-top: 5px;">
+                        <div style="font-size:10px; color:#aaa; text-transform: uppercase; letter-spacing: 1px;">Current Bid</div>
+                        <div style="color:#ffc84a; font-size:22px; font-weight:900; margin-bottom: 8px; text-shadow: 0 0 10px rgba(255, 200, 74, 0.3);">
+                            ${currentBid.toLocaleString()} 💎
+                        </div>
+                        <button class="btn-market-bid full-width" ${btnOnclick} ${btnDisabledAttr}>
+                            ${btnText}
+                        </button>
+                    </div>
                 </div>
             `;
             
             const visualCard = createVisualCard(item.player, item.isGolden, item.variant);
-            visualCard.style.transform = "scale(0.85)";
-            cardEl.querySelector('.market-card-preview').appendChild(visualCard);
-
-            marketGrid.appendChild(cardEl);
+            visualCard.style.transform = "scale(0.95)";
+            visualCard.style.position = "relative"; 
+            visualCard.style.zIndex = "1";
+            
+            const previewContainer = cardEl.querySelector('.market-card-preview');
+            previewContainer.innerHTML = ''; 
+            previewContainer.style.overflow = "visible"; 
+            previewContainer.appendChild(visualCard);
+            
             return; 
         }
-        // B. COMPRA NORMAL
-        else {
-            const priceDisplay = `${item.listing.price.toLocaleString()} 💎`;
-            const isMine = window.currentUser && item.listing.sellerId === window.currentUser.uid;
+        
+        // ============================================================
+        // BLOQUE COMPRA/VENTA (FIXED PRICE)
+        // ============================================================
+        
+        // Datos básicos
+        const supply = item.stats.listings.length;
+        let supplyClass = 'supply-high';
+        if(supply < 10) supplyClass = 'supply-low';
+        else if(supply < 50) supplyClass = 'supply-med';
+        
+        const priceDisplay = `${item.stats.floorPrice.toLocaleString('de-DE')} 💎`;
+
+        if (cardEl) {
+            // Actualizar existente (Optimización)
+            const priceEl = cardEl.querySelector('.market-floor-price');
+            if (priceEl && priceEl.textContent !== priceDisplay) {
+                priceEl.textContent = priceDisplay;
+                priceEl.style.color = '#fff';
+                setTimeout(() => priceEl.style.color = '#2ecc71', 200);
+            }
+            const stockEl = cardEl.querySelector('.market-supply-count');
+            if (stockEl && !stockEl.textContent.includes(supply)) {
+                stockEl.className = `market-supply-count ${supplyClass}`;
+                stockEl.textContent = `${supply} listed`;
+            }
+        } else {
+            // Crear nueva
+            cardEl = document.createElement('div');
+            cardEl.className = 'market-listing-card';
+            cardEl.id = elementId;
             
-            let btnHTML = '';
-            if (isMine) {
-                btnHTML = `<button class="btn-market-buy" style="background:#c0392b; width:100%; margin-top:5px;" onclick="cancelMarketListing('${item.listing.id}', '${item.marketKey}')">CANCEL SALE</button>`;
-            } else {
-                btnHTML = `<button class="btn-market-buy" style="width:100%; margin-top:5px; padding:10px; font-size:14px;" onclick="attemptBuyItem('${item.listing.id}', '${item.marketKey}', ${item.listing.price})">BUY NOW</button>`;
+            // Badge de Grado
+            let gradeBadgeHTML = '';
+            if (item.stats.listings.length > 0 && item.stats.listings[0].gradeData) {
+                const grade = item.stats.listings[0].gradeData;
+                const score = parseFloat(grade.score);
+                let badgeColor = '#e74c3c';
+                if (score >= 10) badgeColor = '#2ecc71';
+                else if (score >= 9) badgeColor = '#3498db';
+                else if (score >= 7) badgeColor = '#f1c40f';
+
+                gradeBadgeHTML = `
+                    <div class="grade-badge" style="position: absolute; top: 10px; right: 10px; background: ${badgeColor}; color: #000; font-weight: 900; font-size: 12px; padding: 2px 6px; border-radius: 4px; z-index: 10; box-shadow: 0 0 5px ${badgeColor}; border: 1px solid rgba(0,0,0,0.3);">
+                        GR ${grade.score}
+                    </div>
+                `;
             }
 
-            let metaHTML = `<span style="color:#bbb;">${item.player.rarity.toUpperCase()}</span>`;
-            if (item.variant !== 'none') metaHTML += ` <span style="color:#4af0e0;">• ${item.variant.toUpperCase()}</span>`;
-            if (item.isGolden) metaHTML += ` <span style="color:#ffc84a;">• GOLDEN</span>`;
+            let metaHTML = `<span style="color: #bbb;">${item.player.rarity.toUpperCase()}</span>`;
+            if (item.variant !== 'none') metaHTML += ` <span style="color: #4af0e0;">• ${item.variant.toUpperCase()}</span>`;
+            if (item.isGolden) metaHTML += ` <span style="color: #ffc84a; text-shadow: 0 0 2px #ffc84a;">• GOLDEN</span>`;
 
             cardEl.innerHTML = `
-                <div class="market-card-preview"></div>
-                <div class="market-listing-info" style="text-align:center;">
-                    <div style="color:#fff; font-weight:bold; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.player.name}</div>
-                    <div style="font-size:10px; margin:5px 0; font-weight:600;">${metaHTML}</div>
+                <div class="market-card-preview">
+                    ${gradeBadgeHTML}
+                </div>
+                <div class="market-listing-info">
+                    <div style="color:#fff; font-weight:bold; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${item.player.name}
+                    </div>
+                    <div style="font-size:10px; margin-top:2px; margin-bottom:8px; font-weight:600;">
+                        ${metaHTML}
+                    </div>
                     <div class="market-floor-price" style="color:#2ecc71; font-size:18px; font-weight:bold;">${priceDisplay}</div>
-                    ${btnHTML}
-                    <div style="font-size:10px; color:#666; margin-top:5px;">Seller: ${isMine ? 'YOU' : 'User'}</div>
+                    <div class="market-supply-count ${supplyClass}" style="color:#888; font-size:12px;">${supply} listed</div>
                 </div>
             `;
-        }
 
-        const visualCard = createVisualCard(item.player, item.isGolden, item.variant);
-        visualCard.style.transform = "scale(0.85)";
-        const previewContainer = cardEl.querySelector('.market-card-preview');
-        if (previewContainer) previewContainer.appendChild(visualCard);
+            const visualCard = createVisualCard(item.player, item.isGolden, item.variant);
+            cardEl.querySelector('.market-card-preview').appendChild(visualCard);
+            cardEl.onclick = () => openMarketDetails(item.player, item.isGolden, item.variant, supply);
+
+            marketGrid.appendChild(cardEl);
+        }
     });
 
-    // 3. LIMPIEZA DE CARTAS VIEJAS
-    const allCards = marketGrid.querySelectorAll('.market-listing-card');
-    allCards.forEach(card => {
+    // Limpieza de cartas viejas que ya no están en los resultados
+    const existingCards = marketGrid.querySelectorAll('.market-listing-card');
+    existingCards.forEach(card => {
         if (!currentIds.has(card.id)) {
             card.remove();
         }
     });
+    
+    if (items.length === 0) {
+        marketGrid.innerHTML = '<div style="padding:20px; color:#aaa; width:100%; text-align:center;">No active listings found.</div>';
+    }
 }
 
 // Función auxiliar para crear una carta visualmente sin necesidad de tenerla en la colección
@@ -13502,255 +13306,217 @@ function logMarketTransaction(type, cardData, price, isAuction = false) {
 }
 
 // Renderizar la vista (Se llama al pulsar la pestaña History)
-// --- SISTEMA DE HISTORIAL ESTABILIZADO (Sin Parpadeos ni Duplicados) ---
-let historyUnsubscribes = [];
-let historyInterval = null;
+   function renderHistoryView() {
+  const container = document.getElementById('history-list-content');
+  const earnedEl = document.getElementById('hist-total-earned');
+  const spentEl = document.getElementById('hist-total-spent');
+  const profitEl = document.getElementById('hist-net-profit');
 
-// 1. FUNCIÓN MAESTRA: Prepara el esqueleto (HTML fijo)
-function renderHistoryView() {
-    // Limpieza total
-    historyUnsubscribes.forEach(unsub => unsub());
-    historyUnsubscribes = [];
-    if (historyInterval) clearInterval(historyInterval);
+  if (!container) return;
+  container.innerHTML = '';
 
-    const container = document.getElementById('history-list-content');
-    if (!container) return;
-    
-    // CREAMOS LA ESTRUCTURA FIJA (3 CAJAS)
-    container.innerHTML = `
-        <div id="history-bids-box">
-            <div class="history-section-title">Active Bids <span style="font-size:10px; color:#666;">(Live)</span></div>
-            <div id="bids-content" style="min-height:50px"><div style="padding:10px; text-align:center; color:#666;">Loading bids...</div></div>
-        </div>
-        
-        <div id="history-listings-box" style="margin-top:30px;">
-            <div class="history-section-title">My Active Listings</div>
-            <div id="listings-content" style="min-height:50px"><div style="padding:10px; text-align:center; color:#666;">Loading listings...</div></div>
-        </div>
+  // ============================================================
+  // 1. SECCIÓN: ACTIVE BETS (ACTUALIZADO)
+  // ============================================================
+  const betsTitle = document.createElement('div');
+  betsTitle.className = 'history-section-title';
+  betsTitle.innerHTML = 'Active Bets &nbsp;<span style="font-size:10px; color:#666;">(Live Updates)</span>';
+  container.appendChild(betsTitle);
 
-        <div id="history-log-box" style="margin-top:30px;">
-            <div class="history-section-title">Transaction Log</div>
-            <div id="log-content"></div>
-        </div>
-    `;
+  let activeBetsCount = 0;
 
-    // Renderizamos el log local inmediatamente (es estático)
-    renderTransactionLogUI();
+  for (let i = myActiveBets.length - 1; i >= 0; i--) {
+      const betInfo = myActiveBets[i];
+      const data = marketDatabase[betInfo.key];
+      const auction = data ? data.listings.find(l => l.id === betInfo.id) : null;
 
-    // Iniciamos los escuchas vivos
-    initHistoryListeners();
-}
+      if (!auction) {
+          myActiveBets.splice(i, 1);
+          saveActiveBets();
+          continue;
+      }
 
-// 2. INICIAR CONEXIONES
-async function initHistoryListeners() {
-    // A. ESCUCHA DE VENTAS (Listings) - SNAPSHOT REAL
-    if (window.currentUser) {
-        const qSales = window.fs.query(
-            window.fs.collection(window.db, "market"),
-            window.fs.where("sellerId", "==", window.currentUser.uid)
-        );
+      activeBetsCount++;
+      const [code, goldenStr, variant] = betInfo.key.split('_');
+      const player = playersDB.find(p => p.cardCode === code);
+      
+      const isWinning = auction.highestBidder === 'PLAYER';
+      
+      const statusClass = isWinning ? 'status-winning' : 'status-outbid';
+      const statusText = isWinning ? 'WINNING' : 'OUTBID';
+      
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${player.rarity})">${player.rarity}</span>`;
+      if (goldenStr === 'true') metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${variant}</span>`;
 
-        const unsubSales = window.fs.onSnapshot(qSales, (snapshot) => {
-            const listings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderListingsUI(listings);
-        });
-        historyUnsubscribes.push(unsubSales);
-    }
+      // --- 1. LÓGICA BOTÓN RAISE BID (Ya la tenías) ---
+      const betBtnHTML = isWinning 
+          ? `<button class="btn-mini" style="background:#222; color:#555; cursor:default; border:1px solid #333;" disabled>RAISE BID</button>`
+          : `<button class="btn-mini btn-bet-plus" onclick="placeBid('${auction.id}', '${betInfo.key}', ${auction.currentBid})">RAISE BID</button>`;
 
-    // B. ESCUCHA DE PUJAS (Bids) - INTERVALO DE REFRESCO
-    // Ejecutar una vez al inicio
-    updateBidsUI();
-    
-    // Y luego cada 2 segundos
-    historyInterval = setInterval(() => {
-        if (currentMarketTab !== 'history') {
-            clearInterval(historyInterval);
-            return;
-        }
-        updateBidsUI();
-    }, 2000);
-}
+      // --- 2. LÓGICA BOTÓN FORFEIT BID (NUEVO) ---
+      // Si vas ganando (isWinning), el botón se deshabilita y se pone gris.
+      // Si vas perdiendo, el botón funciona para dejar de seguir la subasta.
+      const forfeitBtnHTML = isWinning
+          ? `<button class="btn-mini" style="background:#222; color:#555; cursor:not-allowed; border:1px solid #333;" disabled title="Cannot forfeit while winning">FORFEIT BID</button>`
+          : `<button class="btn-mini btn-forfeit" onclick="forfeitBet('${auction.id}')" title="Stop watching">FORFEIT BID</button>`;
 
-// 3. UI: ACTUALIZAR SOLO PUJAS (Bids)
-async function updateBidsUI() {
-    const container = document.getElementById('bids-content');
-    if (!container) return; // Si cambiamos de pestaña, paramos
+      const row = document.createElement('div');
+      row.className = 'history-row';
+      
+      // Ajustes de Grid
+      row.style.gridTemplateColumns = "110px 1fr auto 210px"; 
+      row.style.gap = "10px";
+      row.style.alignItems = "center"; 
 
-    const myActiveBets = JSON.parse(localStorage.getItem('myActiveBets')) || [];
-    let html = '';
-    let betsToRemove = [];
+      row.innerHTML = `
+          <div style="display:flex; justify-content:flex-start; align-items:center; height:100%;">
+              <div class="bet-status ${statusClass}">${statusText}</div>
+          </div>
+          
+          <div class="history-card-details" style="height:100%; display:flex; align-items:center;">
+              <span class="history-card-name">${player.name}</span>
+              <span class="history-card-meta">${metaHTML}</span>
+          </div>
+          
+          <div class="history-price" style="color:${isWinning ? '#2ecc71' : '#e74c3c'}; display:flex; align-items:center; height:100%;">
+              ${auction.currentBid.toLocaleString()} 💎
+          </div>
+          
+          <div class="action-btn-group">
+              ${betBtnHTML}
+              ${forfeitBtnHTML}
+          </div>
+      `;
+      container.appendChild(row);
+  }
 
-    if (myActiveBets.length === 0) {
-        container.innerHTML = '<div style="padding:10px; font-size:13px; color:#444; font-style:italic; text-align:center;">You are not watching any auctions.</div>';
-        return;
-    }
+  if (activeBetsCount === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#444; font-style:italic; text-align:center;";
+      emptyMsg.textContent = "You have no active bids.";
+      container.appendChild(emptyMsg);
+  }
 
-    for (const bet of myActiveBets) {
-        try {
-            const docRef = window.fs.doc(window.db, "market", bet.id);
-            const docSnap = await window.fs.getDoc(docRef);
+  // ============================================================
+  // 2. SECCIÓN: ACTIVE LISTINGS (Tus ventas) - IGUAL QUE ANTES
+  // ============================================================
+  const activeListings = MarketBackend.getPlayerListings();
+  const activeTitle = document.createElement('div');
+  activeTitle.className = 'history-section-title';
+  activeTitle.style.marginTop = "30px";
+  activeTitle.textContent = `My Active Listings (${activeListings.length})`;
+  container.appendChild(activeTitle);
 
-            if (!docSnap.exists() || (docSnap.data().endTime && Date.now() > docSnap.data().endTime)) {
-                betsToRemove.push(bet.id);
-                continue;
-            }
+  if (activeListings.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;";
+    emptyMsg.textContent = "No cards currently for sale.";
+    container.appendChild(emptyMsg);
+  } else {
+    activeListings.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'history-row active-listing-row';
 
-            const auction = { id: docSnap.id, ...docSnap.data() };
-            const [code] = auction.marketKey.split('_');
-            const player = playersDB.find(p => p.cardCode === code);
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${item.rarity})">${item.rarity}</span>`;
+      if (item.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (item.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${item.variant}</span>`;
 
-            if (player) {
-                const isWinning = auction.highestBidder === window.currentUser.uid;
-                const statusClass = isWinning ? 'status-winning' : 'status-outbid';
-                const statusText = isWinning ? 'WINNING' : 'OUTBID';
-                const currentBid = auction.currentBid || auction.price;
-
-                const betBtnHTML = isWinning 
-                    ? `<button class="btn-mini" style="background:#222; color:#555; cursor:default; border:1px solid #333;" disabled>HIGHEST</button>`
-                    : `<button class="btn-mini btn-bet-plus" onclick="placeBid('${auction.id}', '${auction.marketKey}', ${currentBid})">RAISE BID</button>`;
-                
-                // Si vas ganando, no puedes borrar. Si pierdes, sí.
-                const cancelBtn = isWinning
-                     ? '' 
-                     : `<button class="btn-mini btn-forfeit" onclick="forfeitBet('${auction.id}')">X</button>`;
-
-                let metaHTML = `<span class="meta-tag" style="color:#aaa">${player.rarity}</span>`;
-                if (auction.isGolden) metaHTML += ` <span style="color:#ffc84a">• GOLDEN</span>`;
-
-                html += `
-                <div class="history-row" style="grid-template-columns: 90px 1fr auto 160px; gap: 10px; align-items: center;">
-                    <div style="display:flex; justify-content:center;"><div class="bet-status ${statusClass}">${statusText}</div></div>
-                    <div class="history-card-details">
-                        <span class="history-card-name">${player.name}</span>
-                        <span class="history-card-meta">${metaHTML}</span>
-                    </div>
-                    <div class="history-price" style="color:${isWinning ? '#2ecc71' : '#e74c3c'}; font-weight:bold;">${currentBid.toLocaleString()} 💎</div>
-                    <div class="action-btn-group" style="justify-content: flex-end;">${betBtnHTML} ${cancelBtn}</div>
-                </div>`;
-            }
-        } catch (e) {}
-    }
-
-    // Actualizamos el DOM de golpe para evitar parpadeo
-    if (html === '') html = '<div style="padding:10px; font-size:13px; color:#444; font-style:italic; text-align:center;">No active auctions found.</div>';
-    
-    // Truco anti-parpadeo: Solo actualizamos si el HTML ha cambiado
-    if (container.innerHTML !== html) {
-        container.innerHTML = html;
-    }
-
-    if (betsToRemove.length > 0) {
-        const newBets = myActiveBets.filter(b => !betsToRemove.includes(b.id));
-        localStorage.setItem('myActiveBets', JSON.stringify(newBets));
-    }
-}
-
-// 4. UI: ACTUALIZAR SOLO VENTAS (Listings)
-function renderListingsUI(listings) {
-    const container = document.getElementById('listings-content');
-    const titleEl = document.querySelector('#history-listings-box .history-section-title');
-    if (!container) return;
-
-    // Actualizamos el título con el contador
-    if (titleEl) titleEl.textContent = `My Active Listings (${listings.length})`;
-
-    if (listings.length === 0) {
-        container.innerHTML = '<div style="padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;">No cards currently for sale.</div>';
-        return;
-    }
-
-    let html = '';
-    listings.forEach(item => {
-        // Recuperar datos jugador si no vienen completos
-        const [code] = item.marketKey.split('_');
-        const player = playersDB.find(p => p.cardCode === code);
-        const name = player ? player.name : "Unknown";
-        const rarity = player ? player.rarity : "common";
-
-        let metaHTML = `<span class="meta-tag" style="color:#ccc">${rarity.toUpperCase()}</span>`;
-        if (item.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
-
-        let typeBadge = item.isAuction 
-            ? `<div class="tx-badge" style="background:rgba(155, 89, 182, 0.2); border:1px solid #9b59b6; color:#9b59b6;">AUCTION</div>`
-            : `<div class="tx-badge tx-pending">SELLING</div>`;
-
-        html += `
-        <div class="history-row active-listing-row">
-            <div>${typeBadge}</div>
-            <div class="history-card-details">
-                <span class="history-card-name">${name}</span>
-                <span class="history-card-meta">${metaHTML}</span>
-            </div>
-            <div class="history-price" style="color:#f1c40f">${item.price.toLocaleString()} 💎</div>
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-cancel-listing" onclick="cancelMarketListing('${item.id}', '${item.marketKey}')">X</button>
-            </div>
-        </div>`;
+      row.innerHTML = `
+              <div><div class="tx-badge tx-pending">SELLING</div></div>
+              <div class="history-card-details">
+                  <span class="history-card-name">${item.cardName}</span>
+                  <span class="history-card-meta">${metaHTML}</span>
+              </div>
+              <div class="history-price" style="color:#f1c40f">${item.price.toLocaleString()} 💎</div>
+              <div style="display:flex; justify-content:flex-end;">
+                  <button class="btn-cancel-listing" onclick="cancelMarketListing('${item.id}', '${item.marketKey}')" title="Cancel Listing">X</button>
+              </div>
+      `;
+      container.appendChild(row);
     });
+  }
 
-    container.innerHTML = html;
-}
+  // ============================================================
+  // 3. SECCIÓN: TRANSACTION LOG - IGUAL QUE ANTES
+  // ============================================================
+  const historyTitle = document.createElement('div');
+  historyTitle.className = 'history-section-title';
+  historyTitle.style.marginTop = "30px";
+  historyTitle.textContent = "Transaction Log";
+  container.appendChild(historyTitle);
 
-// 5. UI: RENDERIZAR LOG (Estático)
-function renderTransactionLogUI() {
-    const container = document.getElementById('log-content');
-    if (!container) return;
+  let totalEarned = 0;
+  let totalSpent = 0;
 
-    if (typeof playerMarketHistory === 'undefined' || playerMarketHistory.length === 0) {
-        container.innerHTML = '<div style="padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;">No transaction history yet.</div>';
-        return;
-    }
-
-    let html = '';
+  if (playerMarketHistory.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = "padding:10px; font-size:13px; color:#666; font-style:italic; text-align:center;";
+    emptyMsg.textContent = "No transaction history yet.";
+    container.appendChild(emptyMsg);
+  } else {
     playerMarketHistory.forEach(tx => {
-        const dateObj = new Date(tx.date);
-        const dateStr = dateObj.toLocaleDateString();
-        const priceColor = tx.type === 'sell' ? '#2ecc71' : '#e74c3c';
-        const sign = tx.type === 'sell' ? '+' : '-';
-        const badgeClass = tx.type === 'sell' ? 'tx-sell' : 'tx-buy';
-        const badgeText = tx.type === 'sell' ? 'SOLD' : 'BOUGHT';
+      if (tx.type === 'sell') totalEarned += tx.price;
+      else totalSpent += tx.price;
 
-        html += `
-        <div class="history-row">
-            <div><div class="tx-badge ${badgeClass}">${badgeText}</div></div>
-            <div class="history-card-details"><span class="history-card-name">${tx.name}</span></div>
-            <div class="history-date">${dateStr}</div>
-            <div class="history-price" style="color:${priceColor}">${sign}${tx.price.toLocaleString()} 💎</div>
-        </div>`;
+      const dateObj = new Date(tx.date);
+      const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+      const row = document.createElement('div');
+      row.className = 'history-row';
+
+      const typeBadge = tx.type === 'buy' 
+      ? `<div class="tx-badge tx-buy">BOUGHT</div>` 
+      : `<div class="tx-badge tx-sell">SOLD</div>`;
+
+      const priceColor = tx.type === 'sell' ? '#2ecc71' : '#e74c3c';
+      const priceSign = tx.type === 'sell' ? '+' : '-';
+
+      let metaHTML = `<span class="meta-tag" style="color:var(--rarity-color-${tx.rarity})">${tx.rarity}</span>`;
+      if (tx.isGolden) metaHTML += ` • <span class="meta-tag meta-golden">GOLDEN</span>`;
+      if (tx.variant !== 'none') metaHTML += ` • <span class="meta-tag meta-variant">${tx.variant}</span>`;
+      if (tx.isAuction) metaHTML += ` • <span class="meta-tag meta-auction">AUCTION</span>`;
+
+      row.innerHTML = `
+              <div>${typeBadge}</div>
+              <div class="history-card-details">
+                  <span class="history-card-name">${tx.name}</span>
+                  <span class="history-card-meta">${metaHTML}</span>
+              </div>
+              <div class="history-date">${dateStr}</div>
+              <div class="history-price" style="color:${priceColor}">${priceSign}${tx.price.toLocaleString()} 💎</div>
+      `;
+      container.appendChild(row);
     });
-    container.innerHTML = html;
+  }
+
+  // Actualizar Resumen (Igual que antes)
+  const netProfit = totalEarned - totalSpent;
+  if(earnedEl) earnedEl.textContent = `+${totalEarned.toLocaleString()}`;
+  if(spentEl) spentEl.textContent = `-${totalSpent.toLocaleString()}`;
+  if(profitEl) {
+    profitEl.textContent = `${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()} 💎`;
+    profitEl.className = 'summary-value ' + (netProfit >= 0 ? 'net-positive' : 'net-negative');
+  }
 }
 
-  // --- SUSTITUYE ESTA FUNCIÓN ENTERA ---
-window.cancelMarketListing = async function(listingId, marketKey) {
-    // Sonido
+  window.cancelMarketListing = function(listingId, marketKey) {
+    // --- SONIDO ---
     const btnSound = document.getElementById('buttonClickSound');
     if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
 
-    // --- CORRECCIÓN AQUÍ: Añadido 'await' ---
-    const result = await MarketBackend.cancelListing(listingId, marketKey);
+    const result = MarketBackend.cancelListing(listingId, marketKey);
 
     if (result.success) {
-        // Devolver carta a la colección local
-        const [code, goldenStr, variant] = marketKey.split('_');
-        addCardToCollection(code, goldenStr, variant);
-        
-        showToast("Sale cancelled. Card returned.", "info");
-        
-        // Actualizar UI
-        updateCurrencyDisplay();
-        
-        // Si estamos en la pestaña SELL, refrescamos para que vuelva a salir en tu lista
-        if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'sell') {
-            searchMarket();
-        }
-        // Si estamos en HISTORY, refrescamos el historial
-        else if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
-            renderHistoryView();
-        }
-        
+      const [code, goldenStr, variant] = marketKey.split('_');
+      addCardToCollection(code, goldenStr, variant);
+      showToast("Listing cancelled. Card returned to collection.", "info");
+      renderHistoryView();
+      updateCurrencyDisplay();
     } else {
-        showToast("Error cancelling: " + result.message, "error");
+      showToast("Error: " + result.message, "error");
+      renderHistoryView();
     }
 };
 
@@ -13804,13 +13570,12 @@ window.placeBid = function(listingId, marketKey, currentBid) {
     // --- SONIDO ---
     const btnSound = document.getElementById('buttonClickSound');
     if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+    // --------------
     
-    // --- 1. OBTENER DINERO REAL (CORRECCIÓN) ---
-    const realBalance = window.playerCurrency || 0;
-
-    // Cálculo del mínimo (+5%)
+    // --- 1. CÁLCULO DEL MÍNIMO LEGAL (Regla del 5%) ---
     let increment = Math.floor(currentBid * 0.05);
     if (increment < 10) increment = 10; 
+    
     const minNextBid = currentBid + increment;
 
     // --- 2. PREPARAR MODAL ---
@@ -13822,25 +13587,19 @@ window.placeBid = function(listingId, marketKey, currentBid) {
 
     title.textContent = 'Place Your Bid';
     
-    // HTML del Modal (Usando realBalance)
     text.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center;">
             <span style="color:#aaa; font-size:14px;">Current Bid: <strong>${currentBid.toLocaleString()}</strong></span>
-            
             <input type="number" id="custom-bid-input" value="${minNextBid}" min="${minNextBid}">
-            
             <span class="bid-info-text">Min Bid (+5%): ${minNextBid.toLocaleString()}</span>
-            
-            <!-- AQUÍ ESTABA EL ERROR VISUAL -->
-            <span class="bid-info-text" style="color:${realBalance >= minNextBid ? '#2ecc71' : '#e74c3c'}">
-                Your Balance: ${realBalance.toLocaleString()} 💎
+            <span class="bid-info-text" style="color:${playerCurrency >= minNextBid ? '#2ecc71' : '#e74c3c'}">
+                Your Balance: ${playerCurrency.toLocaleString()}
             </span>
         </div>
     `;
 
     overlay.classList.add('visible');
 
-    // Auto-foco en el input
     setTimeout(() => {
         const input = document.getElementById('custom-bid-input');
         if(input) { input.focus(); input.select(); }
@@ -13851,83 +13610,60 @@ window.placeBid = function(listingId, marketKey, currentBid) {
         overlay.classList.remove('visible');
     };
 
-    // Usamos onclick una sola vez
-    confirmBtn.onclick = async () => {
+    confirmBtn.onclick = () => {
         const input = document.getElementById('custom-bid-input');
         const userBidAmount = parseInt(input.value);
-        
-        // Volvemos a leer el dinero por si cambió mientras tenías el modal abierto
-        const currentMoneyCheck = window.playerCurrency || 0;
 
-        if (isNaN(userBidAmount)) { 
-            showToast("Please enter a valid number.", 'error'); return; 
-        }
-        if (userBidAmount < minNextBid) { 
-            showToast(`Bid too low! Minimum is ${minNextBid.toLocaleString()}.`, 'error'); 
-            input.value = minNextBid; return; 
-        }
-        
-        // AQUÍ ESTABA EL ERROR DE LÓGICA (Transaction Error)
-        if (currentMoneyCheck < userBidAmount) { 
-            showToast(`Not enough gems! You need ${userBidAmount.toLocaleString()}.`, 'error'); return; 
-        }
+        if (isNaN(userBidAmount)) { showToast("Please enter a valid number.", 'error'); return; }
+        if (userBidAmount < minNextBid) { showToast(`Bid too low! Minimum is ${minNextBid.toLocaleString()}.`, 'error'); input.value = minNextBid; return; }
+        if (playerCurrency < userBidAmount) { showToast(`Not enough gems! You need ${userBidAmount.toLocaleString()}.`, 'error'); return; }
 
-        // Si todo está bien, cerramos modal y ejecutamos
         overlay.classList.remove('visible'); 
         executeBidLogic(userBidAmount); 
     };
 
-    // Función interna para enviar la puja a Firebase
-    async function executeBidLogic(finalBidAmount) {
+    function executeBidLogic(finalBidAmount) {
+        const data = marketDatabase[marketKey];
+        if (!data) return;
+        const auction = data.listings.find(l => l.id === listingId);
         
-        try {
-            const listingRef = window.fs.doc(window.db, "market", listingId);
-            
-            await window.fs.runTransaction(window.db, async (transaction) => {
-                const listingDoc = await transaction.get(listingRef);
-                if (!listingDoc.exists()) throw "Auction ended!";
-                
-                const data = listingDoc.data();
-                if (data.currentBid >= finalBidAmount) throw "Price updated! Someone bid higher.";
-                
-                // 1. Devolver dinero al anterior pujador (si era humano)
-                if (data.highestBidder && data.highestBidder !== 'PLAYER' && !data.highestBidder.startsWith('Bot_')) {
-                    // Nota: data.highestBidder debería guardar el UID del usuario anterior.
-                    // Si en tu código antiguo guardaba 'PLAYER', aquí habría un problema en multiusuario.
-                    // Para simplificar ahora: Solo actualizamos la puja. 
-                    // En un sistema real complejo habría que devolver el dinero al user ID anterior.
-                }
-
-                // 2. Actualizar subasta
-                transaction.update(listingRef, {
-                    currentBid: finalBidAmount,
-                    highestBidder: window.currentUser.uid, // Guardamos tu ID real
-                    // Si queda poco tiempo (< 30s), extender
-                    endTime: data.endTime - Date.now() < 30000 ? data.endTime + 30000 : data.endTime
-                });
-            });
-
-            // Restar dinero localmente (Firebase lo confirmará luego, pero para feedback inmediato)
-            // O mejor: usar la función de gastar online
-            // await spendGemsOnline(finalBidAmount); <--- Esto sería lo ideal si tuviéramos esa función accesible aquí
-            
-            // Para simplificar y que funcione con tu estructura actual,
-            // vamos a restar el dinero directamente del usuario actual.
-            const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-            await window.fs.updateDoc(userRef, {
-                gems: window.fs.increment(-finalBidAmount)
-            });
-
-            trackBet(listingId, marketKey); 
-
-            showToast(`Bid of ${finalBidAmount.toLocaleString()} 💎 placed!`, 'success');
-            
-            // Refrescar
+        if (!auction) {
+            showToast("Auction ended or not found.", 'error');
+            searchMarket();
+            return;
+        }
+        
+        if (auction.currentBid >= finalBidAmount) {
+            showToast("Price updated! Someone bid higher while you were typing.", 'error');
             if (typeof searchMarket === 'function') searchMarket(true);
+            return;
+        }
 
-        } catch (e) {
-            console.error(e);
-            showToast(typeof e === 'string' ? e : "Bid failed", 'error');
+        if (Date.now() > auction.endTime) {
+            showToast("Auction has ended!", 'error');
+            return;
+        }
+
+        playerCurrency -= finalBidAmount;
+        saveCurrency();
+        updateCurrencyDisplay();
+        
+        auction.currentBid = finalBidAmount;
+        auction.highestBidder = 'PLAYER';
+        
+        if (auction.endTime - Date.now() < 30000) {
+            auction.endTime += 30000;
+            showToast("Time extended by 30s!", 'info');
+        }
+
+        showToast(`Bid of ${finalBidAmount.toLocaleString()} 💎 placed!`, 'success');
+        trackBet(listingId, marketKey); 
+        MarketBackend.saveInteractedAuctions(); 
+
+        if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+            renderHistoryView(); 
+        } else {
+            searchMarket(true); 
         }
     }
 };
@@ -13990,7 +13726,6 @@ if (listing.sellerId === 'PLAYER' && listing.highestBidder !== null) {
     
     // Sumar dinero (ya que la subasta acabó)
     playerCurrency += listing.currentBid;
-    earnGemsOnline(listing.currentBid);
     saveCurrency();
     updateCurrencyDisplay();
     showToast(`💰 Auction sold! ${player.name} for ${listing.currentBid} 💎`, 'success');
@@ -14037,54 +13772,54 @@ window.setSellMode = function(mode) {
 };
 
 // --- GESTIÓN DE APUESTAS ACTIVAS ---
-// --- GESTIÓN DE APUESTAS ACTIVAS (GLOBAL) ---
 let myActiveBets = [];
 
-// Cargar al inicio
 function loadActiveBets() {
   const saved = localStorage.getItem('myActiveBets');
-  if (saved) {
-      try {
-          myActiveBets = JSON.parse(saved);
-      } catch (e) {
-          myActiveBets = [];
-      }
-  }
+  if (saved) myActiveBets = JSON.parse(saved);
 }
 
-// Guardar
 function saveActiveBets() {
   localStorage.setItem('myActiveBets', JSON.stringify(myActiveBets));
 }
 
-// Añadir una subasta a la lista de seguimiento
 function trackBet(listingId, marketKey) {
+  // Evitar duplicados
   if (!myActiveBets.some(b => b.id === listingId)) {
     myActiveBets.push({ id: listingId, key: marketKey });
     saveActiveBets();
   }
 }
 
-// Dejar de seguir una subasta (Solo si no vas ganando)
 function forfeitBet(listingId) {
+  // --- SONIDO ---
   const btnSound = document.getElementById('buttonClickSound');
   if (btnSound) { btnSound.currentTime = 0; btnSound.play(); }
+  // --------------
 
   myActiveBets = myActiveBets.filter(b => b.id !== listingId);
   saveActiveBets();
-  
-  showToast("Removed from watchlist.", "info");
-  
-  // Refrescar vista
-  if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
-      renderHistoryView(); 
-  }
+  renderHistoryView(); 
+  showToast("Removed from Active Bets list.", "info");
 }
+// Cargar al inicio
+document.addEventListener('DOMContentLoaded', loadActiveBets);
 
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    loadActiveBets();
-});
+// Intervalo de refresco de UI (1 segundo)
+setInterval(() => {
+    // 1. Si estás en AUCTIONS o BUY -> Refresca la rejilla
+    if (typeof currentMarketTab !== 'undefined' && (currentMarketTab === 'auction' || currentMarketTab === 'buy')) {
+        // searchMarket(true); // Descomenta esto si quieres que los precios de Buy también se muevan solos
+        // Para subastas es vital para el temporizador:
+        if(currentMarketTab === 'auction') searchMarket(true);
+    }
+
+    // 2. --- ESTO ES LO QUE TE FALTA ---
+    // Si estás en HISTORY -> Refresca la lista para ver si pasas de Winning a Outbid
+    if (typeof currentMarketTab !== 'undefined' && currentMarketTab === 'history') {
+        renderHistoryView();
+    }
+}, 1000);
 
 // Función para cambiar las opciones del filtro de ordenación dinámicamente
 function updateSortOptions(tab) {
@@ -14114,92 +13849,6 @@ function updateSortOptions(tab) {
         `;
         // Por defecto para Buy/Sell (puedes cambiarlo si prefieres Low to High)
         select.value = 'price_desc'; 
-    }
-}
-
-// Función para gastar dinero en la nube (Sobres, Ruleta, etc)
-async function spendGemsOnline(amount) {
-    if (!window.currentUser) return false;
-    const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-    try {
-        await window.fs.updateDoc(userRef, {
-            gems: window.fs.increment(-amount)
-        });
-        return true;
-    } catch(e) {
-        console.error("Error spending gems:", e);
-        return false;
-    }
-}
-
-// Función para ganar dinero en la nube (Quick sell, Partidos)
-async function earnGemsOnline(amount) {
-    if (!window.currentUser) return;
-    const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-    await window.fs.updateDoc(userRef, {
-        gems: window.fs.increment(amount)
-    });
-}
-
-// --- NUEVA FUNCIÓN: FINALIZAR SUBASTA (Backend Logic en Frontend) ---
-async function checkAndFinalizeAuction(listing) {
-    if (!listing.isAuction || Date.now() < listing.endTime) return;
-
-    // console.log(`⏳ Finalizando subasta: ${listing.id}`);
-
-    try {
-        const listingRef = window.fs.doc(window.db, "market", listing.id);
-
-        await window.fs.runTransaction(window.db, async (transaction) => {
-            const doc = await transaction.get(listingRef);
-            if (!doc.exists()) return; 
-
-            const data = doc.data();
-            
-            // 1. SI HUBO PUJAS (Venta Exitosa)
-            if (data.highestBidder) {
-                // A. Pagar al Vendedor
-                const sellerRef = window.fs.doc(window.db, "users", data.sellerId);
-                transaction.set(sellerRef, { gems: window.fs.increment(data.currentBid) }, { merge: true });
-
-                // B. Entregar al Ganador
-                const winRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
-                transaction.set(winRef, {
-                    recipientId: data.highestBidder,
-                    cardCode: data.cardCode, isGolden: data.isGolden, variant: data.variant,
-                    price: data.currentBid, type: 'auction_win', timestamp: window.fs.serverTimestamp()
-                });
-
-                // C. --- NUEVO: Log para el VENDEDOR (Si soy yo quien lo ejecuta) ---
-                // Si la persona que cierra la subasta es el dueño, se guarda en su historial local al momento.
-                if (window.currentUser && window.currentUser.uid === data.sellerId) {
-                    const player = playersDB.find(p => p.cardCode === data.cardCode);
-                    if (player) {
-                        // Importante: Guardamos en localStorage directamente porque logMarketTransaction es local
-                        logMarketTransaction('sell', {
-                            playerData: player, rarity: player.rarity, variant: data.variant, golden: data.isGolden
-                        }, data.currentBid, true);
-                        showToast(`💰 Auction sold! ${player.name} for ${data.currentBid} 💎`, 'success');
-                    }
-                }
-
-            } 
-            // 2. SI NADIE PUJÓ (Devolución)
-            else {
-                const returnRef = window.fs.doc(window.fs.collection(window.db, "deliveries"));
-                transaction.set(returnRef, {
-                    recipientId: data.sellerId,
-                    cardCode: data.cardCode, isGolden: data.isGolden, variant: data.variant,
-                    type: 'auction_return', timestamp: window.fs.serverTimestamp()
-                });
-            }
-
-            // 3. BORRAR DEL MERCADO (Esto hace que desaparezca de la lista)
-            transaction.delete(listingRef);
-        });
-
-    } catch (e) {
-        console.error("Error cerrando subasta:", e);
     }
 }
 
