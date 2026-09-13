@@ -6898,13 +6898,14 @@ button,
         if (docSnap.exists()) {
           const data = docSnap.data();
 
+          // 1. GEMS
           if (data.gems === undefined || data.gems === null) {
               await setDoc(userRef, { gems: 500 }, { merge: true });
           } else {
               updateGlobalCurrencyUI(data.gems);
           }
 
-          // Modal de Nombre si no lo tiene
+          // 2. USERNAME
           if (!data.username) {
               if(usernameModal) usernameModal.style.display = 'flex';
           } else {
@@ -6913,25 +6914,46 @@ button,
               if(btnEditUser) btnEditUser.style.display = 'none';
           }
 
+          // 3. PACKS
           if (data.packs) {
               window.packInventory = data.packs;
               packInventory = data.packs;
+              localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
           }
 
+          // 4. COLECCIÓN (Unificada para que el álbum la lea siempre bien)
           if (data.collection) {
               window.collection = data.collection;
-              collection = data.collection;
+              if (typeof collection !== 'undefined') collection = window.collection;
+              localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
+              console.log("📥 Colección descargada:", Object.keys(window.collection).length, "jugadores.");
+          }
+
+          // 5. ALINEACIÓN (Descargada de Firebase)
+          if (data.lineup) {
+              window.lineup = data.lineup;
+              if (typeof lineup !== 'undefined') lineup = window.lineup;
+              localStorage.setItem('myFootballLineup', JSON.stringify(data.lineup));
           }
 
           window.isCloudDataLoaded = true;
 
+          // Si tienes el álbum o la alineación abiertos en pantalla, se refrescan con los datos nuevos
+          if (typeof createShowcase === 'function' && document.getElementById('showcase-overlay')?.classList.contains('visible')) {
+              createShowcase();
+          }
+          if (typeof renderLineupView === 'function' && document.getElementById('lineup-overlay')?.classList.contains('visible')) {
+              renderLineupView();
+          }
+
         } else {
-          // Documento inicial del nuevo jugador
+          // Documento inicial para usuarios nuevos
           console.log("🌟 Creando perfil en nube para nuevo jugador.");
           const cleanStart = { 
               gems: 500,
               packs: { 'common-pack': 3 }, 
               collection: {},
+              lineup: {}, // <-- Ahora también se inicializa la alineación vacía
               email: user.email,
               createdAt: serverTimestamp()
           };
@@ -7630,6 +7652,7 @@ function flipCard(card, index) {
   } else {
     // Incrementar
     window.collection[playerId][variantKey].count++;
+    collection = window.collection;
   }
 
   // --- GUARDADO CRÍTICO EN NUBE ---
@@ -9385,28 +9408,35 @@ async function savePackInventory() {
   }
 }
 
-// Guardar / Cargar lineup
-function saveLineup() {
+// Guardar alineación tanto en local como en Firebase
+async function saveLineup() {
   localStorage.setItem('myFootballLineup', JSON.stringify(lineup));
+  
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.setDoc(userRef, { lineup: lineup }, { merge: true });
+      console.log("☁️ Lineup guardado en Firebase");
+    } catch(e) {
+      console.error("Error guardando lineup en nube:", e);
+    }
+  }
 }
 
 function loadLineup() {
   try {
     const savedLineup = localStorage.getItem('myFootballLineup');
-// JSON.parse(null) devuelve null, lo cual no es un error, pero debemos manejarlo.
     const parsed = JSON.parse(savedLineup);
-
-// La comprobación clave: ¿El resultado es un objeto y no es null?
     if (parsed && typeof parsed === 'object') {
       lineup = parsed;
+      window.lineup = parsed;
     } else {
-// Si el valor guardado es null, o no es un objeto, forzamos un objeto vacío.
       lineup = {};
+      window.lineup = {};
     }
   } catch (e) {
-// Si JSON.parse falla (por datos corruptos), también asignamos un objeto vacío.
-    console.error("Could not parse lineup data, resetting to empty.", e);
     lineup = {};
+    window.lineup = {};
   }
 }
 
@@ -9485,9 +9515,11 @@ renderLineupView(); // Re-renderiza para mostrar la carta colocada y salir del m
 }
 }
 
-// REEMPLAZA ESTA FUNCIÓN ENTERA
-// REEMPLAZA ESTA FUNCIÓN ENTERA
+// rendelineup
 function renderLineupView() {
+  // Si la base de datos aún se está descargando, no comprobamos nada para no borrar cartas por error
+  if (!window.isCloudDataLoaded) return;
+
   const pitch = document.getElementById('lineup-pitch');
   pitch.innerHTML = '';
   let lineupWasModified = false;
@@ -9503,7 +9535,7 @@ function renderLineupView() {
     if (uniqueCardId) {
       const [cardCode, ...variantParts] = uniqueCardId.split('_');
       const variantKey = variantParts.join('_');
-      if (collection[cardCode]?.[variantKey]) {
+      if (window.collection[cardCode]?.[variantKey]) {
         cardIsValid = true;
       } else {
         console.warn(`Card ${uniqueCardId} in lineup for ${posId} not found in collection. Removing.`);
@@ -10902,6 +10934,7 @@ function selectCardFromChoice(chosenCard) {
     // B. Lógica si es REPETIDA
     else {
       window.collection[playerId][variantKey].count++;
+      collection = window.collection;
     }
 
     // 3. --- GUARDADO EN FIREBASE ---
