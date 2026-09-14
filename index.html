@@ -6750,7 +6750,6 @@ button,
 </div>
 
 <!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
-<!-- Configuración Firebase + LISTENERS EN TIEMPO REAL -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { 
@@ -6922,33 +6921,26 @@ button,
               localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
           }
 
-          // 4. COLECCIÓN (Unificada para que el álbum la lea siempre bien)
-          // COLECCIÓN BLINDADA (Fusión inteligente: nunca borra cartas locales)
-          const localSaved = localStorage.getItem('myFootballCollection');
-          const localCol = localSaved ? JSON.parse(localSaved) : {};
-          const cloudCol = data.collection || {};
+          // 4. COLECCIÓN EN TIEMPO REAL (Permite ventas y compras sin resucitar duplicadas)
+          if (data.collection) {
+              const cloudKeys = Object.keys(data.collection);
 
-          // Fusión: conserva la cantidad mayor entre la nube y el almacenamiento local
-          const mergedCol = { ...cloudCol };
-          for (const playerCode in localCol) {
-              if (!mergedCol[playerCode]) {
-                  mergedCol[playerCode] = localCol[playerCode];
-              } else {
-                  for (const variantKey in localCol[playerCode]) {
-                      if (!mergedCol[playerCode][variantKey]) {
-                          mergedCol[playerCode][variantKey] = localCol[playerCode][variantKey];
-                      } else {
-                          mergedCol[playerCode][variantKey].count = Math.max(
-                              mergedCol[playerCode][variantKey].count || 1,
-                              localCol[playerCode][variantKey].count || 1
-                          );
-                      }
+              // Solo si la nube estuviera 100% vacía por error, rescatamos el respaldo local
+              if (cloudKeys.length === 0) {
+                  const localSaved = localStorage.getItem('myFootballCollection');
+                  const localCol = localSaved ? JSON.parse(localSaved) : {};
+                  if (Object.keys(localCol).length > 0) {
+                      console.log("📤 Subiendo cartas locales a la nube...");
+                      window.collection = localCol;
+                      if (typeof saveCollection === 'function') saveCollection();
                   }
+              } else {
+                  // La nube manda: actualizamos la memoria local con las cantidades reales
+                  window.collection = data.collection;
+                  localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
               }
+              console.log("📥 Colección sincronizada:", Object.keys(window.collection || {}).length, "jugadores.");
           }
-
-          window.collection = mergedCol;
-          localStorage.setItem('myFootballCollection', JSON.stringify(mergedCol));
 
           // ALINEACIÓN (Cargar desde la nube)
           if (data.lineup) {
@@ -9925,20 +9917,17 @@ function claimDailyReward() {
 }
 
 
-//SELL ALL DUPLICATES
-/**
-* Calcula las ganancias potenciales y luego abre un modal de confirmación
-* antes de vender todos los duplicados.
-*/
+// --- FUNCIÓN sellAllDuplicates CORREGIDA ---
 function sellAllDuplicates() {
-// --- PASO 1: Pre-cálculo de ganancias y duplicados ---
+  const userCol = window.collection || {};
   let totalPotentialEarnings = 0;
   let totalDuplicates = 0;
 
-  for (const playerId in collection) {
-    for (const variantKey in collection[playerId]) {
-      const cardStack = collection[playerId][variantKey];
-      if (cardStack.count > 1) {
+  // 1. Calcular usando window.collection
+  for (const playerId in userCol) {
+    for (const variantKey in userCol[playerId]) {
+      const cardStack = userCol[playerId][variantKey];
+      if (cardStack && cardStack.count > 1) {
         const duplicatesToSell = cardStack.count - 1;
         const pricePerCard = calculateSellPrice(cardStack.cardData);
 
@@ -9948,64 +9937,56 @@ function sellAllDuplicates() {
     }
   }
 
-// Si no hay nada que vender, informa al usuario y detén la función.
   if (totalDuplicates === 0) {
     showToast("You don't have any duplicates to sell.", 'info');
     return;
   }
 
-// --- PASO 2: Configurar y mostrar el modal con la información calculada ---
+  // 2. Modal de confirmación
   const overlay = document.getElementById('confirm-modal-overlay');
   const title = document.getElementById('confirm-modal-title');
   const text = document.getElementById('confirm-modal-text');
   const confirmBtn = document.getElementById('confirm-action-btn');
   const cancelBtn = document.getElementById('cancel-action-btn');
 
-  if (!overlay || !confirmBtn || !cancelBtn) {
-    console.error('Confirmation modal elements not found!');
-    return;
-  }
+  if (!overlay || !confirmBtn || !cancelBtn) return;
 
-// Configurar el texto dinámico para el modal.
   title.textContent = 'Confirm Sale';
-  text.innerHTML = `You are about to sell <strong>${totalDuplicates}</strong> duplicate cards for a total of <strong style="color: #ffc84a;">${totalPotentialEarnings} 💎</strong>.<br>This action cannot be undone.`;
+  text.innerHTML = `You are about to sell <strong>${totalDuplicates}</strong> duplicate cards for a total of <strong style="color: #ffc84a;">${totalPotentialEarnings.toLocaleString()} 💎</strong>.<br>This action cannot be undone.`;
 
   overlay.classList.add('visible');
 
-// --- PASO 3: Definir los manejadores de eventos (sin cambios) ---
-  const confirmHandler = () => {
+  cancelBtn.onclick = () => {
+    overlay.classList.remove('visible');
+  };
+
+  confirmBtn.onclick = () => {
     overlay.classList.remove('visible');
     executeSale();
   };
 
-  const cancelHandler = () => {
-    overlay.classList.remove('visible');
-  };
-
-  confirmBtn.addEventListener('click', confirmHandler, { once: true });
-  cancelBtn.addEventListener('click', cancelHandler, { once: true });
-
-// La función interna de venta no necesita el pre-cálculo, ya que lo hicimos arriba.
-// Su lógica de modificación de datos sigue siendo la misma.
   function executeSale() {
-playerCurrency += totalPotentialEarnings; // Usamos el total ya calculado
-earnGemsOnline(totalPotentialEarnings);
+    // A. Sumar dinero solo en la nube (el listener actualizará la pantalla automáticamente)
+    earnGemsOnline(totalPotentialEarnings);
 
-// Iteramos de nuevo para actualizar los contadores
-for (const playerId in collection) {
-  for (const variantKey in collection[playerId]) {
-    if (collection[playerId][variantKey].count > 1) {
-      collection[playerId][variantKey].count = 1;
+    // B. Poner todos los contadores de duplicadas a 1 en window.collection
+    for (const playerId in userCol) {
+      for (const variantKey in userCol[playerId]) {
+        if (userCol[playerId][variantKey] && userCol[playerId][variantKey].count > 1) {
+          userCol[playerId][variantKey].count = 1;
+        }
+      }
     }
-  }
-}
 
-saveCurrency();
-saveCollection();
-updateCurrencyDisplay();
-createShowcase();
-showToast(`Sold ${totalDuplicates} duplicates for ${totalPotentialEarnings} 💎!`, 'success');
-}
+    // C. Sincronizar memoria y guardar en Firebase
+    window.collection = userCol;
+    if (typeof collection !== 'undefined') collection = userCol;
+
+    saveCollection(); // Sube la colección limpia a Firebase
+    createShowcase(); // Refresca el álbum al instante
+
+    showToast(`Sold ${totalDuplicates} duplicates for ${totalPotentialEarnings.toLocaleString()} 💎!`, 'success');
+  }
 }
 
 
