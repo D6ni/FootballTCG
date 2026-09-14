@@ -6560,7 +6560,8 @@ button,
 <!-- ============= POPUP DE RECOMPENSA DIARIA =============== -->
 <div id="daily-reward-overlay">
   <div id="daily-reward-modal">
-    <button id="close-reward-btn">X</button>
+    <!-- 1. Añade onclick="closeDailyRewardPopup()" al botón X -->
+    <button id="close-reward-btn" onclick="closeDailyRewardPopup()">X</button>
     <h2>Daily Reward!</h2>
     <p>Your daily rewards have arrived! Claim your packs and a free spin for the roulette.</p>
     <div id="daily-rewards-container">
@@ -6569,13 +6570,13 @@ button,
         <span class="reward-quantity">x3</span>
       </div>
       <div class="reward-item">
-<!-- NOTA: Deberás crear o encontrar una imagen para esto -->
-<img src="images/icons/roulette-spin.png" alt="Free Roulette Spin"> 
-<span class="reward-quantity" style="color: #4af0e0;">x1</span>
-</div>
-</div>
-<button id="claim-reward-btn">Claim</button>
-</div>
+        <img src="images/icons/roulette-spin.png" alt="Free Roulette Spin"> 
+        <span class="reward-quantity" style="color: #4af0e0;">x1</span>
+      </div>
+    </div>
+    <!-- 2. Añade onclick="claimDailyReward()" al botón Claim -->
+    <button id="claim-reward-btn" onclick="claimDailyReward()">Claim</button>
+  </div>
 </div>
 
 <!-- ============= MODAL DE CONFIRMACIÓN GENÉRICO =============== -->
@@ -8116,7 +8117,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNewCards();
   updateCurrencyDisplay();
   loadLineup();
-  checkForFirstVisit();
   MarketBackend.init();      // Crea la base de datos y los precios base
   //MarketSimulation.start();  // Arranca los bots para que compren y vendan
 
