@@ -6966,6 +6966,10 @@ button,
 
           window.isCloudDataLoaded = true;
 
+          if (typeof checkDailyReward === 'function') {
+              setTimeout(checkDailyReward, 1000);
+          }
+
           // Si tienes el álbum o la alineación abiertos en pantalla, se refrescan con los datos nuevos
           if (typeof createShowcase === 'function' && document.getElementById('showcase-overlay')?.classList.contains('visible')) {
               createShowcase();
@@ -8102,7 +8106,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNewCards();
   updateCurrencyDisplay();
   loadLineup();
-  checkDailyReward();
   checkForFirstVisit();
   MarketBackend.init();      // Crea la base de datos y los precios base
   //MarketSimulation.start();  // Arranca los bots para que compren y vendan
@@ -9135,32 +9138,32 @@ function enableBuyButtons() {
 let currentOpeningPackId = null;
 
 function openOwnedPack(packId) {
-  if (packInventory[packId] > 0) {
+  // Aseguramos que miramos la variable global activa
+  const inv = window.packInventory || packInventory;
+
+  if (inv && inv[packId] > 0) {
     packOpeningState = 'flipping';
-// Guardamos el tipo de pack para el botón "Abrir Otro"
     currentOpeningPackId = packId; 
 
-// Preparamos el escenario
     const packsOverlay = document.getElementById('packs-overlay');
     const openingStage = document.getElementById('pack-opening-stage');
     const openingControls = document.getElementById('pack-opening-controls');
 
-// 1. Restamos el pack y guardamos
-    packInventory[packId]--; 
-    savePackInventory();
+    // 1. Restamos el pack en ambas variables
+    inv[packId]--; 
+    window.packInventory = inv;
+    packInventory = inv;
+    savePackInventory(); // Guarda el descuento en Firebase
 
-// Incrementamos el contador y guardamos las estadísticas para album ---
+    // 2. Estadísticas
     stats.totalPacksOpened++;
     saveStats();
 
-// 2. Entramos en "modo apertura" (esto hace que la tienda se desvanezca)
+    // 3. UI
     packsOverlay.classList.add('opening-mode');
-
-// 3. Mostramos el escenario y ocultamos los controles de "Abrir Otro"
     openingStage.style.display = 'flex';
     openingControls.style.display = 'none';
 
-// 4. Llamamos a la función openPack, pero le decimos que use nuestro nuevo contenedor
     openPack('pack-opening-cards-container', packId); 
   }
 }
@@ -9427,17 +9430,18 @@ async function saveCollection() {
 }
 
 async function savePackInventory() {
-  localStorage.setItem('myFootballPacks', JSON.stringify(window.packInventory));
+  const inv = window.packInventory || packInventory;
+  localStorage.setItem('myFootballPacks', JSON.stringify(inv));
+  packInventory = inv;
+  window.packInventory = inv;
 
-  if (!window.isCloudDataLoaded) return; 
-
-  if (window.currentUser) {
+  if (window.currentUser && window.fs && window.db) {
       try {
           const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          // IMPORTANTE: Enviamos window.packInventory
-          await window.fs.setDoc(userRef, { packs: window.packInventory }, { merge: true });
+          await window.fs.setDoc(userRef, { packs: inv }, { merge: true });
+          console.log("☁️ Packs sincronizados con Firebase:", inv);
       } catch (e) {
-          console.error("Error guardando packs:", e);
+          console.error("Error guardando packs en nube:", e);
       }
   }
 }
@@ -9549,84 +9553,93 @@ renderLineupView(); // Re-renderiza para mostrar la carta colocada y salir del m
 }
 }
 
-// rendelineup
+// --- FUNCIÓN renderLineupView CORREGIDA (El campo nunca desaparece) ---
 function renderLineupView() {
-  // Si la base de datos aún se está descargando, no comprobamos nada para no borrar cartas por error
-  if (!window.isCloudDataLoaded) return;
-
   const pitch = document.getElementById('lineup-pitch');
+  if (!pitch) return;
   pitch.innerHTML = '';
   let lineupWasModified = false;
+
+  // Unificar alineación y colección activa
+  const currentLineup = window.lineup || lineup || {};
+  const currentCollection = window.collection || collection || {};
 
   Object.values(lineupPositions).flat().forEach(posId => {
     const slot = document.createElement('div');
     slot.id = `lineup-slot-${posId}`;
     slot.className = 'lineup-slot';
 
-    const uniqueCardId = lineup[posId];
+    const uniqueCardId = currentLineup[posId];
     let cardIsValid = false;
 
     if (uniqueCardId) {
       const [cardCode, ...variantParts] = uniqueCardId.split('_');
       const variantKey = variantParts.join('_');
-      if (window.collection[cardCode]?.[variantKey]) {
+      
+      // 1. Si la carta existe en la colección, es válida
+      if (currentCollection[cardCode]?.[variantKey]) {
         cardIsValid = true;
-      } else {
-        console.warn(`Card ${uniqueCardId} in lineup for ${posId} not found in collection. Removing.`);
-        delete lineup[posId];
+      } 
+      // 2. Si la nube ya cargó y de verdad no la tienes, la quitamos
+      else if (window.isCloudDataLoaded) {
+        console.warn(`Card ${uniqueCardId} in lineup for ${posId} not found. Removing.`);
+        delete currentLineup[posId];
         lineupWasModified = true;
+      } 
+      // 3. Si la nube aún está conectando, NO la borramos para no perderla
+      else {
+        cardIsValid = true;
       }
     }
 
-    if (cardIsValid) {
+    if (cardIsValid && uniqueCardId) {
       const [cardCode, ...variantParts] = uniqueCardId.split('_');
       const variantKey = variantParts.join('_');
-
-// CORRECCIÓN: La llamada ahora pasa el string 'cardCode', no el objeto.
       const cardElement = createCardElement(cardCode, variantKey);
 
-// Comprobamos si el elemento se creó correctamente antes de añadirle eventos
-      if (cardElement.hasChildNodes()) {
+      if (cardElement && cardElement.hasChildNodes()) {
         cardElement.onclick = () => removeCardFromLineup(posId);
         slot.appendChild(cardElement);
       } else {
-cardIsValid = false; // Si falló la creación, volvemos a mostrar el placeholder
-}
-}
-
-if (!cardIsValid) {
-  const placeholder = document.createElement('div');
-  placeholder.className = 'placeholder-slot';
-  placeholder.innerHTML = `
-<div class="placeholder-position">${posId}</div>
-<div class="placeholder-name">${positionNames[posId]}</div>
-<div class="placeholder-instruction">${cardToAddFromAlbum ? 'Click to Place' : 'Click to Add'}</div>
-  `;
-
-  if (cardToAddFromAlbum) {
-    const cardPosition = cardToAddFromAlbum.playerData.position;
-    const isValidSlot = lineupPositions[cardPosition].includes(posId);
-    placeholder.classList.add(isValidSlot ? 'valid-placement' : 'invalid-placement');
-    if (isValidSlot) {
-      slot.onclick = () => placeHeldCardInSlot(posId);
-    }
-  } else {
-    slot.onclick = () => {
-      targetedLineupSlot = posId;
-      const generalPosition = getGeneralPosition(posId);
-      if (generalPosition) {
-        activeFilters.query = generalPosition;
-        const searchInput = document.getElementById('name-search');
-        if (searchInput) searchInput.value = generalPosition;
+        cardIsValid = false;
       }
-      document.getElementById('lineup-overlay').classList.remove('visible');
-      document.getElementById('showcaseBtn').click();
-    };
-  }
-  slot.appendChild(placeholder);
-}
-pitch.appendChild(slot);
-});
+    }
+
+    // Si el hueco está libre, dibujamos el placeholder del campo
+    if (!cardIsValid) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'placeholder-slot';
+      placeholder.innerHTML = `
+        <div class="placeholder-position">${posId}</div>
+        <div class="placeholder-name">${positionNames[posId]}</div>
+        <div class="placeholder-instruction">${cardToAddFromAlbum ? 'Click to Place' : 'Click to Add'}</div>
+      `;
+
+      if (cardToAddFromAlbum) {
+        const cardPosition = cardToAddFromAlbum.playerData.position;
+        const isValidSlot = lineupPositions[cardPosition].includes(posId);
+        placeholder.classList.add(isValidSlot ? 'valid-placement' : 'invalid-placement');
+        if (isValidSlot) {
+          slot.onclick = () => placeHeldCardInSlot(posId);
+        }
+      } else {
+        slot.onclick = () => {
+          targetedLineupSlot = posId;
+          const generalPosition = getGeneralPosition(posId);
+          if (generalPosition) {
+            activeFilters.query = generalPosition;
+            const searchInput = document.getElementById('name-search');
+            if (searchInput) searchInput.value = generalPosition;
+          }
+          document.getElementById('lineup-overlay').classList.remove('visible');
+          document.getElementById('showcaseBtn').click();
+        };
+      }
+      slot.appendChild(placeholder);
+    }
+
+    pitch.appendChild(slot);
+  });
 
   if (lineupWasModified) {
     saveLineup();
@@ -9847,6 +9860,9 @@ return null;
 
 // --- LÓGICA DE RECOMPENSA DIARIA ---
 function checkDailyReward() {
+  // Si no hay usuario logueado con Google, no salta ningún popup
+  if (!window.currentUser) return;
+
   const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
 
 // Si es la primera visita, marca que ya ha visitado y no hagas nada más.
@@ -9883,19 +9899,17 @@ function closeDailyRewardPopup() {
 }
 
 function claimDailyReward() {
-// Añadir 3 paquetes comunes al inventario
-  packInventory['common-pack'] = (packInventory['common-pack'] || 0) + 3;
+  const inv = window.packInventory || packInventory;
+  inv['common-pack'] = (inv['common-pack'] || 0) + 3;
+  window.packInventory = inv;
+  packInventory = inv;
   savePackInventory();
 
-// Guardar el momento actual como la última vez que se reclamó
   localStorage.setItem('lastLoginRewardClaimed', new Date().getTime());
-
-// Notificar al jugador y cerrar
   showToast('You received 3 Common Packs!', 'success');
   closeDailyRewardPopup();
 
-// Opcional: Si la vista de paquetes está abierta, actualízala para que vea los nuevos paquetes.
-  if(document.getElementById('packs-overlay').classList.contains('visible')) {
+  if(document.getElementById('packs-overlay')?.classList.contains('visible')) {
     renderPacksView();
   }
 }
