@@ -6922,12 +6922,40 @@ button,
           }
 
           // 4. COLECCIÓN (Unificada para que el álbum la lea siempre bien)
-          if (data.collection) {
-              window.collection = data.collection;
-              if (typeof collection !== 'undefined') collection = window.collection;
-              localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
-              console.log("📥 Colección descargada:", Object.keys(window.collection).length, "jugadores.");
+          const localSaved = localStorage.getItem('myFootballCollection');
+          const localCol = localSaved ? JSON.parse(localSaved) : {};
+          const cloudCol = data.collection || {};
+
+          // Función que une ambas colecciones conservando la cantidad mayor
+          const mergedCol = { ...cloudCol };
+          for (const playerCode in localCol) {
+              if (!mergedCol[playerCode]) {
+                  mergedCol[playerCode] = localCol[playerCode];
+              } else {
+                  for (const variantKey in localCol[playerCode]) {
+                      if (!mergedCol[playerCode][variantKey]) {
+                          mergedCol[playerCode][variantKey] = localCol[playerCode][variantKey];
+                      } else {
+                          mergedCol[playerCode][variantKey].count = Math.max(
+                              mergedCol[playerCode][variantKey].count || 1,
+                              localCol[playerCode][variantKey].count || 1
+                          );
+                      }
+                  }
+              }
           }
+
+          window.collection = mergedCol;
+          if (typeof collection !== 'undefined') collection = window.collection;
+          localStorage.setItem('myFootballCollection', JSON.stringify(mergedCol));
+
+          // Si el ordenador tenía cartas que la nube no tenía (por un F5 rápido), las subimos ahora
+          if (JSON.stringify(mergedCol) !== JSON.stringify(cloudCol)) {
+              console.log("🔄 Sincronizando cartas locales pendientes con la nube...");
+              if (typeof saveCollection === 'function') saveCollection();
+          }
+
+          console.log("📥 Colección lista y blindada:", Object.keys(window.collection).length, "jugadores.");
 
           // 5. ALINEACIÓN (Descargada de Firebase)
           if (data.lineup) {
@@ -7561,13 +7589,15 @@ specialSound.play().catch(error => {
 }
 }
 
-// --- FUNCIÓN flipCard CORREGIDA (Guarda en Nube) ---
+// --- FUNCIÓN flipCard CORREGIDA (Guarda en Nube y Álbum sin saturar) ---
 function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
-  // Lógica de fin de pack
+  // 1. Lógica de fin de pack: AL ABRIR LA ÚLTIMA CARTA SE SUBE A FIREBASE (1 sola vez por sobre)
   if (flippedCardsInPack === currentPackContentSize) {
+    saveCollection(); // <--- Guardado en Firebase agrupado y seguro
+
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
 
@@ -7616,21 +7646,18 @@ function flipCard(card, index) {
     flipSound.play();
   }
 
-  // Lógica de Colección
+  // 2. Lógica de Colección
   const cardObj = card.cardData;
   playSpecialCardSound(cardObj);
   const playerId = cardObj.playerData.cardCode;
   
-  // Usar strings para booleanos
   const isGoldenStr = String(cardObj.golden); 
   const variantKey = `${isGoldenStr}_${cardObj.variant}`;
 
-  // Usamos window.collection para asegurar que es la global
   if (!window.collection[playerId]) {
     window.collection[playerId] = {};
   }
   
-  // Detectar si es nueva variante
   const isNewVariant = !window.collection[playerId][variantKey];
 
   if (isNewVariant) {
@@ -7644,23 +7671,20 @@ function flipCard(card, index) {
     newCards.add(uniqueId); 
     saveNewCards(); 
     
-    // Crear entrada inicial
     window.collection[playerId][variantKey] = {
       count: 1,
       cardData: cardObj
     };
   } else {
-    // Incrementar
     window.collection[playerId][variantKey].count++;
-    collection = window.collection;
   }
 
-  // --- GUARDADO CRÍTICO EN NUBE ---
-  saveCollection(); // <--- ESTO EVITA QUE SE PIERDAN AL RECARGAR
+  // Sincronizar ambas variables y respaldo local instantáneo (tanto si es nueva como repetida)
+  collection = window.collection;
+  localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
   updateAlbumStats();
-  // --------------------------------
 
-  // Animaciones y Estilos
+  // 3. Animaciones y Estilos
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
@@ -7682,7 +7706,6 @@ function flipCard(card, index) {
     addInteractiveTilt(card);
   }, 700);
 
-  // Contadores visuales locales (Opcional si usas los de Firebase)
   if (counters[rarity] && counters[rarity][variant]) {
       if (isGolden) counters[rarity][variant].golden++;
       else counters[rarity][variant].normal++;
@@ -7698,7 +7721,7 @@ function flipCard(card, index) {
   card.style.transform = 'rotateY(180deg)';
 
   addReactiveEffects(card);
-} //termina flipcard
+} // termina flipcard
 
 function updateCounter() {
   for (const rarityKey in counters) {
@@ -9361,33 +9384,44 @@ if (playerDetailOverlay && playerDetailOverlay.classList.contains('visible')) {
 showToast(`Sold for ${totalEarnings} 💎`, 'info');
 }
 
-// Necesitamos una función para guardar la colección, por si no la tienes
+// --- SISTEMA DE GUARDADO EN COLA (Anti-saturación de Firebase) ---
+let isSavingCollection = false;
+let hasPendingSave = false;
+
 async function saveCollection() {
-  // 1. Guardar en local
+  // 1. Guardar de inmediato en local (a salvo de cualquier corte o F5)
   localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
+  collection = window.collection; // Sincroniza la variable en memoria para el álbum
 
-  // 2. Seguridad
-  if (!window.isCloudDataLoaded || !window.currentUser) return;
+  // 2. Comprobación de seguridad
+  if (!window.isCloudDataLoaded || !window.currentUser || !window.fs) return;
 
+  // 3. Semáforo: si ya se está enviando una petición, ponemos turno en espera y salimos
+  if (isSavingCollection) {
+      hasPendingSave = true;
+      return;
+  }
+
+  isSavingCollection = true;
   try {
       const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
       
-      // CAMBIO CLAVE: Usamos updateDoc.
-      // Esto reemplaza el campo 'collection' entero con lo que tengas ahora en memoria.
-      // Así, si has borrado una carta, desaparecerá también de la nube.
-      await window.fs.updateDoc(userRef, { 
-          collection: window.collection 
-      });
+      // Guardamos la colección completa y el inventario de sobres juntos
+      await window.fs.setDoc(userRef, { 
+          collection: window.collection,
+          packs: window.packInventory 
+      }, { merge: true });
       
-      console.log("☁️ Guardado en nube OK.");
+      console.log("☁️ Guardado en Firebase completado con éxito.");
   } catch (e) {
-      console.error("Error guardando colección:", e);
-      // Si falla, intentamos set con merge (fallback)
-      try {
-          const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-          await window.fs.setDoc(userRef, { collection: window.collection }, { merge: true });
-      } catch(e2) {
-          console.error("Error crítico guardando:", e2);
+      console.error("Error guardando colección en nube:", e);
+  } finally {
+      // 4. Liberamos el semáforo
+      isSavingCollection = false;
+      // Si mientras guardaba abriste más cartas, las envía ahora en una sola petición final
+      if (hasPendingSave) {
+          hasPendingSave = false;
+          saveCollection();
       }
   }
 }
