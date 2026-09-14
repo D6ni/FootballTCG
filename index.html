@@ -9472,17 +9472,27 @@ async function savePackInventory() {
   }
 }
 
-// Guardar alineación tanto en local como en Firebase
+// --- FUNCIÓN saveLineup CORREGIDA (Elimina cartas de verdad en Firebase) ---
 async function saveLineup() {
-  localStorage.setItem('myFootballLineup', JSON.stringify(lineup));
+  const currentLineup = window.lineup || lineup || {};
+  localStorage.setItem('myFootballLineup', JSON.stringify(currentLineup));
+  lineup = currentLineup;
+  window.lineup = currentLineup;
   
   if (window.currentUser && window.fs && window.db) {
     try {
       const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-      await window.fs.setDoc(userRef, { lineup: lineup }, { merge: true });
-      console.log("☁️ Lineup guardado en Firebase");
+      // Usamos updateDoc para REEMPLAZAR el mapa entero y borrar las posiciones quitadas
+      await window.fs.updateDoc(userRef, { lineup: currentLineup });
+      console.log("☁️ Lineup actualizado y sincronizado en Firebase");
     } catch(e) {
-      console.error("Error guardando lineup en nube:", e);
+      // Si el campo aún no existía en el documento, usamos setDoc como fallback
+      try {
+        const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+        await window.fs.setDoc(userRef, { lineup: currentLineup }, { merge: true });
+      } catch (e2) {
+        console.error("Error guardando lineup en nube:", e2);
+      }
     }
   }
 }
@@ -9723,29 +9733,28 @@ function addCardToLineup(playerData, variantKey) {
 
 // --- FUNCIÓN removeCardFromLineup CORREGIDA ---
 function removeCardFromLineup(posId) {
-  // 1. Borrar la carta de la alineación
-  delete lineup[posId];
-  
-  // 2. Guardar el hueco vacío inmediatamente en memoria y Firebase
+  // 1. Borramos el hueco en todas las variables activas
+  if (lineup) delete lineup[posId];
+  if (window.lineup) delete window.lineup[posId];
+
+  // 2. Guardamos de inmediato en Firebase (sin el fantasma)
   saveLineup();
-  
-  // 3. Forzar al validador a recalcular AHORA, con el hueco vacío
-  validateLineup();
-  
-  // 4. Re-dibujar el campo para que aparezca la ranura vacía (+ añadir)
-  renderLineupView(); 
+
+  // 3. Redibujamos el campo y recalculamos las reglas de rareza
+  renderLineupView();
+  validateLineup(); 
 }
 
 
 // --- FUNCIÓN validateLineup BLINDADA ---
-function validateLineup(lineupToCheck = lineup, isSimulation = false) {
+function validateLineup(lineupToCheck = null, isSimulation = false) {
   const rules = { relic: 1, legendary: 2, epic: 3, rare: 4, common: 1 };
   const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
   let totalCards = 0;
   const errorMessages = []; 
 
   // Usamos el objeto unificado por si acaso
-  const currentLineup = lineupToCheck || window.lineup || {};
+  const currentLineup = lineupToCheck || window.lineup || lineup || {};
 
   // 1. Contar las cartas reales que hay en el campo
   for (const uniqueCardId of Object.values(currentLineup)) {
