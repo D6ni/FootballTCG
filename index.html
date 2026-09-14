@@ -8154,24 +8154,6 @@ document.addEventListener('DOMContentLoaded', () => {
   MarketBackend.init();      // Crea la base de datos y los precios base
   //MarketSimulation.start();  // Arranca los bots para que compren y vendan
 
-  const dailyRewardOverlay = document.getElementById('daily-reward-overlay');
-  const claimRewardBtn = document.getElementById('claim-reward-btn');
-  const closeRewardBtn = document.getElementById('close-reward-btn');
-
-  if (claimRewardBtn) {
-    claimRewardBtn.addEventListener('click', claimDailyReward);
-  }
-  if (closeRewardBtn) {
-    closeRewardBtn.addEventListener('click', closeDailyRewardPopup);
-  }
-  if (dailyRewardOverlay) {
-    dailyRewardOverlay.addEventListener('click', (e) => {
-      if (e.target === dailyRewardOverlay) {
-        closeDailyRewardPopup();
-      }
-    });
-  }
-
   const showMissingCheckbox = document.getElementById('show-missing-checkbox');
   const showMissingLabel = document.querySelector('.checkbox-label[for="show-missing-checkbox"]');
   const showOwnedCheckbox = document.getElementById('show-owned-checkbox');
@@ -9998,6 +9980,16 @@ function claimDailyReward() {
   }
 
   setTimeout(() => { isClaimingReward = false; }, 1000);
+}
+
+function showDailyRewardPopup() {
+  const overlay = document.getElementById('daily-reward-overlay');
+  if (overlay) overlay.classList.add('visible');
+}
+
+function closeDailyRewardPopup() {
+  const overlay = document.getElementById('daily-reward-overlay');
+  if (overlay) overlay.classList.remove('visible');
 }
 
 
