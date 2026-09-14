@@ -9721,71 +9721,82 @@ function addCardToLineup(playerData, variantKey) {
   }
 }
 
+// --- FUNCIÓN removeCardFromLineup CORREGIDA ---
 function removeCardFromLineup(posId) {
+  // 1. Borrar la carta de la alineación
   delete lineup[posId];
+  
+  // 2. Guardar el hueco vacío inmediatamente en memoria y Firebase
   saveLineup();
-renderLineupView(); // Re-renderiza para mostrar el hueco vacío
+  
+  // 3. Forzar al validador a recalcular AHORA, con el hueco vacío
+  validateLineup();
+  
+  // 4. Re-dibujar el campo para que aparezca la ranura vacía (+ añadir)
+  renderLineupView(); 
 }
 
-// Pega esta función completa en lugar de la que tienes
+
+// --- FUNCIÓN validateLineup BLINDADA ---
 function validateLineup(lineupToCheck = lineup, isSimulation = false) {
   const rules = { relic: 1, legendary: 2, epic: 3, rare: 4, common: 1 };
   const counts = { common: 0, rare: 0, epic: 0, legendary: 0, relic: 0 };
   let totalCards = 0;
-const errorMessages = []; // Usaremos un array para acumular todos los errores
+  const errorMessages = []; 
 
-// 1. Contar las cartas y sus rarezas
-for (const uniqueCardId of Object.values(lineupToCheck)) {
-  totalCards++;
-  const [cardCode] = uniqueCardId.split('_');
-  const playerData = playersDB.find(p => p.cardCode === cardCode);
-  if (playerData && counts.hasOwnProperty(playerData.rarity)) {
-    counts[playerData.rarity]++;
+  // Usamos el objeto unificado por si acaso
+  const currentLineup = lineupToCheck || window.lineup || {};
+
+  // 1. Contar las cartas reales que hay en el campo
+  for (const uniqueCardId of Object.values(currentLineup)) {
+    // Seguridad extra: Si hay un hueco vacío o un fantasma, lo ignoramos
+    if (!uniqueCardId) continue;
+
+    const [cardCode] = uniqueCardId.split('_');
+    const playerData = playersDB.find(p => p.cardCode === cardCode);
+    
+    if (playerData && counts.hasOwnProperty(playerData.rarity)) {
+      totalCards++;
+      counts[playerData.rarity]++;
+    }
   }
-}
 
-// 2. Comprobar todas las reglas de MÁXIMOS
-if (counts.relic > rules.relic) errorMessages.push(`Too many Relics (Max ${rules.relic})`);
-if (counts.legendary > rules.legendary) errorMessages.push(`Too many Legendaries (Max ${rules.legendary})`);
-if (counts.epic > rules.epic) errorMessages.push(`Too many Epics (Max ${rules.epic})`);
-if (counts.rare > rules.rare) errorMessages.push(`Too many Rares (Max ${rules.rare})`);
+  // 2. Comprobar reglas de MÁXIMOS
+  if (counts.relic > rules.relic) errorMessages.push(`Too many Relics (Max ${rules.relic})`);
+  if (counts.legendary > rules.legendary) errorMessages.push(`Too many Legendaries (Max ${rules.legendary})`);
+  if (counts.epic > rules.epic) errorMessages.push(`Too many Epics (Max ${rules.epic})`);
+  if (counts.rare > rules.rare) errorMessages.push(`Too many Rares (Max ${rules.rare})`);
 
-// 3. Comprobar la regla de MÍNIMO (solo si el equipo está completo)
-if (totalCards === 11 && counts.common < rules.common) {
-  errorMessages.push(`You need at least ${rules.common} Common card`);
-}
+  // 3. Comprobar regla de MÍNIMO (solo si el equipo de 11 está lleno)
+  if (totalCards === 11 && counts.common < rules.common) {
+    errorMessages.push(`You need at least ${rules.common} Common card`);
+  }
 
-// 4. Si es una simulación interna, devolver un resultado simple
-if (isSimulation) {
-// Para la simulación, la alineación es válida si no hay errores de MÁXIMOS.
-// La regla del mínimo común no debería bloquear la colocación de una carta.
-  const isValid = !errorMessages.some(msg => msg.includes('Too many'));
-  return { isValid, message: errorMessages.join(', ') };
-}
+  // 4. Modo Simulación Interna (solo devuelve el texto)
+  if (isSimulation) {
+    const isValid = !errorMessages.some(msg => msg.includes('Too many'));
+    return { isValid, message: errorMessages.join(', ') };
+  }
 
-// 5. Actualizar la UI para el usuario
-const messageEl = document.getElementById('lineup-validation-message');
-const playBtn = document.getElementById('play-match-btn');
+  // 5. MODO VISUAL: Actualizar UI
+  const messageEl = document.getElementById('lineup-validation-message');
+  const playBtn = document.getElementById('play-match-btn');
 
-// Primero, verificamos si el equipo está completo
-const isTeamComplete = totalCards === 11;
+  const isTeamComplete = totalCards === 11;
 
-if (errorMessages.length > 0) {
-// Si hay errores de reglas (reliquias, etc.), los mostramos
-  messageEl.textContent = errorMessages.join(' | ');
-  messageEl.style.display = 'block';
-  playBtn.disabled = true;
-} else if (!isTeamComplete) {
-// Si no hay errores de reglas PERO el equipo no está completo
-  messageEl.textContent = `Complete your lineup (${totalCards}/11)`;
-  messageEl.style.display = 'block';
-  playBtn.disabled = true;
-} else {
-// Si no hay errores y el equipo está completo, ¡es válido!
-messageEl.textContent = 'Lineup is valid!'; // Mensaje de éxito opcional
-messageEl.style.display = 'none'; // O lo ocultamos
-playBtn.disabled = false;
-}
+  if (errorMessages.length > 0) {
+    messageEl.textContent = errorMessages.join(' | ');
+    messageEl.style.display = 'block';
+    if(playBtn) playBtn.disabled = true;
+  } else if (!isTeamComplete) {
+    messageEl.textContent = `Complete your lineup (${totalCards}/11)`;
+    messageEl.style.display = 'block';
+    if(playBtn) playBtn.disabled = true;
+  } else {
+    // Equipo 100% legal y lleno
+    messageEl.style.display = 'none'; 
+    if(playBtn) playBtn.disabled = false;
+  }
 }
 
 function isPlayerAlreadyInLineup(cardCodeToCheck) {
