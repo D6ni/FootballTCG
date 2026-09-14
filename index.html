@@ -6922,11 +6922,12 @@ button,
           }
 
           // 4. COLECCIÓN (Unificada para que el álbum la lea siempre bien)
+          // COLECCIÓN BLINDADA (Fusión inteligente: nunca borra cartas locales)
           const localSaved = localStorage.getItem('myFootballCollection');
           const localCol = localSaved ? JSON.parse(localSaved) : {};
           const cloudCol = data.collection || {};
 
-          // Función que une ambas colecciones conservando la cantidad mayor
+          // Fusión: conserva la cantidad mayor entre la nube y el almacenamiento local
           const mergedCol = { ...cloudCol };
           for (const playerCode in localCol) {
               if (!mergedCol[playerCode]) {
@@ -6946,16 +6947,23 @@ button,
           }
 
           window.collection = mergedCol;
-          if (typeof collection !== 'undefined') collection = window.collection;
           localStorage.setItem('myFootballCollection', JSON.stringify(mergedCol));
 
-          // Si el ordenador tenía cartas que la nube no tenía (por un F5 rápido), las subimos ahora
-          if (JSON.stringify(mergedCol) !== JSON.stringify(cloudCol)) {
-              console.log("🔄 Sincronizando cartas locales pendientes con la nube...");
-              if (typeof saveCollection === 'function') saveCollection();
+          // ALINEACIÓN (Cargar desde la nube)
+          if (data.lineup) {
+              window.lineup = data.lineup;
+              localStorage.setItem('myFootballLineup', JSON.stringify(data.lineup));
           }
 
-          console.log("📥 Colección lista y blindada:", Object.keys(window.collection).length, "jugadores.");
+          window.isCloudDataLoaded = true;
+
+          // Si el álbum o la alineación están abiertos, refrescarlos con los datos cargados
+          if (typeof createShowcase === 'function' && document.getElementById('showcase-overlay')?.classList.contains('visible')) {
+              createShowcase();
+          }
+          if (typeof renderLineupView === 'function' && document.getElementById('lineup-overlay')?.classList.contains('visible')) {
+              renderLineupView();
+          }
 
           // 5. ALINEACIÓN (Descargada de Firebase)
           if (data.lineup) {
@@ -7752,6 +7760,8 @@ function createShowcase() {
   const container = document.getElementById('showcase-content');
   container.innerHTML = '';
 
+  const userCol = window.collection || {};
+
   // --- 1. MODO GRADED (Sin cambios) ---
   if (activeFilters.showGraded) {
     if (gradedCollection.length === 0) { container.innerHTML = `<div class="no-results-message">You have no graded cards yet.</div>`; return; }
@@ -7770,7 +7780,7 @@ function createShowcase() {
   if (activeFilters.showMissing) {
       uniquePlayers = [...playersDB]; 
   } else {
-      const collectedPlayerIds = Object.keys(collection);
+      const collectedPlayerIds = Object.keys(userCol);
       uniquePlayers = playersDB.filter(p => collectedPlayerIds.includes(String(p.cardCode)));
   }
 
@@ -7782,7 +7792,7 @@ function createShowcase() {
   let filteredPlayers = uniquePlayers.filter(player => {
     // A. Filtro "New"
     if (activeFilters.showNew) {
-      const ownedVariants = collection[player.cardCode];
+      const ownedVariants = userCol[player.cardCode];
       if (!ownedVariants) return false; 
       const hasNew = Object.values(ownedVariants).some(variantData => {
         const uniqueId = getUniqueCardId(variantData.cardData);
@@ -7832,8 +7842,8 @@ function createShowcase() {
     // C. Filtros de Botones (Rareza, etc.)
     if (activeFilters.rarity && player.rarity !== activeFilters.rarity) return false;
 
-    if ((activeFilters.golden !== null || activeFilters.variant) && collection[player.cardCode]) {
-      const playerVariants = collection[player.cardCode];
+    if ((activeFilters.golden !== null || activeFilters.variant) && userCol[player.cardCode]) {
+  const playerVariants = userCol[player.cardCode];
       return Object.keys(playerVariants).some(variantKey => {
         const [isGoldenStr, variantName] = variantKey.split('_');
         const isGolden = isGoldenStr === 'true';
@@ -7910,7 +7920,7 @@ function createShowcase() {
   grid.style.justifyContent = 'center';
 
   filteredPlayers.forEach(player => {
-    const ownedVariants = collection[player.cardCode];
+    const ownedVariants = userCol[player.cardCode];
     const wrapper = document.createElement('div');
     wrapper.className = 'album-entry-wrapper';
 
@@ -11677,24 +11687,44 @@ function renderGradableCards() {
 * Crea un elemento de carta para la vista de grading. Es una versión simplificada
 * de la función original para asegurar que tenemos los datos correctos.
 */
-function createCardElement(playerId, variantKey) {
-  const cardStackData = collection[playerId]?.[variantKey];
-  if (!cardStackData) return document.createElement('div'); 
+// --- FUNCIÓN createCardElement CORREGIDA (Siempre dibuja la carta) ---
+function createCardElement(cardCode, variantKey) {
+  const playerData = playersDB.find(p => p.cardCode === cardCode);
+  if (!playerData) return document.createElement('div');
 
-  const { cardData } = cardStackData;
+  const userCol = window.collection || {};
+  const cardStackData = userCol[cardCode]?.[variantKey];
+
+  // Desglosar si es golden y variante
+  const [isGoldenStr, variant] = variantKey ? variantKey.split('_') : ['false', 'none'];
+  const isGolden = isGoldenStr === 'true';
+
+  // Si por un microsegundo de sincronización no está en el mapa, usamos los datos del jugador
+  const cardData = cardStackData ? cardStackData.cardData : {
+    playerData: playerData,
+    rarity: playerData.rarity,
+    golden: isGolden,
+    variant: variant
+  };
+
   const div = document.createElement("div");
   const variantClass = cardData.variant !== 'none' ? `variant-${cardData.variant}` : '';
-  const setClass = `set-${cardData.playerData.set}`; 
+  const setClass = `set-${playerData.set || 'S00'}`;
 
-  div.className = `card showcase-card flipped ${cardData.rarity} ${cardData.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
+  div.className = `card showcase-card flipped ${playerData.rarity} ${isGolden ? 'golden' : ''} ${variantClass} ${setClass}`;
+
+  const indicatorsHTML = `<div class="card-indicators">${variant !== 'none' ? `<div class="indicator">${variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
 
   div.innerHTML = `
-<div class="side front">
-<img src="${cardData.playerData.img}" class="player-image" alt="${cardData.playerData.name}" />
-<div class="player-info"></div>
-</div>
-<div class="side back"></div>
+    <div class="side front">
+      <img src="${playerData.img}" class="player-image" alt="${playerData.name}" />
+      ${indicatorsHTML}
+      <div class="player-info"></div>
+    </div>
+    <div class="side back"></div>
   `;
+
+  div.cardData = cardData;
   addInteractiveTilt(div);
   addReactiveEffects(div);
   return div;
@@ -11887,248 +11917,6 @@ function generateDebugGradedCard() {
   showToast(`Generated Grade ${gradeData.score} (B:${visualDNA.borderVariant}, D:${visualDNA.dirtVariant}, R:${visualDNA.ripVariant})`, 'success');
 }
 
-// =============================================================
-// --- INICIO DEL CÓDIGO DEL TOUR GUIADO (SHEPHERD.JS) v3.1 ---
-// =============================================================
-
-/**
- * Función que define e inicia el tour interactivo para nuevos usuarios.
- */
-function startFirstTimeUserTour() {
-  const tour = new Shepherd.Tour({
-    useModalOverlay: true,
-    defaultStepOptions: {
-      cancelIcon: {
-        enabled: true
-      },
-      classes: 'shepherd-element',
-      scrollTo: { behavior: 'smooth', block: 'center' }
-    }
-  });
-
-  // --- Helper functions ---
-  const waitForAnimation = () => new Promise(resolve => setTimeout(resolve, 500));
-  
-  // ¡LA CORRECCIÓN CLAVE ESTÁ AQUÍ!
-  // Esta función ahora oculta directamente los overlays para evitar efectos secundarios.
-  const closeAllOverlays = async () => {
-    const visibleOverlays = document.querySelectorAll('.visible[id$="-overlay"]');
-    if (visibleOverlays.length > 0) {
-      visibleOverlays.forEach(overlay => {
-              // En lugar de hacer click(), eliminamos la clase .visible directamente.
-        overlay.classList.remove('visible');
-      });
-          await waitForAnimation(); // Espera a que la animación de cierre termine
-        }
-      };
-
-  // --- MAIN MENU ---
-      tour.addStep({
-        id: 'welcome',
-        title: 'Welcome to Football TCG!',
-        text: 'This is a quick tour to show you how everything works. Let\'s get started!',
-        buttons: [{ text: 'Next', action: tour.next }]
-      });
-
-      tour.addStep({
-        id: 'currency',
-        title: 'Your Gems 💎',
-        text: 'This is your gem balance. You\'ll use gems to buy new packs and grow your collection.',
-        attachTo: { element: '#player-currency-display', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-  // --- ALBUM VIEW ---
-      tour.addStep({
-        id: 'enter-album',
-        title: 'My Album',
-        text: 'Let\'s check your collection. This is where all the cards you obtain will be stored.',
-        attachTo: { element: '#showcaseBtn', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-            await closeAllOverlays();
-            document.getElementById('showcaseBtn').click();
-            await waitForAnimation();
-            resolve();
-          });
-        }
-      });
-
-      tour.addStep({
-        id: 'album-filters',
-        title: 'Filtering Your Collection',
-        text: 'Use these powerful buttons to filter your cards by rarity, variant, or see only your graded cards.',
-        attachTo: { element: '#filter-controls', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-      tour.addStep({
-        id: 'album-search',
-        title: 'Search & Sort',
-        text: 'You can also search for a specific player by name, team, or position, and sort them by their overall rating.',
-        attachTo: { element: '#search-controls', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-  // --- LINEUP VIEW ---
-      tour.addStep({
-        id: 'enter-lineup',
-        title: 'My Lineup',
-        text: 'From the album, you can access your lineup. This is where you build your team for matches!',
-        attachTo: { element: '#my-lineup-btn', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-        // No necesitamos cerrar, porque el lineup se abre desde el álbum
-            document.getElementById('my-lineup-btn').click();
-            await waitForAnimation();
-            resolve();
-          });
-        }
-      });
-
-      tour.addStep({
-        id: 'lineup-pitch',
-        title: 'Building Your Team',
-        text: 'To add a player, click an empty slot here, which will take you back to your album to choose a valid card. Build a team of 11 to play a match!',
-        attachTo: { element: '#lineup-pitch', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-      });
-
-  // --- PACK STORE VIEW ---
-      tour.addStep({
-        id: 'enter-packs',
-        title: 'Pack Store',
-        text: 'Now for the fun part! Let\'s go to the store to see the packs.',
-        attachTo: { element: '#openPacksViewBtn', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-        await closeAllOverlays(); // Usamos nuestra función corregida
-        document.getElementById('openPacksViewBtn').click();
-        await waitForAnimation();
-        resolve();
-      });
-        }
-      });
-
-      tour.addStep({
-        id: 'pack-store-grid',
-        title: 'The Store',
-        text: 'Here you can spend your gems to buy different types of packs.',
-        attachTo: { element: '#pack-store', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-      tour.addStep({
-        id: 'my-packs-grid',
-        title: 'My Packs',
-        text: 'Packs that you own (from buying or daily rewards) appear here. Click a pack in this section to open it!',
-        attachTo: { element: '#my-packs-inventory', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-  // --- GRADING VIEW ---
-      tour.addStep({
-        id: 'enter-grading',
-        title: 'Grade Cards',
-        text: 'Want to improve your cards? Let\'s check the grading station.',
-        attachTo: { element: '#grade-cards-btn', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-            await closeAllOverlays();
-            document.getElementById('grade-cards-btn').click();
-            await waitForAnimation();
-            resolve();
-          });
-        }
-      });
-
-      tour.addStep({
-        id: 'grading-explanation',
-        title: 'How Grading Works',
-        text: 'Here you can select any card from your collection to have it graded. Grading assigns it a quality score from 0 to 10+. Using multiple copies of the same card in the process gives you a better chance at a higher grade!',
-        attachTo: { element: '#gradable-cards-grid', on: 'top' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-  // --- ROULETTE VIEW ---
-      tour.addStep({
-        id: 'enter-roulette',
-        title: 'Roulette Game',
-        text: 'Feeling lucky? Let\'s visit the high-stakes roulette table.',
-        attachTo: { element: '#roulette-btn', on: 'bottom' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-            await closeAllOverlays();
-            document.getElementById('roulette-btn').click();
-            await waitForAnimation();
-            resolve();
-          });
-        }
-      });
-
-      tour.addStep({
-        id: 'roulette-table',
-        title: 'Place Your Bets!',
-        text: 'Select a bet on the table, choose your wager amount, and spin the wheel. You can win huge gem payouts or even exclusive packs!',
-        attachTo: { element: '#roulette-betting-table', on: 'left' },
-        buttons: [{ text: 'Back', action: tour.back }, { text: 'Next', action: tour.next }]
-      });
-
-  // --- FINAL STEP ---
-      tour.addStep({
-        id: 'finish',
-        title: 'You\'re All Set!',
-        text: 'That covers the basics. Now go open some packs and build your ultimate team. Good luck!',
-        buttons: [{ text: 'Finish', action: tour.complete }],
-        beforeShowPromise: () => {
-          return new Promise(async (resolve) => {
-            await closeAllOverlays();
-            resolve();
-          });
-        }
-      });
-
-      tour.on('complete', setTourAsCompleted);
-      tour.on('cancel', setTourAsCompleted);
-
-      tour.start();
-    }
-
-/**
- * Marks the tour as completed in localStorage.
- */
-    function setTourAsCompleted() {
-      localStorage.setItem('footballTCGTourCompleted', 'true');
-  // If any overlay is still open after cancelling, close it.
-      const visibleOverlays = document.querySelectorAll('.visible[id$="-overlay"]');
-      visibleOverlays.forEach(overlay => {
-        overlay.classList.remove('visible');
-      });
-    }
-
-/**
- * Checks if the user is visiting for the first time and starts the tour.
- */
-    function checkForFirstVisit() {
-      const tourCompleted = localStorage.getItem('footballTCGTourCompleted');
-      if (!tourCompleted) {
-        setTimeout(startFirstTimeUserTour, 500);
-      }
-    }
-
-// For testing purposes, you can call this from the browser console.
-    function forceStartTour() {
-      localStorage.removeItem('footballTCGTourCompleted');
-      checkForFirstVisit();
-    }
-// =============================================================
-// --- FIN DEL CÓDIGO DEL TOUR GUIADO v3.1 ---
-// =============================================================
 
 //prueba market
 // --- market-backend.js (Simulación de Servidor) ---
