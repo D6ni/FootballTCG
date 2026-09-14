@@ -7594,14 +7594,62 @@ specialSound.play().catch(error => {
 }
 }
 
-// --- FUNCIÓN flipCard CORREGIDA (Guarda en Nube y Álbum sin saturar) ---
+// --- FUNCIÓN flipCard CORREGIDA (Orden blindado: registra y luego guarda) ---
 function flipCard(card, index) {
   if (card.classList.contains("flipped")) return;
   flippedCardsInPack++;
 
-  // 1. Lógica de fin de pack: AL ABRIR LA ÚLTIMA CARTA SE SUBE A FIREBASE (1 sola vez por sobre)
+  // Sonido
+  const flipSound = document.getElementById('flipSound');
+  if (flipSound) {
+    flipSound.currentTime = 0;
+    flipSound.volume = 0.25;
+    flipSound.play();
+  }
+
+  // 1. PRIMERO: REGISTRAR LA CARTA EN LA COLECCIÓN (Sea la 1 o la 11)
+  const cardObj = card.cardData;
+  playSpecialCardSound(cardObj);
+  const playerId = cardObj.playerData.cardCode;
+  
+  const isGoldenStr = String(cardObj.golden); 
+  const variantKey = `${isGoldenStr}_${cardObj.variant}`;
+
+  if (!window.collection[playerId]) {
+    window.collection[playerId] = {};
+  }
+  
+  const isNewVariant = !window.collection[playerId][variantKey];
+
+  if (isNewVariant) {
+    const newIndicator = document.createElement('div');
+    newIndicator.className = 'new-indicator';
+    newIndicator.textContent = 'NEW';
+    card.appendChild(newIndicator);
+    setTimeout(() => { newIndicator.remove(); }, 4200);
+
+    const uniqueId = getUniqueCardId(cardObj);
+    newCards.add(uniqueId); 
+    saveNewCards(); 
+    
+    window.collection[playerId][variantKey] = {
+      count: 1,
+      cardData: cardObj
+    };
+  } else {
+    // Si es duplicada, incrementamos el contador
+    window.collection[playerId][variantKey].count++;
+  }
+
+  // Sincronizamos siempre ambas variables y el almacenamiento local
+  collection = window.collection;
+  localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
+  updateAlbumStats();
+
+  // 2. DESPUÉS: SI ES LA ÚLTIMA CARTA, SUBIMOS A FIREBASE EL SOBRE ENTERO
+  // (Ahora sí incluye la carta 11 con su Legendaria o Reliquia)
   if (flippedCardsInPack === currentPackContentSize) {
-    saveCollection(); // <--- Guardado en Firebase agrupado y seguro
+    saveCollection();
 
     const openingControls = document.getElementById('pack-opening-controls');
     const nextPackContainer = document.getElementById('next-pack-container');
@@ -7643,53 +7691,7 @@ function flipCard(card, index) {
     packOpeningState = 'pack_complete';
   }
 
-  // Sonido
-  const flipSound = document.getElementById('flipSound');
-  if (flipSound) {
-    flipSound.currentTime = 0;
-    flipSound.volume = 0.25;
-    flipSound.play();
-  }
-
-  // 2. Lógica de Colección
-  const cardObj = card.cardData;
-  playSpecialCardSound(cardObj);
-  const playerId = cardObj.playerData.cardCode;
-  
-  const isGoldenStr = String(cardObj.golden); 
-  const variantKey = `${isGoldenStr}_${cardObj.variant}`;
-
-  if (!window.collection[playerId]) {
-    window.collection[playerId] = {};
-  }
-  
-  const isNewVariant = !window.collection[playerId][variantKey];
-
-  if (isNewVariant) {
-    const newIndicator = document.createElement('div');
-    newIndicator.className = 'new-indicator';
-    newIndicator.textContent = 'NEW';
-    card.appendChild(newIndicator);
-    setTimeout(() => { newIndicator.remove(); }, 4200);
-
-    const uniqueId = getUniqueCardId(cardObj);
-    newCards.add(uniqueId); 
-    saveNewCards(); 
-    
-    window.collection[playerId][variantKey] = {
-      count: 1,
-      cardData: cardObj
-    };
-  } else {
-    window.collection[playerId][variantKey].count++;
-  }
-
-  // Sincronizar ambas variables y respaldo local instantáneo (tanto si es nueva como repetida)
-  collection = window.collection;
-  localStorage.setItem('myFootballCollection', JSON.stringify(window.collection));
-  updateAlbumStats();
-
-  // 3. Animaciones y Estilos
+  // 3. Animaciones y volteo visual
   const rarity = card.dataset.rarity;
   const isGolden = card.dataset.golden === "true";
   const variant = card.dataset.variant;
@@ -7697,7 +7699,6 @@ function flipCard(card, index) {
   card.style.transition = 'transform 0.7s ease, left 0.7s ease, top 0.7s ease';
   card.classList.add("flipped", "is-animating");
 
-  // Click para inspeccionar
   card.onclick = () => {
     const cardStackData = window.collection[playerId]?.[variantKey];
     if (cardStackData) {
@@ -7716,7 +7717,6 @@ function flipCard(card, index) {
       else counters[rarity][variant].normal++;
   }
 
-  // Posicionamiento en abanico
   const containerWidth = Math.min(window.innerWidth * 0.95, 1540);
   const cardSpacing = containerWidth / currentPackContentSize;
   const spread = (containerWidth - cardSpacing) / 2;
@@ -7726,7 +7726,7 @@ function flipCard(card, index) {
   card.style.transform = 'rotateY(180deg)';
 
   addReactiveEffects(card);
-} // termina flipcard
+}
 
 function updateCounter() {
   for (const rarityKey in counters) {
@@ -11761,70 +11761,28 @@ function openPlayerDetailView(cardCode) {
   grid.innerHTML = '';
 
   const favoriteVariantKey = playerFavorites[cardCode];
+  
+  // ➔➔➔ CAMBIO AQUÍ: Usar window.collection ➔➔➔
+  const userCol = window.collection || collection || {};
 
-  // Iteramos sobre TODAS las variantes
   for (const isGolden of [false, true]) {
     for (const variantName in CONFIG.variants) {
       const variantKey = `${isGolden}_${variantName}`;
-      const collectedVersion = collection[cardCode]?.[variantKey];
+      
+      // ➔➔➔ CAMBIO AQUÍ: Buscar en userCol ➔➔➔
+      const collectedVersion = userCol[cardCode]?.[variantKey];
 
       const itemContainer = document.createElement('div');
       itemContainer.className = 'variant-item-container';
 
       if (collectedVersion) {
-        // --- CARTA POSEÍDA ---
         const { cardData, count } = collectedVersion;
         const div = createCardElement(cardCode, variantKey);
 
+        // Aquí se dibuja la etiqueta x2, x3, etc.
         const duplicateCounterHTML = count > 1 ? `<div class="duplicate-counter">x${count}</div>` : '';
         div.querySelector('.front').insertAdjacentHTML('beforeend', duplicateCounterHTML);
-
-        // Click para inspeccionar (Mercado/Detalle)
-        div.onclick = () => showInspectView(div, collectedVersion);
-
-        // 1. Botón Favorito
-        const favoriteBtn = document.createElement('button');
-        const isFavorite = favoriteVariantKey === variantKey;
-        favoriteBtn.className = `set-favorite-btn ${isFavorite ? 'is-favorite' : ''}`;
-        
-        if (isFavorite) {
-          favoriteBtn.innerHTML = '<span class="star-icon">&#9733;</span> FAVORITE';
-        } else {
-          favoriteBtn.innerHTML = '<span class="star-icon">&#9734;</span> SET FAVORITE';
-        }
-
-        favoriteBtn.onclick = (e) => {
-          e.stopPropagation();
-          setFavoriteVariant(cardCode, variantKey);
-        };
-
-        // 2. NUEVO: Botón de Grading
-        const gradeBtn = document.createElement('button');
-        gradeBtn.className = 'grade-mini-btn';
-        gradeBtn.innerHTML = '<span>✦</span> GRADE THIS CARD';
-        
-        gradeBtn.onclick = (e) => {
-            e.stopPropagation(); // Evitar que abra la inspección
-            // Llamamos a la función de confirmación de grading directamente
-            setupDirectGrading(cardCode, variantKey);
-        };
-
-        itemContainer.appendChild(div);
-        itemContainer.appendChild(favoriteBtn);
-        itemContainer.appendChild(gradeBtn); // Añadimos el botón debajo
-
-      } else {
-        // --- CARTA FALTANTE (Placeholder) ---
-        const placeholder = document.createElement('div');
-        placeholder.className = 'card showcase-card album-placeholder';
-        placeholder.innerHTML = `<div class="placeholder-indicators">${isGolden ? '<div class="placeholder-indicator golden-indicator">Golden</div>' : ''}${variantName !== 'none' ? `<div class="placeholder-indicator">${capitalize(variantName)}</div>` : ''}</div>`;
-        itemContainer.appendChild(placeholder);
-      }
-      grid.appendChild(itemContainer);
-    }
-  }
-  overlay.classList.add('visible');
-}
+        ...
 
 function setFavoriteVariant(cardCode, variantKey) {
   if (playerFavorites[cardCode] === variantKey) {
