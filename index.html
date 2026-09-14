@@ -6557,6 +6557,50 @@ button,
 </div>
 </div>
 
+<!-- ============= WELCOME STARTER KIT MODAL (NEW ACCOUNTS ONLY) ============= -->
+<div id="welcome-gift-overlay" style="position: fixed; inset: 0; background: rgba(10, 12, 20, 0.96); z-index: 10001; display: none; place-items: center; padding: 20px;">
+  <div style="background: #1d1f24; border-radius: 16px; padding: 30px 25px; text-align: center; max-width: 500px; width: 90%; border: 1px solid rgba(255, 200, 74, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+    
+    <h2 style="color: #ffc84a; margin: 0 0 10px 0; font-size: 26px; text-shadow: 0 0 10px rgba(255, 200, 74, 0.3);">
+      Welcome to Football TCG! ⚽🎁
+    </h2>
+    
+    <p style="color: #ccc; font-size: 14px; margin: 0 0 20px 0; line-height: 1.5;">
+      To kick off your career as a manager, here is your <strong>Starter Kit</strong> (4 Common + 1 Rare Pack).<br>
+      Plus, we've included your <strong>Day 1 Daily Bonus</strong> (3 Common Packs + 1 Free Roulette Spin)!<br>
+      <em style="color: #888; font-size: 12px;">(Remember to check back every 24 hours to claim more free daily packs).</em>
+    </p>
+
+    <!-- 4 Reward Cards -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
+      <!-- 4 Common Welcome -->
+      <div class="reward-item" style="width: 95px; margin: 0;">
+        <img src="packs/packs/common-pack.png" alt="Common Pack">
+        <span class="reward-quantity" style="font-size: 28px; bottom: -5px; right: -5px;">x4</span>
+      </div>
+      <!-- 1 Rare Welcome -->
+      <div class="reward-item" style="width: 95px; margin: 0;">
+        <img src="packs/packs/rare-pack.png" alt="Rare Pack">
+        <span class="reward-quantity" style="font-size: 28px; bottom: -5px; right: -5px; color: #4a7dff;">x1</span>
+      </div>
+      <!-- 3 Common Daily -->
+      <div class="reward-item" style="width: 95px; margin: 0;">
+        <img src="packs/packs/common-pack.png" alt="Daily Pack">
+        <span class="reward-quantity" style="font-size: 28px; bottom: -5px; right: -5px;">+x3</span>
+      </div>
+      <!-- 1 Free Spin -->
+      <div class="reward-item" style="width: 95px; margin: 0;">
+        <img src="images/icons/roulette-spin.png" alt="Free Spin">
+        <span class="reward-quantity" style="font-size: 28px; bottom: -5px; right: -5px; color: #4af0e0;">x1</span>
+      </div>
+    </div>
+
+    <button onclick="claimWelcomeBundle()" style="background: #1f7; color: #022; font-size: 18px; font-weight: 800; padding: 14px 30px; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 0 15px rgba(31, 255, 7, 0.4); width: 100%;">
+      CLAIM ALL (8 PACKS)
+    </button>
+  </div>
+</div>
+
 <!-- ============= POPUP DE RECOMPENSA DIARIA =============== -->
 <div id="daily-reward-overlay">
   <div id="daily-reward-modal">
@@ -6872,6 +6916,11 @@ button,
               if(btnEditUser) btnEditUser.style.display = 'none'; 
               if(displayUsername) displayUsername.textContent = nameDisplay;
 
+              // Abrir el regalo de bienvenida de inmediato
+              if (typeof showWelcomeGiftModal === 'function') {
+                  showWelcomeGiftModal();
+              }
+
           } catch (e) {
               console.error(e);
               usernameError.textContent = typeof e === 'string' ? e : "Error creating name.";
@@ -6905,13 +6954,28 @@ button,
               updateGlobalCurrencyUI(data.gems);
           }
 
-          // 2. USERNAME
+          // 2. CONTROL: NOMBRE ➔ BIENVENIDA ➔ RECOMPENSA DIARIA
           if (!data.username) {
-              if(usernameModal) usernameModal.style.display = 'flex';
+              // Si no tiene nombre, solo mostramos la ventana del nombre
+              if (usernameModal) usernameModal.style.display = 'flex';
           } else {
-              if(displayUsername) displayUsername.textContent = data.username;
-              if(usernameModal) usernameModal.style.display = 'none';
-              if(btnEditUser) btnEditUser.style.display = 'none';
+              // Si ya tiene nombre
+              if (displayUsername) displayUsername.textContent = data.username;
+              if (usernameModal) usernameModal.style.display = 'none';
+              if (btnEditUser) btnEditUser.style.display = 'none';
+
+              // Si es cuenta nueva y no ha reclamado el kit inicial
+              if (!data.hasClaimedWelcome) {
+                  if (typeof showWelcomeGiftModal === 'function') {
+                      showWelcomeGiftModal();
+                  }
+              } 
+              // Si ya reclamó el kit hace días, comprobamos si le toca el daily normal
+              else {
+                  if (typeof checkDailyReward === 'function') {
+                      setTimeout(checkDailyReward, 1000);
+                  }
+              }
           }
 
           // 3. PACKS
@@ -6921,11 +6985,10 @@ button,
               localStorage.setItem('myFootballPacks', JSON.stringify(data.packs));
           }
 
-          // 4. COLECCIÓN EN TIEMPO REAL (Permite ventas y compras sin resucitar duplicadas)
+          // 4. COLECCIÓN EN TIEMPO REAL
           if (data.collection) {
               const cloudKeys = Object.keys(data.collection);
 
-              // Solo si la nube estuviera 100% vacía por error, rescatamos el respaldo local
               if (cloudKeys.length === 0) {
                   const localSaved = localStorage.getItem('myFootballCollection');
                   const localCol = localSaved ? JSON.parse(localSaved) : {};
@@ -6935,30 +6998,13 @@ button,
                       if (typeof saveCollection === 'function') saveCollection();
                   }
               } else {
-                  // La nube manda: actualizamos la memoria local con las cantidades reales
                   window.collection = data.collection;
                   localStorage.setItem('myFootballCollection', JSON.stringify(data.collection));
               }
               console.log("📥 Colección sincronizada:", Object.keys(window.collection || {}).length, "jugadores.");
           }
 
-          // ALINEACIÓN (Cargar desde la nube)
-          if (data.lineup) {
-              window.lineup = data.lineup;
-              localStorage.setItem('myFootballLineup', JSON.stringify(data.lineup));
-          }
-
-          window.isCloudDataLoaded = true;
-
-          // Si el álbum o la alineación están abiertos, refrescarlos con los datos cargados
-          if (typeof createShowcase === 'function' && document.getElementById('showcase-overlay')?.classList.contains('visible')) {
-              createShowcase();
-          }
-          if (typeof renderLineupView === 'function' && document.getElementById('lineup-overlay')?.classList.contains('visible')) {
-              renderLineupView();
-          }
-
-          // 5. ALINEACIÓN (Descargada de Firebase)
+          // 5. ALINEACIÓN
           if (data.lineup) {
               window.lineup = data.lineup;
               if (typeof lineup !== 'undefined') lineup = window.lineup;
@@ -6967,11 +7013,7 @@ button,
 
           window.isCloudDataLoaded = true;
 
-          if (typeof checkDailyReward === 'function') {
-              setTimeout(checkDailyReward, 1000);
-          }
-
-          // Si tienes el álbum o la alineación abiertos en pantalla, se refrescan con los datos nuevos
+          // 6. REFRESCAR PANTALLA SI ESTÁ ABIERTA
           if (typeof createShowcase === 'function' && document.getElementById('showcase-overlay')?.classList.contains('visible')) {
               createShowcase();
           }
@@ -6984,9 +7026,9 @@ button,
           console.log("🌟 Creando perfil en nube para nuevo jugador.");
           const cleanStart = { 
               gems: 500,
-              packs: { 'common-pack': 3 }, 
+              packs: { 'common-pack': 0, 'rare-pack': 0 },
               collection: {},
-              lineup: {}, // <-- Ahora también se inicializa la alineación vacía
+              hasClaimedWelcome: false, // Flag en Firebase
               email: user.email,
               createdAt: serverTimestamp()
           };
@@ -9860,60 +9902,102 @@ return null;
 }
 
 
-// --- LÓGICA DE RECOMPENSA DIARIA ---
+// --- LÓGICA DE RECOMPENSA DIARIA + welcome ---
+let isClaimingReward = false; // Anti-spam click guard
+
+// 1. Show Welcome Modal
+function showWelcomeGiftModal() {
+  const overlay = document.getElementById('welcome-gift-overlay');
+  if (overlay) overlay.style.display = 'grid';
+}
+
+// 2. Claim Starter Kit + Day 1 Daily Bonus (4 Common + 1 Rare + 3 Daily)
+async function claimWelcomeBundle() {
+  if (isClaimingReward) return;
+  isClaimingReward = true;
+
+  const inv = window.packInventory || packInventory || {};
+  // 4 Welcome + 3 Daily = 7 Common
+  inv['common-pack'] = (inv['common-pack'] || 0) + 7;
+  // 1 Welcome Rare Pack
+  inv['rare-pack'] = (inv['rare-pack'] || 0) + 1;
+
+  window.packInventory = inv;
+  packInventory = inv;
+  savePackInventory(); // Syncs 8 packs to Firebase
+
+  // Mark in Firebase that welcome gift is claimed
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.setDoc(userRef, { hasClaimedWelcome: true }, { merge: true });
+    } catch(e) { console.error("Error updating welcome status:", e); }
+  }
+
+  // Set cooldown: Day 1 Daily is now officially claimed!
+  const now = Date.now();
+  localStorage.setItem('lastLoginRewardClaimed', now.toString());
+  localStorage.setItem('hasClaimedWelcome', 'true');
+
+  const overlay = document.getElementById('welcome-gift-overlay');
+  if (overlay) overlay.style.display = 'none';
+
+  showToast("Welcome Kit claimed! You have 8 packs ready to open.", "success", 4000);
+
+  // Automatically take player to Store to open packs
+  const openPacksBtn = document.getElementById('openPacksViewBtn');
+  if (openPacksBtn) openPacksBtn.click();
+
+  setTimeout(() => { isClaimingReward = false; }, 1000);
+}
+
+// 3. Check Daily Reward (Day 2 onwards only)
 function checkDailyReward() {
-  // Si no hay usuario logueado con Google, no salta ningún popup
   if (!window.currentUser) return;
 
-  const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
-
-// Si es la primera visita, marca que ya ha visitado y no hagas nada más.
-  if (!hasVisitedBefore) {
-    localStorage.setItem('hasVisitedBefore', 'true');
+  // If welcome modal or username modal is active, do NOT show daily reward
+  const welcomeModal = document.getElementById('welcome-gift-overlay');
+  const usernameModal = document.getElementById('username-modal-overlay');
+  if ((welcomeModal && welcomeModal.style.display === 'grid') || 
+      (usernameModal && usernameModal.style.display === 'flex')) {
     return;
   }
 
   const lastClaimed = localStorage.getItem('lastLoginRewardClaimed');
-  const now = new Date().getTime();
+  
+  // If never claimed, Day 1 must be claimed through Welcome Bundle first
+  if (!lastClaimed) return;
 
-// ----- ¡¡PARA PROBAR, PUEDES CAMBIAR ESTE VALOR!! -----
-// const cooldown = 10 * 1000; // TEST: 10 segundos
-const cooldown = 24 * 60 * 60 * 1000; // TIEMPO REAL: 24 horas
+  const now = Date.now();
+  const cooldown = 24 * 60 * 60 * 1000; // 24 hours
 
-// Si nunca se ha reclamado O si ya ha pasado el tiempo de cooldown.
-if (!lastClaimed || (now - lastClaimed > cooldown)) {
-  showDailyRewardPopup();
-}
-}
-
-function showDailyRewardPopup() {
-  const overlay = document.getElementById('daily-reward-overlay');
-  if (overlay) {
-    overlay.classList.add('visible');
+  // Only pops up if 24 hours have passed since the last claim
+  if (now - parseInt(lastClaimed, 10) > cooldown) {
+    showDailyRewardPopup();
   }
 }
 
-function closeDailyRewardPopup() {
-  const overlay = document.getElementById('daily-reward-overlay');
-  if (overlay) {
-    overlay.classList.remove('visible');
-  }
-}
-
+// 4. Claim Regular Daily Reward (Day 2 onwards)
 function claimDailyReward() {
-  const inv = window.packInventory || packInventory;
+  if (isClaimingReward) return;
+  isClaimingReward = true;
+
+  const inv = window.packInventory || packInventory || {};
   inv['common-pack'] = (inv['common-pack'] || 0) + 3;
+
   window.packInventory = inv;
   packInventory = inv;
   savePackInventory();
 
-  localStorage.setItem('lastLoginRewardClaimed', new Date().getTime());
-  showToast('You received 3 Common Packs!', 'success');
+  localStorage.setItem('lastLoginRewardClaimed', Date.now().toString());
+  showToast("You received 3 Common Packs!", "success");
   closeDailyRewardPopup();
 
-  if(document.getElementById('packs-overlay')?.classList.contains('visible')) {
+  if (document.getElementById('packs-overlay')?.classList.contains('visible')) {
     renderPacksView();
   }
+
+  setTimeout(() => { isClaimingReward = false; }, 1000);
 }
 
 
