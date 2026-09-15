@@ -39,32 +39,42 @@
       }
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      color: white;
-      padding: 20px;
+    html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* <--- Bloquea el scroll del menú principal */
+}
 
-/* --- Propiedades para la imagen de fondo --- */
-background-color: #111217; /* Color de respaldo si la imagen no carga */
-background-image: url('images/fondo.jpg'); /* Ruta a tu imagen */
-background-size: cover; /* Asegura que la imagen cubra todo el espacio sin deformarse */
-background-position: center center; /* Centra la imagen horizontal y verticalmente */
-background-repeat: no-repeat; /* Evita que la imagen se repita si es pequeña */
-background-attachment: fixed; /* Fija la imagen para que no se mueva al hacer scroll */
+    body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  color: white;
+  padding: 15px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Centra todo el menú verticalmente en tu pantalla */
+
+  /* Propiedades de fondo */
+  background-color: #111217;
+  background-image: url('images/fondo.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 
 h1 {
-  color: #eee;
-  text-shadow: 0 0 10px rgba(31, 255, 7, 0.3);
+  margin: 0 0 10px 0;
 }
-#cards {
-  position: relative;
-  width: calc(var(--card-w) + 20px);
-  height: var(--card-h);
-  margin: 50px auto calc(var(--card-h) + 60px) auto;
-  perspective: 1200px;
+
+/* Solo ocupa espacio si realmente tiene cartas dentro; si está vacío, desaparece */
+#cards:empty {
+  display: none;
+  height: 0;
+  margin: 0;
 }
 .card {
   width: var(--card-w);
@@ -573,7 +583,7 @@ button:disabled {
 }
 
 h1 img {
-  height: 300px; 
+  height: clamp(140px, 22vh, 220px); 
   width: auto;
   filter: drop-shadow(0 0 10px rgba(0, 160, 250, 0.5));
 }
