@@ -7957,13 +7957,29 @@ function createShowcase() {
             if (teamCompare !== 0) return teamCompare;
 
 
-            // C. ESTRUCTURA INTERNA (Escudo -> Media)
+            // C. ESTRUCTURA INTERNA (Escudo -> Set -> Media)
             
             // 1. Escudo primero
             if (a.position === "Crest" && b.position !== "Crest") return -1;
             if (a.position !== "Crest" && b.position === "Crest") return 1;
+            if (a.position === "Crest" && b.position === "Crest") return 0;
 
-            // 2. Por Media (Mejores arriba)
+            // 2. Dentro del mismo equipo: primero todo S00, luego todo S01, etc.
+            const getSetNum = (card) => {
+                const match = (card.set || '').match(/\d+/);
+                return match ? parseInt(match[0], 10) : 999;
+            };
+            const setA = getSetNum(a);
+            const setB = getSetNum(b);
+            if (setA !== setB) return setA - setB;
+
+            // 3. Dentro del mismo equipo y mismo set: relic siempre al final, resto por rating ascendente
+            const isRelicA = a.rarity === 'relic';
+            const isRelicB = b.rarity === 'relic';
+            if (isRelicA && !isRelicB) return 1;
+            if (!isRelicA && isRelicB) return -1;
+
+            // 4. Por Media (Mejores arriba)
             return a.rating - b.rating;
         });
     }
