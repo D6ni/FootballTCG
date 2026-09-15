@@ -7928,18 +7928,52 @@ function createShowcase() {
     } 
     else {
         // ORDEN POR DEFECTO DEL ÁLBUM
-        filteredPlayers.sort((a, b) => {
-            
-            // A. DETECTAR LIGA AUTOMÁTICAMENTE
-            // La ruta es: images/cards/sets/S00/NOMBRE-LIGA/equipo...
-            // Al hacer split('/'), los índices son:
-            // 0: images, 1: cards, 2: sets, 3: S00, 4: NOMBRE-LIGA
-            const getLeagueName = (card) => {
-                const parts = card.img.split('/');
-                // Cogemos la parte 4. Si la ruta es rara, devolvemos "z_otros" para que vaya al final.
-                return (parts.length > 4) ? parts[4].toLowerCase() : "z_otros";
-            };
 
+        // Una carta es "retirada/especial" si su PRIMER equipo es "Retired",
+        // independientemente del set (hay retired dentro de S00 y en SR1 también).
+        const isRetiredCard = (card) => {
+            const t = (card.teams && card.teams[0]) || '';
+            return t.toLowerCase() === 'retired';
+        };
+
+        const getPrimaryTeamName = (card) => {
+            const teams = card.teams || [];
+            const realTeam = teams.find(t => t && t.toLowerCase() !== 'retired');
+            return realTeam || teams[0] || card.team || 'ZZZ';
+        };
+
+        const getLeagueFromPath = (card) => {
+            const parts = (card.img || '').split('/');
+            return (parts.length > 4) ? parts[4].toLowerCase() : "z_otros";
+        };
+
+        // Mapa equipo -> liga real, construido con las cartas normales (no retiradas),
+        // para que las cartas "Retired" hereden la liga de su club real en vez
+        // de la carpeta "retired" de su ruta de imagen.
+        const teamLeagueMap = {};
+        playersDB.forEach(card => {
+            if (!isRetiredCard(card)) {
+                const team = getPrimaryTeamName(card);
+                if (team && !teamLeagueMap[team]) teamLeagueMap[team] = getLeagueFromPath(card);
+            }
+        });
+
+        const getLeagueName = (card) => {
+            if (isRetiredCard(card)) {
+                const team = getPrimaryTeamName(card);
+                return teamLeagueMap[team] || getLeagueFromPath(card);
+            }
+            return getLeagueFromPath(card);
+        };
+
+        const getSetNum = (card) => {
+            const match = (card.set || '').match(/\d+/);
+            return match ? parseInt(match[0], 10) : 999;
+        };
+
+        filteredPlayers.sort((a, b) => {
+
+            // A. DETECTAR LIGA (heredada del equipo real para cartas Retired)
             const leagueA = getLeagueName(a);
             const leagueB = getLeagueName(b);
 
@@ -7949,9 +7983,9 @@ function createShowcase() {
             if (leagueCompare !== 0) return leagueCompare;
 
 
-            // B. ORDENAR POR EQUIPO (Dentro de la misma liga)
-            const teamA = (a.teams && a.teams.length > 0) ? a.teams[0] : (a.team || "ZZZ");
-            const teamB = (b.teams && b.teams.length > 0) ? b.teams[0] : (b.team || "ZZZ");
+            // B. ORDENAR POR EQUIPO (Dentro de la misma liga), ignorando "Retired"
+            const teamA = getPrimaryTeamName(a);
+            const teamB = getPrimaryTeamName(b);
 
             const teamCompare = teamA.localeCompare(teamB);
             if (teamCompare !== 0) return teamCompare;
@@ -7964,14 +7998,15 @@ function createShowcase() {
             if (a.position !== "Crest" && b.position === "Crest") return 1;
             if (a.position === "Crest" && b.position === "Crest") return 0;
 
-            // 2. Dentro del mismo equipo: primero todo S00, luego todo S01, etc.
-            const getSetNum = (card) => {
-                const match = (card.set || '').match(/\d+/);
-                return match ? parseInt(match[0], 10) : 999;
-            };
-            const setA = getSetNum(a);
-            const setB = getSetNum(b);
-            if (setA !== setB) return setA - setB;
+            // 2. Dentro del mismo equipo: primero todo S00, luego todo S01, etc.,
+            //    y las cartas "Retired" (sea cual sea su set) siempre cierran el equipo al final.
+            const retiredA = isRetiredCard(a), retiredB = isRetiredCard(b);
+            if (retiredA !== retiredB) return retiredA ? 1 : -1;
+            if (!retiredA && !retiredB) {
+                const setA = getSetNum(a);
+                const setB = getSetNum(b);
+                if (setA !== setB) return setA - setB;
+            }
 
             // 3. Dentro del mismo equipo y mismo set: relic siempre al final, resto por rating ascendente
             const isRelicA = a.rarity === 'relic';
