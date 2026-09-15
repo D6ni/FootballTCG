@@ -7131,35 +7131,58 @@ variantSellMultipliers: {
 }
 };
 
+packTypes['common-pack'] = packTypes['common-pack-s00'];
+packTypes['rare-pack'] = packTypes['rare-pack-s00'];
+packTypes['collectors-pack'] = packTypes['collectors-pack-s00'];
+
 const packTypes = {
-  'common-pack': {
+  // Sobres de Set 00
+  'common-pack-s00': {
     name: 'Common Pack - [Set 00]',
-cost: 150, // PRECIO
-description: 'A basic pack, 11 cards and at least 1 Rare.',
-size: 11,
-setId: 'S00'
-},
-'rare-pack': {
-  name: 'Rare Pack - [Set 00]',
-cost: 400, // PRECIO
-description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
-size: 5,
-setId: 'S00'
-},
-'collectors-pack': {
-  name: 'Collectors Pack - [Set 00]',
-cost: 1200, // PRECIO
-description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
-size: 3,
-setId: 'S00'
-},
-'roulette-pack': {
-  name: 'Roulette Pack - [Set R1]',
-cost: 0, // No se puede comprar
-description: 'A special pack won only from the roulette jackpot!',
-size: 3,
-setId: 'SR1'
-}
+    cost: 150,
+    description: 'A basic pack, 11 cards and at least 1 Rare.',
+    size: 11,
+    setId: 's00',
+    img: 'packs/packs/common-pack.png'
+  },
+  'rare-pack-s00': {
+    name: 'Rare Pack - [Set 00]',
+    cost: 400,
+    description: 'Boost your squad! 5 cards, all guaranteed to be Rare or better.',
+    size: 5,
+    setId: 's00',
+    img: 'packs/packs/rare-pack.png'
+  },
+  'collectors-pack-s00': {
+    name: 'Collectors Pack - [Set 00]',
+    cost: 1200,
+    description: 'Only for high end collectors, 3 cards and at least 1 unowned card.',
+    size: 3,
+    setId: 's00',
+    img: 'packs/packs/collectors-pack.png'
+  },
+
+  // Sobres de Set 01 (cuando los crees, solo los añades aquí):
+  /*
+  'common-pack-s01': {
+    name: 'Common Pack - [Set 01]',
+    cost: 150,
+    description: 'Set 01 pack, 11 cards and at least 1 Rare.',
+    size: 11,
+    setId: 's01',
+    img: 'packs/packs/common-pack-s01.png'
+  },
+  */
+
+  // Sobre de Ruleta
+  'roulette-pack': {
+    name: 'Roulette Pack - [Set R1]',
+    cost: 0,
+    description: 'A special pack won only from the roulette jackpot!',
+    size: 3,
+    setId: 'sr1',
+    img: 'packs/packs/roulette-pack.png'
+  }
 };
 
 // --- Cálculo del total de cartas posibles en el juego ---
@@ -7369,70 +7392,48 @@ function pickByProb(list) {
 }
 
 function generateCard(targetSet) {
-  // 1. Limpieza del input: Quitamos espacios y lo pasamos a Mayúsculas
-  // Si targetSet es null, usamos 'S00'
-  const cleanSet = (targetSet || 'S00').toString().trim().toUpperCase();
-  
+  if (!targetSet) {
+    console.error("❌ Error: generateCard requiere que se le especifique un targetSet.");
+    return null;
+  }
+
   const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
   const probObj = isGolden ? pickByProb(goldenProbs) : pickByProb(regularProbs);
   const desiredRarity = probObj ? probObj.r : 'common';
 
-  // 2. FILTRO INTELIGENTE (Ignora mayúsculas/minúsculas)
-  let playersOfSet = playersDB.filter(p => {
-      // Aseguramos que el jugador tenga set, lo limpiamos y comparamos
-      return p.set && p.set.toString().trim().toUpperCase() === cleanSet;
-  });
-  
-  // SEGURIDAD: Si falló el set, usamos toda la DB para no romper el juego
+  // Solo cartas del set pedido
+  let playersOfSet = playersDB.filter(p => playerMatchesSet(p, targetSet));
+
   if (playersOfSet.length === 0) {
-    console.warn(`⚠️ Set '${cleanSet}' no encontrado (Revisa mayúsculas en database.js). Usando toda la DB.`);
-    playersOfSet = playersDB;
+    console.error(`❌ No existen jugadores en playersDB para el set: "${targetSet}"`);
+    return null;
   }
 
-  // 3. Filtrar por Rareza
   let playersOfRarity = playersOfSet.filter(p => p.rarity === desiredRarity);
-
-  // Fallback de rareza
   if (playersOfRarity.length === 0) {
     playersOfRarity = playersOfSet;
   }
 
-  // 4. ULTIMA DEFENSA (Si la DB está vacía o algo grave pasa)
-  if (playersOfRarity.length === 0) {
-      console.error("❌ ERROR CRÍTICO: No hay cartas disponibles.");
-      return { 
-          playerData: { name: "Error Card", img: "images/placeholder.png", rating: 0, rarity: "common", cardCode: "ERR", set: "ERR" }, 
-          rarity: "common", golden: false, variant: "none" 
-      };
-  }
-
   const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
-  
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
 
   return { 
-      playerData: player, 
-      rarity: player.rarity, 
-      golden: isGolden, 
-      variant: variant 
+    playerData: player, 
+    rarity: player.rarity, 
+    golden: isGolden, 
+    variant: variant 
   };
 }
 
-//para el rare pack
-// Coloca esta función junto a las otras funciones de generación de cartas.
+function generateTransferredProbCard(targetSet) {
+  if (!targetSet) {
+    console.error("❌ Error: generateTransferredProbCard requiere un targetSet.");
+    return null;
+  }
 
-/**
-* Genera una carta para el "Rare Pack" utilizando la lógica de "transferencia de probabilidad".
-* La probabilidad de las Comunes se suma directamente a la de las Raras.
-* Las demás probabilidades permanecen iguales.
-* @returns {object} Un objeto de carta con rareza >= Rara.
-*/
-function generateTransferredProbCard() {
-// 1. Definir la nueva tabla de probabilidades para este paquete específico.
   const probCommonTotal = (CONFIG.rarities.common.p || 0) + (CONFIG.rarities.common.p_golden || 0);
 
-// Creamos las probabilidades para las rarezas que sí pueden aparecer.
   const transferredProbs = [
     { r: 'rare',      p: ((CONFIG.rarities.rare.p || 0) + (CONFIG.rarities.rare.p_golden || 0) + probCommonTotal) },
     { r: 'epic',      p: ((CONFIG.rarities.epic.p || 0) + (CONFIG.rarities.epic.p_golden || 0)) },
@@ -7440,40 +7441,35 @@ function generateTransferredProbCard() {
     { r: 'relic',     p: ((CONFIG.rarities.relic.p || 0) + (CONFIG.rarities.relic.p_golden || 0)) }
   ];
 
-// 2. Elegimos una RAREZA usando esta nueva tabla ponderada.
   const chosenCategory = pickByProb(transferredProbs);
   const { r: rarity } = chosenCategory;
 
-// 3. Dentro de la rareza elegida, determinamos si es Golden o no.
-// Para RARE, la probabilidad de ser Golden es ahora mucho más baja en proporción, lo cual es correcto.
   const probNormal = CONFIG.rarities[rarity].p || 0;
   const probGolden = CONFIG.rarities[rarity].p_golden || 0;
 
   let isGolden = false;
   if (probGolden > 0) {
-// Si la rareza elegida es 'rare', la prob. de ser golden es ahora p_golden / (p + p_golden + probCommonTotal)
     let totalProbForRarity = probNormal + probGolden;
     if (rarity === 'rare') {
       totalProbForRarity += probCommonTotal;
     }
-
     if (Math.random() * totalProbForRarity < probGolden) {
       isGolden = true;
     }
   }
 
-// 4. Generamos el resto de la carta como siempre.
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
-  const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+
+  // Filtramos por rareza Y estrictamente por el set del sobre
+  const playersOfRarity = playersDB.filter(p => p.rarity === rarity && playerMatchesSet(p, targetSet));
 
   if (playersOfRarity.length === 0) {
-    console.error(`No players found for rarity "${rarity}". Falling back to generateCard().`);
-    return generateCard();
+    console.warn(`No hay jugadores de rareza "${rarity}" en el set "${targetSet}". Fallback a generateCard.`);
+    return generateCard(targetSet);
   }
 
   const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
-
   return { playerData: player, rarity, golden: isGolden, variant };
 }
 
@@ -7488,125 +7484,80 @@ function isCardOwned(cardData) {
   return !!collection[cardCode]?.[variantKey];
 }
 
-function openPack(containerId = 'cards', packId = 'common-pack') {
+function openPack(containerId = 'cards', packId) {
   const openPacksViewBtn = document.getElementById('openPacksViewBtn');
   if (openPacksViewBtn) openPacksViewBtn.disabled = true;
 
   flippedCardsInPack = 0;
   const container = document.getElementById(containerId);
-  if (!container) {
-    console.error("Error: Container not found!", containerId);
-    return;
-  }
+  if (!container) return;
   container.innerHTML = "";
 
+  const packInfo = packTypes[packId];
+  if (!packInfo) {
+    console.error(`❌ Pack no reconocido: ${packId}`);
+    return;
+  }
+
+  const currentSetId = packInfo.setId; // <--- El sobre manda
+  currentPackContentSize = packInfo.size;
   let pack = [];
 
-  const packInfo = packTypes[packId] || { size: 11, setId: 'S00' }; // Default a S00
-  const currentSetId = packInfo.setId || 'S00'; // Obtenemos el ID del set
-  currentPackContentSize = packInfo.size;
-
-  switch (packId) {
-  case 'roulette-pack':
-    console.log("Generando 3 opciones Relic para el Roulette Pack...");
-
-// Llamamos 3 veces a nuestra nueva función para crear las opciones
+  // 1. Caso especial: Ruleta
+  if (packId === 'roulette-pack') {
     const cardOptions = [
       generateSR1Choice(),
       generateSR1Choice(),
       generateSR1Choice()
     ];
-
-// En lugar de renderizar cartas, mostramos nuestro nuevo modal de elección
     showChoiceView(cardOptions);
+    return;
+  }
 
-// Detenemos la ejecución de openPack aquí para no renderizar nada en el escenario principal
-    return; 
-
-  case 'collectors-pack':
-    console.log("Opening a Collectors Pack with Weighted New Card logic.");
-
-    const unlockedCount = calculateUnlockedCards();
-
-    if (unlockedCount >= totalPossibleCards) {
-      showToast("You have all the cards! Opening a regular pack instead.", 'info');
-      for (let i = 0; i < currentPackContentSize; i++) {
-        pack.push(generateCard());
-      }
+  // 2. Collectors Packs
+  if (packId.includes('collectors')) {
+    const guaranteedNewCard = getWeightedNewCard(currentSetId);
+    if (guaranteedNewCard) {
+      pack.push(guaranteedNewCard);
     } else {
-      const guaranteedNewCard = getWeightedNewCard();
-
-      if (guaranteedNewCard) {
-        pack.push(guaranteedNewCard);
-      } else {
-        pack.push(generateCard());
-      }
-
-      while (pack.length < currentPackContentSize) {
-        pack.push(generateCard());
-      }
-
-      pack.sort(() => Math.random() - 0.5);
+      pack.push(generateCard(currentSetId));
     }
-    break;
 
-  case 'rare-pack':
-    console.log("Opening a Rare Pack with 'Transferred Probability' logic.");
     while (pack.length < currentPackContentSize) {
-      pack.push(generateTransferredProbCard());
+      pack.push(generateCard(currentSetId));
     }
-    break;
+    pack.sort(() => Math.random() - 0.5);
 
-  default:
-    console.log("Opening a standard pack.");
+  // 3. Rare Packs
+  } else if (packId.includes('rare')) {
+    while (pack.length < currentPackContentSize) {
+      pack.push(generateTransferredProbCard(currentSetId));
+    }
+
+  // 4. Sobres comunes o cualquier otro
+  } else {
     for (let i = 0; i < currentPackContentSize; i++) {
       pack.push(generateCard(currentSetId));
     }
 
+    // Garantía de 1 rara mínima DEL SET DEL SOBRE
     if (!pack.some(c => CONFIG.rarities[c.rarity].order > 1)) {
-      const rarePlayers = playersDB.filter(p => p.rarity === 'rare');
+      const rarePlayers = playersDB.filter(p => p.rarity === 'rare' && playerMatchesSet(p, currentSetId));
       if (rarePlayers.length > 0) {
-        pack[0] = { ...generateCard(), rarity: 'rare', playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] };
+        pack[0] = { 
+          ...generateCard(currentSetId), 
+          rarity: 'rare', 
+          playerData: rarePlayers[Math.floor(Math.random() * rarePlayers.length)] 
+        };
       }
     }
-    break;
   }
 
-// El resto de la función (que renderiza las cartas) no cambia.
+  // Ordenar y renderizar...
   pack.sort((a, b) => CONFIG.rarities[a.rarity].order - CONFIG.rarities[b.rarity].order);
 
   pack.forEach((cardObj, i) => {
-    const div = document.createElement("div");
-    const variantClass = cardObj.variant !== 'none' ? `variant-${cardObj.variant}` : '';
-    const setClass = `set-${cardObj.playerData.set}`; // Ej: "set-SR1" o "set-S00"
-    div.className = `card ${cardObj.rarity} ${cardObj.golden ? 'golden' : ''} ${variantClass} ${setClass}`;
-    div.style.zIndex = pack.length - i;
-    div.dataset.rarity = cardObj.rarity;
-    div.dataset.golden = cardObj.golden;
-    div.dataset.variant = cardObj.variant;
-    div.dataset.index = i;
-    div.style.transform = `translateX(${i * 2}px) translateY(${i * -2}px)`;
-
-    const indicatorsHTML = `<div class="card-indicators">${cardObj.variant !== 'none' ? `<div class="indicator">${cardObj.variant.charAt(0).toUpperCase()}</div>` : ''}</div>`;
-
-    div.innerHTML = `
-<div class="side front">
-<img src="${cardObj.playerData.img}" class="player-image" alt="${cardObj.playerData.name}" />
-      ${indicatorsHTML}
-<div class="player-info">
-</div>
-</div>
-<div class="side back">⚽</div>
-    `;
-
-    div.cardData = cardObj;
-    div.onclick = () => flipCard(div, i);
-    container.appendChild(div);
-  });
-}
-
-
-
+    // Renderizado visual normal...
 
 function playSpecialCardSound(cardData) {
   const { rarity, golden, variant } = cardData;
@@ -7718,7 +7669,7 @@ function flipCard(card, index) {
         packEl.title = `Click to open a ${pack.name}`;
 
         const packImg = document.createElement('img');
-        packImg.src = `packs/packs/${packId}.png`;
+packImg.src = pack.img || `packs/packs/${packId}.png`;
         packImg.alt = pack.name;
         packEl.appendChild(packImg);
 
@@ -9056,7 +9007,7 @@ packEl.dataset.packType = packId;
 packEl.title = `${pack.name} - Cost: ${pack.cost}`; // Actualizamos el title también
 
 const packImg = document.createElement('img');
-packImg.src = `packs/packs/${packId}.png`;
+packImg.src = pack.img || `packs/packs/${packId}.png`;
 packImg.alt = pack.name;
 packEl.appendChild(packImg);
 
@@ -9092,7 +9043,7 @@ for (const packId in packInventory) {
     packEl.title = `Click to open one ${pack.name}`;
 
     const packImg = document.createElement('img');
-    packImg.src = `packs/packs/${packId}.png`;
+packImg.src = pack.img || `packs/packs/${packId}.png`;
     packImg.alt = pack.name;
     packEl.appendChild(packImg);
 
@@ -9842,13 +9793,12 @@ return generalPos; // ...la devolvemos.
 return null; // Como fallback, por si algo sale mal.
 }
 
-/**
-* Encuentra una carta nueva garantizada para el jugador utilizando un muestreo ponderado
-* sobre las cartas que le faltan, respetando las proporciones de probabilidad originales.
-* @returns {object | null} Un objeto de carta nueva, o null si la colección está completa.
-*/
-function getWeightedNewCard() {
-// 1. Identificar qué categorías de probabilidad todavía tienen cartas por descubrir.
+function getWeightedNewCard(targetSet) {
+  if (!targetSet) {
+    console.error("❌ Error: getWeightedNewCard requiere un targetSet.");
+    return null;
+  }
+
   const availableProbabilities = [];
   const allProbabilities = [...regularProbs, ...goldenProbs];
 
@@ -9856,37 +9806,28 @@ function getWeightedNewCard() {
     const { r: rarity } = prob;
     const isGolden = goldenProbs.some(p => p.r === rarity && p.p === prob.p);
 
-// Buscamos si existe AL MENOS UNA carta de esta categoría que el jugador no tenga.
+    // Solo busca cartas que falten DENTRO del set del sobre
     const hasMissingCardInCategory = playersDB.some(player => {
-      if (player.rarity !== rarity) return false;
-// Comprobamos todas las variantes para este jugador en esta categoría
+      if (player.rarity !== rarity || !playerMatchesSet(player, targetSet)) return false;
       return Object.keys(CONFIG.variants).some(variant => {
         const cardData = { playerData: player, golden: isGolden, variant };
         return !isCardOwned(cardData);
       });
     });
 
-// Si encontramos al menos una carta faltante, esta categoría es viable.
     if (hasMissingCardInCategory) {
       availableProbabilities.push(prob);
     }
   }
 
-// Si no hay categorías viables, la colección está completa.
-  if (availableProbabilities.length === 0) {
-    console.warn("getWeightedNewCard fue llamada, pero la colección está completa.");
-    return null;
-  }
+  if (availableProbabilities.length === 0) return null;
 
-// 2. Elegir una categoría ponderada de entre las disponibles.
-// Usamos la función pickByProb que ya tienes, ¡perfecto para esto!
   const chosenCategory = pickByProb(availableProbabilities);
   const { r: chosenRarity } = chosenCategory;
   const isChosenGolden = goldenProbs.some(p => p.r === chosenRarity && p.p === chosenCategory.p);
 
-// 3. Crear una "mini-pool" solo con las cartas que faltan de la categoría elegida.
   const missingCardsInChosenCategory = [];
-  const playersInRarity = playersDB.filter(p => p.rarity === chosenRarity);
+  const playersInRarity = playersDB.filter(p => p.rarity === chosenRarity && playerMatchesSet(p, targetSet));
 
   for (const player of playersInRarity) {
     for (const variant of Object.keys(CONFIG.variants)) {
@@ -9894,23 +9835,20 @@ function getWeightedNewCard() {
         playerData: player,
         golden: isChosenGolden,
         variant,
-rarity: chosenRarity // ¡Añadimos la rareza para consistencia!
-};
-if (!isCardOwned(cardData)) {
-  missingCardsInChosenCategory.push(cardData);
-}
-}
-}
+        rarity: chosenRarity
+      };
+      if (!isCardOwned(cardData)) {
+        missingCardsInChosenCategory.push(cardData);
+      }
+    }
+  }
 
-// 4. Elegir una carta al azar de esa mini-pool y devolverla.
-if (missingCardsInChosenCategory.length > 0) {
-  const randomIndex = Math.floor(Math.random() * missingCardsInChosenCategory.length);
-  return missingCardsInChosenCategory[randomIndex];
-}
+  if (missingCardsInChosenCategory.length > 0) {
+    const randomIndex = Math.floor(Math.random() * missingCardsInChosenCategory.length);
+    return missingCardsInChosenCategory[randomIndex];
+  }
 
-// Como fallback por si algo sale mal (no debería ocurrir gracias al paso 1).
-console.error("Error lógico en getWeightedNewCard: No se encontraron cartas faltantes en una categoría que debería tenerlas.");
-return null;
+  return null;
 }
 
 
@@ -14184,6 +14122,16 @@ async function checkAndFinalizeAuction(listing) {
     } catch (e) {
         console.error("Error cerrando subasta:", e);
     }
+}
+
+function playerMatchesSet(player, targetSet) {
+  if (!player || !player.set || !targetSet) return false;
+  const pSet = player.set.toString().trim().toLowerCase();
+
+  if (Array.isArray(targetSet)) {
+    return targetSet.map(s => s.toString().trim().toLowerCase()).includes(pSet);
+  }
+  return pSet === targetSet.toString().trim().toLowerCase();
 }
 
 </script>
