@@ -7368,26 +7368,36 @@ function pickByProb(list) {
     return list[list.length - 1];
 }
 
-function generateCard(targetSet) {
-  // 1. Limpieza del input: Quitamos espacios y lo pasamos a Mayúsculas
-  // Si targetSet es null, usamos 'S00'
+/**
+ * Devuelve todos los jugadores de un set concreto (comparación normalizada,
+ * ignorando mayúsculas/espacios). Si el set no existe, cae a toda la DB
+ * como red de seguridad para no romper el juego, avisando por consola.
+ * Centralizado aquí para que TODAS las funciones de generación de cartas
+ * (sobres normales, rare pack, futuros packs de S01/S02/etc.) usen
+ * siempre el mismo filtro y no se desincronicen entre sí.
+ */
+function getPlayersBySet(targetSet) {
   const cleanSet = (targetSet || 'S00').toString().trim().toUpperCase();
-  
-  const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
-  const probObj = isGolden ? pickByProb(goldenProbs) : pickByProb(regularProbs);
-  const desiredRarity = probObj ? probObj.r : 'common';
 
-  // 2. FILTRO INTELIGENTE (Ignora mayúsculas/minúsculas)
   let playersOfSet = playersDB.filter(p => {
-      // Aseguramos que el jugador tenga set, lo limpiamos y comparamos
-      return p.set && p.set.toString().trim().toUpperCase() === cleanSet;
+    return p.set && p.set.toString().trim().toUpperCase() === cleanSet;
   });
-  
-  // SEGURIDAD: Si falló el set, usamos toda la DB para no romper el juego
+
   if (playersOfSet.length === 0) {
     console.warn(`⚠️ Set '${cleanSet}' no encontrado (Revisa mayúsculas en database.js). Usando toda la DB.`);
     playersOfSet = playersDB;
   }
+
+  return playersOfSet;
+}
+
+function generateCard(targetSet) {
+  const isGolden = (Math.random() * 100) < CONFIG.goldenChance;
+  const probObj = isGolden ? pickByProb(goldenProbs) : pickByProb(regularProbs);
+  const desiredRarity = probObj ? probObj.r : 'common';
+
+  // 2. Cartas del set correspondiente (mismo filtro centralizado)
+  let playersOfSet = getPlayersBySet(targetSet);
 
   // 3. Filtrar por Rareza
   let playersOfRarity = playersOfSet.filter(p => p.rarity === desiredRarity);
@@ -7428,7 +7438,7 @@ function generateCard(targetSet) {
 * Las demás probabilidades permanecen iguales.
 * @returns {object} Un objeto de carta con rareza >= Rara.
 */
-function generateTransferredProbCard() {
+function generateTransferredProbCard(targetSet = 'S00') {
 // 1. Definir la nueva tabla de probabilidades para este paquete específico.
   const probCommonTotal = (CONFIG.rarities.common.p || 0) + (CONFIG.rarities.common.p_golden || 0);
 
@@ -7465,11 +7475,17 @@ function generateTransferredProbCard() {
 // 4. Generamos el resto de la carta como siempre.
   const totalVariantChance = Object.values(CONFIG.variants).reduce((s, v) => s + v.p, 0);
   const variant = (Math.random() * 100 < totalVariantChance) ? pickByProb(variantProbs).v : 'none';
-  const playersOfRarity = playersDB.filter(p => p.rarity === rarity);
+  const playersOfSet = getPlayersBySet(targetSet);
+  const playersOfRarity = playersOfSet.filter(p => p.rarity === rarity);
 
   if (playersOfRarity.length === 0) {
-    console.error(`No players found for rarity "${rarity}". Falling back to generateCard().`);
-    return generateCard();
+    console.error(`No hay jugadores de rareza "${rarity}" en el set "${targetSet}". Usando fallback dentro del mismo set.`);
+    // Fallback DENTRO del mismo set (nunca fuera de él, para no repetir el bug)
+    if (playersOfSet.length > 0) {
+      const fallbackPlayer = playersOfSet[Math.floor(Math.random() * playersOfSet.length)];
+      return { playerData: fallbackPlayer, rarity: fallbackPlayer.rarity, golden: isGolden, variant };
+    }
+    return generateCard(targetSet);
   }
 
   const player = playersOfRarity[Math.floor(Math.random() * playersOfRarity.length)];
@@ -7531,19 +7547,19 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
     if (unlockedCount >= totalPossibleCards) {
       showToast("You have all the cards! Opening a regular pack instead.", 'info');
       for (let i = 0; i < currentPackContentSize; i++) {
-        pack.push(generateCard());
+        pack.push(generateCard(currentSetId));
       }
     } else {
-      const guaranteedNewCard = getWeightedNewCard();
+      const guaranteedNewCard = getWeightedNewCard(currentSetId);
 
       if (guaranteedNewCard) {
         pack.push(guaranteedNewCard);
       } else {
-        pack.push(generateCard());
+        pack.push(generateCard(currentSetId));
       }
 
       while (pack.length < currentPackContentSize) {
-        pack.push(generateCard());
+        pack.push(generateCard(currentSetId));
       }
 
       pack.sort(() => Math.random() - 0.5);
@@ -7553,7 +7569,7 @@ function openPack(containerId = 'cards', packId = 'common-pack') {
   case 'rare-pack':
     console.log("Opening a Rare Pack with 'Transferred Probability' logic.");
     while (pack.length < currentPackContentSize) {
-      pack.push(generateTransferredProbCard());
+      pack.push(generateTransferredProbCard(currentSetId));
     }
     break;
 
@@ -9847,7 +9863,9 @@ return null; // Como fallback, por si algo sale mal.
 * sobre las cartas que le faltan, respetando las proporciones de probabilidad originales.
 * @returns {object | null} Un objeto de carta nueva, o null si la colección está completa.
 */
-function getWeightedNewCard() {
+function getWeightedNewCard(targetSet = 'S00') {
+  const playersOfSet = getPlayersBySet(targetSet);
+
 // 1. Identificar qué categorías de probabilidad todavía tienen cartas por descubrir.
   const availableProbabilities = [];
   const allProbabilities = [...regularProbs, ...goldenProbs];
@@ -9856,8 +9874,8 @@ function getWeightedNewCard() {
     const { r: rarity } = prob;
     const isGolden = goldenProbs.some(p => p.r === rarity && p.p === prob.p);
 
-// Buscamos si existe AL MENOS UNA carta de esta categoría que el jugador no tenga.
-    const hasMissingCardInCategory = playersDB.some(player => {
+// Buscamos si existe AL MENOS UNA carta de esta categoría (dentro del set) que el jugador no tenga.
+    const hasMissingCardInCategory = playersOfSet.some(player => {
       if (player.rarity !== rarity) return false;
 // Comprobamos todas las variantes para este jugador en esta categoría
       return Object.keys(CONFIG.variants).some(variant => {
@@ -9886,7 +9904,7 @@ function getWeightedNewCard() {
 
 // 3. Crear una "mini-pool" solo con las cartas que faltan de la categoría elegida.
   const missingCardsInChosenCategory = [];
-  const playersInRarity = playersDB.filter(p => p.rarity === chosenRarity);
+  const playersInRarity = playersOfSet.filter(p => p.rarity === chosenRarity);
 
   for (const player of playersInRarity) {
     for (const variant of Object.keys(CONFIG.variants)) {
