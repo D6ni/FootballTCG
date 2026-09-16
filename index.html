@@ -6983,7 +6983,7 @@ button,
               // Si ya reclamó el kit hace días, comprobamos si le toca el daily normal
               else {
                   if (typeof checkDailyReward === 'function') {
-                      setTimeout(checkDailyReward, 1000);
+                      setTimeout(() => checkDailyReward(data), 1000);
                   }
               }
           }
@@ -10007,16 +10007,21 @@ async function claimWelcomeBundle() {
   packInventory = inv;
   savePackInventory(); // Syncs 8 packs to Firebase
 
-  // Mark in Firebase that welcome gift is claimed
+  // Cooldown: Day 1 Daily queda oficialmente reclamado desde este momento
+  const now = Date.now();
+
+  // Mark in Firebase that welcome gift is claimed (y el cooldown del daily
+  // viaja con la cuenta, no solo con este navegador)
   if (window.currentUser && window.fs && window.db) {
     try {
       const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-      await window.fs.setDoc(userRef, { hasClaimedWelcome: true }, { merge: true });
+      await window.fs.setDoc(userRef, {
+        hasClaimedWelcome: true,
+        lastDailyRewardClaimed: now
+      }, { merge: true });
     } catch(e) { console.error("Error updating welcome status:", e); }
   }
 
-  // Set cooldown: Day 1 Daily is now officially claimed!
-  const now = Date.now();
   localStorage.setItem('lastLoginRewardClaimed', now.toString());
   localStorage.setItem('hasClaimedWelcome', 'true');
 
@@ -10033,7 +10038,7 @@ async function claimWelcomeBundle() {
 }
 
 // 3. Check Daily Reward (Day 2 onwards only)
-function checkDailyReward() {
+function checkDailyReward(firestoreData = null) {
   if (!window.currentUser) return;
 
   // If welcome modal or username modal is active, do NOT show daily reward
@@ -10044,10 +10049,20 @@ function checkDailyReward() {
     return;
   }
 
-  const lastClaimed = localStorage.getItem('lastLoginRewardClaimed');
-  
-  // If never claimed, Day 1 must be claimed through Welcome Bundle first
-  if (!lastClaimed) return;
+  // Fuente de verdad: Firestore (ligado a la cuenta). Si no nos pasaron el
+  // dato de Firestore por lo que sea, caemos a localStorage como último recurso,
+  // pero SIEMPRE preferimos el de la cuenta para que funcione entre dispositivos.
+  const lastClaimed = (firestoreData && firestoreData.lastDailyRewardClaimed)
+    ?? localStorage.getItem('lastLoginRewardClaimed');
+
+  // Si no hay NINGÚN registro (ni en Firestore ni en localStorage), esta función
+  // solo se llama cuando el welcome ya fue reclamado, así que lo tratamos como
+  // que el daily ya toca. Esto autocura cuentas afectadas por versiones
+  // anteriores del bug (cooldown guardado solo en localStorage).
+  if (!lastClaimed) {
+    showDailyRewardPopup();
+    return;
+  }
 
   const now = Date.now();
   const cooldown = 24 * 60 * 60 * 1000; // 24 hours
@@ -10059,7 +10074,7 @@ function checkDailyReward() {
 }
 
 // 4. Claim Regular Daily Reward (Day 2 onwards)
-function claimDailyReward() {
+async function claimDailyReward() {
   if (isClaimingReward) return;
   isClaimingReward = true;
 
@@ -10070,7 +10085,18 @@ function claimDailyReward() {
   packInventory = inv;
   savePackInventory();
 
-  localStorage.setItem('lastLoginRewardClaimed', Date.now().toString());
+  const now = Date.now();
+
+  // Guardamos el cooldown en Firestore (ligado a la cuenta) además de en
+  // localStorage, para que funcione igual entre dispositivos/navegadores.
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.setDoc(userRef, { lastDailyRewardClaimed: now }, { merge: true });
+    } catch(e) { console.error("Error updating daily reward status:", e); }
+  }
+
+  localStorage.setItem('lastLoginRewardClaimed', now.toString());
   showToast("You received 3 Common Packs!", "success");
   closeDailyRewardPopup();
 
