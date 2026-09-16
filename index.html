@@ -9090,6 +9090,27 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
 
 // ========= FUNCIONES TIENDA ========= //
       // --- GUARDAR PACKS EN NUBE ---
+// Ajusta el conteo de un tipo de sobre de forma ATÓMICA en Firebase (usa
+// increment() en el campo concreto, en vez de sobreescribir todo el mapa
+// "packs"). Así, si comprar y abrir un sobre coinciden en el tiempo (doble
+// clic, varias pestañas...), nunca se pisan entre sí ni se pierden sobres.
+async function adjustPackCount(packId, delta) {
+  const inv = window.packInventory || packInventory || {};
+  inv[packId] = (inv[packId] || 0) + delta;
+  window.packInventory = inv;
+  packInventory = inv;
+  localStorage.setItem('myFootballPacks', JSON.stringify(inv));
+
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.updateDoc(userRef, { [`packs.${packId}`]: window.fs.increment(delta) });
+    } catch (e) {
+      console.error("Error ajustando packs en nube:", e);
+    }
+  }
+}
+
 async function savePackInventory() {
   // 1. Guardar en local (por velocidad visual)
   localStorage.setItem('myFootballPacks', JSON.stringify(packInventory));
@@ -9206,9 +9227,8 @@ async function purchasePacks(packId, quantity) {
           
           // --- SI LLEGAMOS AQUÍ, EL PAGO FUE EXITOSO ---
           
-          // 4. Entregar Packs
-          packInventory[packId] = (packInventory[packId] || 0) + quantity;
-          await savePackInventory(); 
+          // 4. Entregar Packs (incremento atómico, sin condición de carrera)
+          await adjustPackCount(packId, quantity);
 
           // 5. Feedback
           renderPacksView();
@@ -9252,11 +9272,8 @@ function openOwnedPack(packId) {
     const openingStage = document.getElementById('pack-opening-stage');
     const openingControls = document.getElementById('pack-opening-controls');
 
-    // 1. Restamos el pack en ambas variables
-    inv[packId]--; 
-    window.packInventory = inv;
-    packInventory = inv;
-    savePackInventory(); // Guarda el descuento en Firebase
+    // 1. Restamos el pack de forma atómica (evita perder sobres por carreras)
+    adjustPackCount(packId, -1);
 
     // 2. Estadísticas
     stats.totalPacksOpened++;
