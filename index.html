@@ -1762,6 +1762,66 @@ box-sizing: border-box;
   opacity: 1;
 }
 
+/* --- ESTILOS PARA EL POPUP DE LOGROS --- */
+#achievements-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 20, 0.95);
+  z-index: 1500;
+  display: none;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+#achievements-overlay.visible {
+  display: grid;
+  opacity: 1;
+}
+#achievements-modal {
+  position: relative;
+  background: #1d1f24;
+  border-radius: 15px;
+  padding: 30px;
+  width: min(500px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: left;
+}
+#achievements-modal h2 { text-align: center; margin-top: 0; color: #fff; }
+#close-achievements-btn {
+  position: absolute; top: 10px; right: 10px;
+  background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer;
+}
+.achievement-item {
+  background: #2a2d35;
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  opacity: 0.6;
+}
+.achievement-item.ready { opacity: 1; border: 1px solid #f1c40f; }
+.achievement-item.claimed { opacity: 0.4; }
+.achievement-info { flex: 1; }
+.achievement-info h4 { margin: 0 0 4px 0; color: #fff; font-size: 15px; }
+.achievement-info p { margin: 0 0 6px 0; color: #aaa; font-size: 12px; }
+.achievement-progress-bar {
+  background: #111; border-radius: 6px; height: 8px; overflow: hidden;
+}
+.achievement-progress-fill {
+  background: #4caf50; height: 100%; transition: width 0.3s;
+}
+.achievement-claim-btn {
+  padding: 8px 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;
+  background: #f1c40f; color: #1d1f24; white-space: nowrap;
+}
+.achievement-claim-btn:disabled {
+  background: #444; color: #888; cursor: default;
+}
+
 #daily-reward-modal {
   position: relative;
   background: #1d1f24;
@@ -6127,6 +6187,7 @@ button,
     <button id="showcaseBtn">MY ALBUM</button>
     <button id="openMarketBtn">TRANSFER MARKET</button>
     <button id="roulette-btn">ROULETTE GAME</button>
+    <button id="achievementsBtn" style="position:relative;">ACHIEVEMENTS<span id="achievements-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:20px;text-align:center;"></span></button>
     <!-- <button onclick="resetCollection()" style="background-color: #E6A115; color: #fff;">RESET PROGRESS</button> -->
 </div>
 
@@ -6633,6 +6694,15 @@ button,
   </div>
 </div>
 
+<!-- ============= OVERLAY DE HITOS/LOGROS =============== -->
+<div id="achievements-overlay">
+  <div id="achievements-modal">
+    <button id="close-achievements-btn" onclick="closeAchievementsView()">X</button>
+    <h2>Achievements</h2>
+    <div id="achievements-list"></div>
+  </div>
+</div>
+
 <!-- ============= MODAL DE CONFIRMACIÓN GENÉRICO =============== -->
 <div id="confirm-modal-overlay">
   <div id="confirm-modal">
@@ -7021,6 +7091,19 @@ button,
               localStorage.setItem('myFootballLineup', JSON.stringify(data.lineup));
           }
 
+          // 6. ESTADÍSTICAS (packs abiertos, ganancias ruleta, partidos jugados...)
+          // Fuente de verdad: Firestore, ligado a la cuenta (no al navegador).
+          if (data.stats) {
+              stats = { totalPacksOpened: 0, rouletteWinnings: 0, matchesPlayed: 0, ...data.stats };
+              window.stats = stats;
+              localStorage.setItem('myGameStats', JSON.stringify(stats));
+              if (typeof updateAlbumStats === 'function') updateAlbumStats();
+          }
+
+          // 7. LOGROS RECLAMADOS
+          window.claimedAchievements = data.claimedAchievements || {};
+          if (typeof updateAchievementsBadge === 'function') updateAchievementsBadge();
+
           window.isCloudDataLoaded = true;
 
           // 6. REFRESCAR PANTALLA SI ESTÁ ABIERTA
@@ -7168,7 +7251,9 @@ const totalPossibleCards = playersDB.length * Object.keys(CONFIG.variants).lengt
 // --- Objeto para guardar y cargar estadísticas ---
 const savedStats = localStorage.getItem('myGameStats');
 let stats = savedStats ? JSON.parse(savedStats) : {
-  totalPacksOpened: 0
+  totalPacksOpened: 0,
+  rouletteWinnings: 0,
+  matchesPlayed: 0
 };
 
 function buildProbLists(config) {
@@ -9090,6 +9175,135 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
 
 // ========= FUNCIONES TIENDA ========= //
       // --- GUARDAR PACKS EN NUBE ---
+// ============= SISTEMA DE HITOS / LOGROS =============
+const ACHIEVEMENTS = [
+  { id: 'packs_5',    statKey: 'totalPacksOpened', threshold: 5,    name: 'Getting Started',  desc: 'Open 5 packs',   reward: { packId: 'common-pack', qty: 2 } },
+  { id: 'packs_10',   statKey: 'totalPacksOpened', threshold: 10,   name: 'Pack Opener',      desc: 'Open 10 packs',  reward: { packId: 'common-pack', qty: 3 } },
+  { id: 'packs_20',   statKey: 'totalPacksOpened', threshold: 20,   name: 'Collector',        desc: 'Open 20 packs',  reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'packs_50',   statKey: 'totalPacksOpened', threshold: 50,   name: 'Enthusiast',       desc: 'Open 50 packs',  reward: { packId: 'rare-pack', qty: 2 } },
+  { id: 'packs_100',  statKey: 'totalPacksOpened', threshold: 100,  name: 'Pack Master',      desc: 'Open 100 packs', reward: { packId: 'collectors-pack', qty: 1 } },
+
+  { id: 'roulette_500',   statKey: 'rouletteWinnings', threshold: 500,   name: 'Lucky Spin',    desc: 'Win 500 💎 on the roulette total',   reward: { packId: 'common-pack', qty: 2 } },
+  { id: 'roulette_2000',  statKey: 'rouletteWinnings', threshold: 2000,  name: 'High Roller',   desc: 'Win 2,000 💎 on the roulette total',  reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'roulette_10000', statKey: 'rouletteWinnings', threshold: 10000, name: 'Jackpot Hunter', desc: 'Win 10,000 💎 on the roulette total', reward: { packId: 'collectors-pack', qty: 1 } },
+
+  { id: 'matches_5',   statKey: 'matchesPlayed', threshold: 5,   name: 'Rookie Manager',  desc: 'Play 5 matches',  reward: { packId: 'common-pack', qty: 2 } },
+  { id: 'matches_15',  statKey: 'matchesPlayed', threshold: 15,  name: 'Tactician',       desc: 'Play 15 matches', reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'matches_40',  statKey: 'matchesPlayed', threshold: 40,  name: 'Club Legend',     desc: 'Play 40 matches', reward: { packId: 'collectors-pack', qty: 1 } },
+];
+
+window.claimedAchievements = window.claimedAchievements || {};
+
+function getPendingAchievementsCount() {
+  const s = window.stats || stats || {};
+  return ACHIEVEMENTS.filter(a =>
+    !window.claimedAchievements[a.id] && (s[a.statKey] || 0) >= a.threshold
+  ).length;
+}
+
+function updateAchievementsBadge() {
+  const badge = document.getElementById('achievements-badge');
+  if (!badge) return;
+  const pending = getPendingAchievementsCount();
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderAchievements() {
+  const list = document.getElementById('achievements-list');
+  if (!list) return;
+  const s = window.stats || stats || {};
+
+  list.innerHTML = ACHIEVEMENTS.map(a => {
+    const current = s[a.statKey] || 0;
+    const claimed = !!window.claimedAchievements[a.id];
+    const ready = !claimed && current >= a.threshold;
+    const pct = Math.min(100, Math.floor((current / a.threshold) * 100));
+
+    let btnHTML;
+    if (claimed) {
+      btnHTML = `<button class="achievement-claim-btn" disabled>Claimed</button>`;
+    } else if (ready) {
+      btnHTML = `<button class="achievement-claim-btn" onclick="claimAchievement('${a.id}')">Claim</button>`;
+    } else {
+      btnHTML = `<button class="achievement-claim-btn" disabled>${current}/${a.threshold}</button>`;
+    }
+
+    return `
+      <div class="achievement-item ${ready ? 'ready' : ''} ${claimed ? 'claimed' : ''}">
+        <div class="achievement-info">
+          <h4>${a.name}</h4>
+          <p>${a.desc} — Reward: ${a.reward.qty}x ${a.reward.packId.replace('-pack','')} pack</p>
+          <div class="achievement-progress-bar">
+            <div class="achievement-progress-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+        ${btnHTML}
+      </div>`;
+  }).join('');
+
+  updateAchievementsBadge();
+}
+
+async function claimAchievement(id) {
+  const achievement = ACHIEVEMENTS.find(a => a.id === id);
+  if (!achievement) return;
+
+  const s = window.stats || stats || {};
+  if (window.claimedAchievements[id]) return; // ya reclamado
+  if ((s[achievement.statKey] || 0) < achievement.threshold) return; // aún no toca
+
+  // Marcamos como reclamado ANTES de entregar el premio, para que no se pueda
+  // volver a pulsar dos veces seguidas mientras se procesa.
+  window.claimedAchievements[id] = true;
+  renderAchievements();
+
+  await adjustPackCount(achievement.reward.packId, achievement.reward.qty);
+
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.updateDoc(userRef, { [`claimedAchievements.${id}`]: true });
+    } catch (e) { console.error("Error guardando logro reclamado:", e); }
+  }
+
+  showToast(`Achievement claimed: ${achievement.reward.qty}x ${achievement.reward.packId.replace('-pack','')} pack!`, 'success');
+}
+
+function openAchievementsView() {
+  renderAchievements();
+  document.getElementById('achievements-overlay').classList.add('visible');
+}
+function closeAchievementsView() {
+  document.getElementById('achievements-overlay').classList.remove('visible');
+}
+document.getElementById('achievementsBtn')?.addEventListener('click', openAchievementsView);
+
+// Ajusta una estadística (packs abiertos, ganancias de ruleta, partidos
+// jugados...) de forma ATÓMICA en Firestore, igual que adjustPackCount.
+// Así los hitos/logros que se construyan encima funcionan bien entre
+// dispositivos y no se pierden conteos por sobrescrituras.
+async function bumpStat(statName, delta) {
+  stats = stats || {};
+  stats[statName] = (stats[statName] || 0) + delta;
+  window.stats = stats;
+  localStorage.setItem('myGameStats', JSON.stringify(stats));
+  if (typeof updateAchievementsBadge === 'function') updateAchievementsBadge();
+
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.updateDoc(userRef, { [`stats.${statName}`]: window.fs.increment(delta) });
+    } catch (e) {
+      console.error("Error actualizando estadística en la nube:", e);
+    }
+  }
+}
+
 // Ajusta el conteo de un tipo de sobre de forma ATÓMICA en Firebase (usa
 // increment() en el campo concreto, en vez de sobreescribir todo el mapa
 // "packs"). Así, si comprar y abrir un sobre coinciden en el tiempo (doble
@@ -9275,9 +9489,8 @@ function openOwnedPack(packId) {
     // 1. Restamos el pack de forma atómica (evita perder sobres por carreras)
     adjustPackCount(packId, -1);
 
-    // 2. Estadísticas
-    stats.totalPacksOpened++;
-    saveStats();
+    // 2. Estadísticas (sincronizado con la cuenta, no solo local)
+    bumpStat('totalPacksOpened', 1);
 
     // 3. UI
     packsOverlay.classList.add('opening-mode');
@@ -10567,6 +10780,7 @@ async function simulateMatch(homeLineup) {
   earnGemsOnline(reward);
   saveCurrency();
   updateCurrencyDisplay();
+  bumpStat('matchesPlayed', 1);
   showToast(result, 'info', 4000); 
   finalResultDiv.style.display = 'flex';
 }
@@ -10970,6 +11184,7 @@ showToast(customMessage, 'success', 5000);
 if (gemWinnings > 0) {
   playerCurrency += gemWinnings;
   earnGemsOnline(gemWinnings);
+  bumpStat('rouletteWinnings', gemWinnings);
 }
 savePackInventory();
 saveCurrency();
