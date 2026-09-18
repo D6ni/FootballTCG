@@ -1799,6 +1799,65 @@ box-sizing: border-box;
   margin: 22px 0 12px 0; opacity: 0.75;
 }
 .profile-section-title:first-of-type { margin-top: 4px; }
+
+.profile-tabs {
+  display: flex; gap: 6px; margin-bottom: 18px;
+  background: rgba(0,0,0,0.25); padding: 5px; border-radius: 12px;
+}
+.profile-tab-btn {
+  flex: 1; padding: 9px 6px; border: none; border-radius: 9px;
+  background: transparent; color: #999; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.profile-tab-btn.active { background: rgba(255,255,255,0.09); color: #fff; }
+.profile-tab-content {}
+.profile-tab-hint { color: #999; font-size: 12.5px; margin: 0 0 14px 0; }
+
+.profile-search-input {
+  width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+  color: #fff; font-size: 13px; margin-bottom: 12px;
+}
+.profile-search-input::placeholder { color: #777; }
+
+/* Showcase */
+#showcase-slots { display: flex; gap: 12px; margin-bottom: 18px; }
+.showcase-slot {
+  flex: 1; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden;
+  background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer;
+}
+.showcase-slot.filled { border-style: solid; border-color: rgba(241, 196, 15, 0.4); }
+.showcase-slot-empty { color: #666; font-size: 26px; }
+.showcase-slot-remove {
+  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,0.7); color: #fff; border: none; font-size: 12px; cursor: pointer; z-index: 5;
+}
+#showcase-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 220px; overflow-y: auto; }
+.showcase-picker-item { aspect-ratio: 2/3; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.85; transition: opacity 0.15s, transform 0.15s; }
+.showcase-picker-item:hover { opacity: 1; transform: translateY(-2px); }
+
+/* Friends */
+.friend-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.friend-add-row .profile-search-input { margin-bottom: 0; }
+#friend-send-btn {
+  padding: 0 16px; border-radius: 10px; border: none; background: linear-gradient(90deg,#f1c40f,#ffb347);
+  color: #1d1f24; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.friend-request-item, .friend-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
+}
+.friend-name { color: #fff; font-size: 13.5px; font-weight: 600; }
+.friend-sub { color: #888; font-size: 11.5px; }
+.friend-action-btn {
+  padding: 7px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.friend-action-btn.accept { background: #4caf50; color: #fff; }
+.friend-action-btn.decline { background: rgba(255,255,255,0.08); color: #ccc; }
+.friend-action-btn.remove { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.profile-empty-hint { color: #777; font-size: 12.5px; text-align: center; padding: 14px 0; }
 #close-achievements-btn {
   position: absolute; top: 14px; right: 14px;
   background: rgba(255,255,255,0.08); border: none; color: #ccc;
@@ -6754,10 +6813,33 @@ button,
     <button id="close-achievements-btn" onclick="closeAchievementsView()">X</button>
     <h2>My Profile</h2>
 
-    <!-- (Aquí irá más adelante el showcase de cartas favoritas) -->
+    <div class="profile-tabs">
+      <button class="profile-tab-btn active" data-tab="achievements" onclick="switchProfileTab('achievements')">🏆 Achievements</button>
+      <button class="profile-tab-btn" data-tab="showcase" onclick="switchProfileTab('showcase')">⭐ Showcase</button>
+      <button class="profile-tab-btn" data-tab="friends" onclick="switchProfileTab('friends')">👥 Friends</button>
+    </div>
 
-    <h3 class="profile-section-title">🏆 Achievements</h3>
-    <div id="achievements-list"></div>
+    <div id="profile-tab-achievements" class="profile-tab-content">
+      <div id="achievements-list"></div>
+    </div>
+
+    <div id="profile-tab-showcase" class="profile-tab-content" style="display:none;">
+      <p class="profile-tab-hint">Pick up to 3 cards to show off on your profile.</p>
+      <div id="showcase-slots"></div>
+      <h3 class="profile-section-title">Your collection</h3>
+      <input type="text" id="showcase-search" placeholder="Search a card to add..." class="profile-search-input" oninput="renderShowcasePicker()">
+      <div id="showcase-picker"></div>
+    </div>
+
+    <div id="profile-tab-friends" class="profile-tab-content" style="display:none;">
+      <div class="friend-add-row">
+        <input type="text" id="friend-username-input" placeholder="Add a friend by username..." class="profile-search-input">
+        <button id="friend-send-btn" onclick="sendFriendRequest()">Add</button>
+      </div>
+      <div id="friend-requests-section"></div>
+      <h3 class="profile-section-title">👥 My Friends</h3>
+      <div id="friends-list"></div>
+    </div>
   </div>
 </div>
 
@@ -7098,6 +7180,7 @@ button,
               if (usernameModal) usernameModal.style.display = 'flex';
           } else {
               // Si ya tiene nombre
+              window.myUsername = data.username;
               if (displayUsername) displayUsername.textContent = data.username;
               if (usernameModal) usernameModal.style.display = 'none';
               if (btnEditUser) btnEditUser.style.display = 'none';
@@ -7152,7 +7235,7 @@ button,
           // 6. ESTADÍSTICAS (packs abiertos, ganancias ruleta, partidos jugados...)
           // Fuente de verdad: Firestore, ligado a la cuenta (no al navegador).
           if (data.stats) {
-              stats = { totalPacksOpened: 0, rouletteWinnings: 0, matchesPlayed: 0, ...data.stats };
+              stats = { totalPacksOpened: 0, rouletteWinnings: 0, matchesPlayed: 0, matchesWon: 0, quickSells: 0, marketPurchases: 0, marketSales: 0, gemsSpentOnPacks: 0, ...data.stats };
               window.stats = stats;
               localStorage.setItem('myGameStats', JSON.stringify(stats));
               if (typeof updateAlbumStats === 'function') updateAlbumStats();
@@ -7161,6 +7244,10 @@ button,
           // 7. LOGROS RECLAMADOS
           window.claimedAchievements = data.claimedAchievements || {};
           if (typeof updateAchievementsBadge === 'function') updateAchievementsBadge();
+
+          // 8. SHOWCASE (cartas favoritas del perfil)
+          window.showcaseCards = data.showcaseCards || [];
+          localStorage.setItem('myShowcaseCards', JSON.stringify(window.showcaseCards));
 
           window.isCloudDataLoaded = true;
 
@@ -7311,7 +7398,12 @@ const savedStats = localStorage.getItem('myGameStats');
 let stats = savedStats ? JSON.parse(savedStats) : {
   totalPacksOpened: 0,
   rouletteWinnings: 0,
-  matchesPlayed: 0
+  matchesPlayed: 0,
+  matchesWon: 0,
+  quickSells: 0,
+  marketPurchases: 0,
+  marketSales: 0,
+  gemsSpentOnPacks: 0
 };
 
 function buildProbLists(config) {
@@ -9234,28 +9326,74 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
 // ========= FUNCIONES TIENDA ========= //
       // --- GUARDAR PACKS EN NUBE ---
 // ============= SISTEMA DE HITOS / LOGROS =============
+// ============= NAVEGACIÓN DE PESTAÑAS DE MY PROFILE =============
+function switchProfileTab(tab) {
+  document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.profile-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById(`profile-tab-${tab}`).style.display = 'block';
+
+  if (tab === 'achievements') renderAchievements();
+  if (tab === 'showcase') { renderShowcaseSlots(); renderShowcasePicker(); }
+  if (tab === 'friends') renderFriendsTab();
+}
+
+// ============= SISTEMA DE HITOS / LOGROS =============
 const ACHIEVEMENTS = [
+  // --- PACKS ---
   { id: 'packs_5',    statKey: 'totalPacksOpened', threshold: 5,    name: 'Getting Started',  desc: 'Open 5 packs',   category: 'Packs', icon: '📦', reward: { packId: 'common-pack', qty: 2 } },
   { id: 'packs_10',   statKey: 'totalPacksOpened', threshold: 10,   name: 'Pack Opener',      desc: 'Open 10 packs',  category: 'Packs', icon: '📦', reward: { packId: 'common-pack', qty: 3 } },
   { id: 'packs_20',   statKey: 'totalPacksOpened', threshold: 20,   name: 'Collector',        desc: 'Open 20 packs',  category: 'Packs', icon: '📦', reward: { packId: 'rare-pack', qty: 1 } },
   { id: 'packs_50',   statKey: 'totalPacksOpened', threshold: 50,   name: 'Enthusiast',       desc: 'Open 50 packs',  category: 'Packs', icon: '📦', reward: { packId: 'rare-pack', qty: 2 } },
   { id: 'packs_100',  statKey: 'totalPacksOpened', threshold: 100,  name: 'Pack Master',      desc: 'Open 100 packs', category: 'Packs', icon: '📦', reward: { packId: 'collectors-pack', qty: 1 } },
+  { id: 'spender_5000', statKey: 'gemsSpentOnPacks', threshold: 5000, name: 'Big Spender', desc: 'Spend 5,000 💎 on packs (lifetime)', category: 'Packs', icon: '💸', reward: { packId: 'collectors-pack', qty: 1 } },
 
+  // --- ROULETTE ---
   { id: 'roulette_500',   statKey: 'rouletteWinnings', threshold: 500,   name: 'Lucky Spin',    desc: 'Win 500 💎 on the roulette total',   category: 'Roulette', icon: '🎰', reward: { packId: 'common-pack', qty: 2 } },
-  { id: 'roulette_2000',  statKey: 'rouletteWinnings', threshold: 2000,  name: 'High Roller',   desc: 'Win 2,000 💎 on the roulette total',  category: 'Roulette', icon: '🎰', reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'roulette_2000',  statKey: 'rouletteWinnings', threshold: 2000,  name: 'High Roller',   desc: 'Win 2,000 💎 on the roulette total',  category: 'Roulette', icon: '🎰', reward: { packId: 'roulette-pack', qty: 1 } },
   { id: 'roulette_10000', statKey: 'rouletteWinnings', threshold: 10000, name: 'Jackpot Hunter', desc: 'Win 10,000 💎 on the roulette total', category: 'Roulette', icon: '🎰', reward: { packId: 'collectors-pack', qty: 1 } },
 
+  // --- MATCHES ---
   { id: 'matches_5',   statKey: 'matchesPlayed', threshold: 5,   name: 'Rookie Manager',  desc: 'Play 5 matches',  category: 'Matches', icon: '⚽', reward: { packId: 'common-pack', qty: 2 } },
   { id: 'matches_15',  statKey: 'matchesPlayed', threshold: 15,  name: 'Tactician',       desc: 'Play 15 matches', category: 'Matches', icon: '⚽', reward: { packId: 'rare-pack', qty: 1 } },
   { id: 'matches_40',  statKey: 'matchesPlayed', threshold: 40,  name: 'Club Legend',     desc: 'Play 40 matches', category: 'Matches', icon: '⚽', reward: { packId: 'collectors-pack', qty: 1 } },
+  { id: 'wins_10',     statKey: 'matchesWon',    threshold: 10,  name: 'Winning Streak',  desc: 'Win 10 matches',  category: 'Matches', icon: '🏆', reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'wins_30',     statKey: 'matchesWon',    threshold: 30,  name: 'Unstoppable',     desc: 'Win 30 matches',  category: 'Matches', icon: '🏆', reward: { packId: 'collectors-pack', qty: 1 } },
+
+  // --- TRADING (mercado y venta rápida) ---
+  { id: 'quicksell_25',  statKey: 'quickSells',       threshold: 25, name: 'Declutterer',   desc: 'Quick sell 25 cards',        category: 'Trading', icon: '🧹', reward: { packId: 'common-pack', qty: 2 } },
+  { id: 'buyer_5',       statKey: 'marketPurchases',  threshold: 5,  name: 'Bargain Hunter', desc: 'Buy 5 cards on the market',  category: 'Trading', icon: '🛒', reward: { packId: 'common-pack', qty: 2 } },
+  { id: 'seller_5',      statKey: 'marketSales',      threshold: 5,  name: 'Entrepreneur',   desc: 'Sell 5 cards on the market', category: 'Trading', icon: '💰', reward: { packId: 'rare-pack', qty: 1 } },
+
+  // --- ESPECIALES (calculados en vivo desde tu colección/equipo) ---
+  { id: 'collection_50',  category: 'Special', icon: '🗂️', name: 'Album in Progress', desc: 'Own 50 unique cards',  threshold: 50,
+    getCurrent: () => Object.keys(window.collection || {}).length, reward: { packId: 'common-pack', qty: 3 } },
+  { id: 'collection_150', category: 'Special', icon: '🗂️', name: 'Serious Collector', desc: 'Own 150 unique cards', threshold: 150,
+    getCurrent: () => Object.keys(window.collection || {}).length, reward: { packId: 'rare-pack', qty: 2 } },
+  { id: 'golden_owner', category: 'Special', icon: '✨', name: 'Golden Ticket', desc: 'Own a golden card', threshold: 1,
+    getCurrent: () => Object.values(window.collection || {}).some(v => Object.keys(v).some(k => k.startsWith('true_'))) ? 1 : 0,
+    reward: { packId: 'rare-pack', qty: 1 } },
+  { id: 'relic_owner', category: 'Special', icon: '💎', name: 'Relic Hunter', desc: 'Own a relic card', threshold: 1,
+    getCurrent: () => Object.keys(window.collection || {}).some(code => {
+      const p = (typeof playersDB !== 'undefined') ? playersDB.find(pl => pl.cardCode === code) : null;
+      return p && p.rarity === 'relic';
+    }) ? 1 : 0,
+    reward: { packId: 'collectors-pack', qty: 1 } },
+  { id: 'full_squad', category: 'Special', icon: '🧩', name: 'Full Squad', desc: 'Fill all 11 lineup slots', threshold: 11,
+    getCurrent: () => Object.values(window.lineup || {}).filter(Boolean).length,
+    reward: { packId: 'rare-pack', qty: 1 } },
 ];
 
 window.claimedAchievements = window.claimedAchievements || {};
 
-function getPendingAchievementsCount() {
+function getAchievementCurrent(a) {
+  if (typeof a.getCurrent === 'function') return a.getCurrent();
   const s = window.stats || stats || {};
+  return s[a.statKey] || 0;
+}
+
+function getPendingAchievementsCount() {
   return ACHIEVEMENTS.filter(a =>
-    !window.claimedAchievements[a.id] && (s[a.statKey] || 0) >= a.threshold
+    !window.claimedAchievements[a.id] && getAchievementCurrent(a) >= a.threshold
   ).length;
 }
 
@@ -9274,13 +9412,12 @@ function updateAchievementsBadge() {
 function renderAchievements() {
   const list = document.getElementById('achievements-list');
   if (!list) return;
-  const s = window.stats || stats || {};
 
   const categories = [...new Set(ACHIEVEMENTS.map(a => a.category))];
 
   list.innerHTML = categories.map(cat => {
     const itemsHTML = ACHIEVEMENTS.filter(a => a.category === cat).map(a => {
-      const current = s[a.statKey] || 0;
+      const current = getAchievementCurrent(a);
       const claimed = !!window.claimedAchievements[a.id];
       const ready = !claimed && current >= a.threshold;
       const pct = Math.min(100, Math.floor((current / a.threshold) * 100));
@@ -9319,9 +9456,9 @@ async function claimAchievement(id) {
   const achievement = ACHIEVEMENTS.find(a => a.id === id);
   if (!achievement) return;
 
-  const s = window.stats || stats || {};
+  const current = getAchievementCurrent(achievement);
   if (window.claimedAchievements[id]) return; // ya reclamado
-  if ((s[achievement.statKey] || 0) < achievement.threshold) return; // aún no toca
+  if (current < achievement.threshold) return; // aún no toca
 
   // Marcamos como reclamado ANTES de entregar el premio, para que no se pueda
   // volver a pulsar dos veces seguidas mientras se procesa.
@@ -9348,6 +9485,288 @@ function closeAchievementsView() {
   document.getElementById('achievements-overlay').classList.remove('visible');
 }
 document.getElementById('profileBtn')?.addEventListener('click', openAchievementsView);
+
+// ============= SHOWCASE (3 CARTAS FAVORITAS DEL PERFIL) =============
+window.showcaseCards = window.showcaseCards || []; // [{cardCode, variantKey}, ...] máx 3
+
+function renderShowcaseSlots() {
+  const container = document.getElementById('showcase-slots');
+  if (!container) return;
+
+  const slots = [0, 1, 2].map(i => window.showcaseCards[i] || null);
+
+  container.innerHTML = '';
+  slots.forEach((entry, i) => {
+    const slotDiv = document.createElement('div');
+    slotDiv.className = `showcase-slot ${entry ? 'filled' : ''}`;
+
+    if (entry) {
+      const cardEl = createCardElement(entry.cardCode, entry.variantKey);
+      cardEl.style.width = '100%';
+      cardEl.style.height = '100%';
+      slotDiv.appendChild(cardEl);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'showcase-slot-remove';
+      removeBtn.textContent = '✕';
+      removeBtn.onclick = (ev) => { ev.stopPropagation(); removeFromShowcase(i); };
+      slotDiv.appendChild(removeBtn);
+    } else {
+      slotDiv.innerHTML = `<div class="showcase-slot-empty">+</div>`;
+    }
+    container.appendChild(slotDiv);
+  });
+}
+
+function renderShowcasePicker() {
+  const picker = document.getElementById('showcase-picker');
+  if (!picker) return;
+
+  const searchTerm = (document.getElementById('showcase-search')?.value || '').toLowerCase().trim();
+  const ownedCodes = Object.keys(window.collection || {});
+
+  const filtered = ownedCodes.filter(code => {
+    const p = playersDB.find(pl => pl.cardCode === code);
+    if (!p) return false;
+    if (p.rarity === 'crest') return false; // los escudos no son "cartas favoritas"
+    if (!searchTerm) return true;
+    return p.name.toLowerCase().includes(searchTerm) || (p.teams || []).some(t => t.toLowerCase().includes(searchTerm));
+  }).slice(0, 40); // límite razonable para no saturar el DOM
+
+  picker.innerHTML = '';
+  filtered.forEach(code => {
+    const variantKey = getDefaultVariant(code);
+    if (!variantKey) return;
+    const item = document.createElement('div');
+    item.className = 'showcase-picker-item';
+    const cardEl = createCardElement(code, variantKey);
+    cardEl.style.width = '100%';
+    cardEl.style.height = '100%';
+    item.appendChild(cardEl);
+    item.onclick = () => addToShowcase(code, variantKey);
+    picker.appendChild(item);
+  });
+
+  if (filtered.length === 0) {
+    picker.innerHTML = `<div class="profile-empty-hint" style="grid-column:1/-1;">No cards found.</div>`;
+  }
+}
+
+async function addToShowcase(cardCode, variantKey) {
+  if (window.showcaseCards.some(c => c.cardCode === cardCode && c.variantKey === variantKey)) {
+    showToast("That card is already in your showcase.", "info");
+    return;
+  }
+  if (window.showcaseCards.length >= 3) {
+    showToast("Remove a card from your showcase first.", "info");
+    return;
+  }
+  window.showcaseCards.push({ cardCode, variantKey });
+  await saveShowcase();
+  renderShowcaseSlots();
+}
+
+async function removeFromShowcase(index) {
+  window.showcaseCards.splice(index, 1);
+  await saveShowcase();
+  renderShowcaseSlots();
+}
+
+async function saveShowcase() {
+  localStorage.setItem('myShowcaseCards', JSON.stringify(window.showcaseCards));
+  if (window.currentUser && window.fs && window.db) {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.setDoc(userRef, { showcaseCards: window.showcaseCards }, { merge: true });
+    } catch (e) { console.error("Error guardando showcase:", e); }
+  }
+}
+
+// ============= AMIGOS =============
+// NOTA: requiere dos colecciones nuevas en Firestore ("friendRequests" y
+// "friendships"), con sus propias reglas de seguridad — ver el mensaje
+// adjunto con el fragmento a pegar en Firebase Console.
+window.incomingFriendRequests = window.incomingFriendRequests || [];
+window.myFriendships = window.myFriendships || [];
+let friendsListenersStarted = false;
+
+function startFriendsListeners() {
+  if (friendsListenersStarted || !window.currentUser || !window.fs || !window.db) return;
+  friendsListenersStarted = true;
+
+  const reqQuery = window.fs.query(
+    window.fs.collection(window.db, "friendRequests"),
+    window.fs.where("toUid", "==", window.currentUser.uid),
+    window.fs.where("status", "==", "pending")
+  );
+  window.fs.onSnapshot(reqQuery, (snap) => {
+    window.incomingFriendRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderFriendRequests();
+    if (typeof updateAchievementsBadge === 'function') updateAchievementsBadge();
+  });
+
+  const friendQuery = window.fs.query(
+    window.fs.collection(window.db, "friendships"),
+    window.fs.where("users", "array-contains", window.currentUser.uid)
+  );
+  window.fs.onSnapshot(friendQuery, (snap) => {
+    window.myFriendships = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderFriendsList();
+  });
+}
+
+function renderFriendsTab() {
+  startFriendsListeners();
+  renderFriendRequests();
+  renderFriendsList();
+}
+
+function renderFriendRequests() {
+  const section = document.getElementById('friend-requests-section');
+  if (!section) return;
+  if (window.incomingFriendRequests.length === 0) { section.innerHTML = ''; return; }
+
+  section.innerHTML = `<h3 class="profile-section-title">📬 Requests</h3>` + window.incomingFriendRequests.map(r => `
+    <div class="friend-request-item">
+      <div><div class="friend-name">${r.fromUsername}</div><div class="friend-sub">wants to be friends</div></div>
+      <div style="display:flex; gap:6px;">
+        <button class="friend-action-btn accept" onclick="acceptFriendRequest('${r.id}','${r.fromUid}', decodeURIComponent('${encodeURIComponent(r.fromUsername)}'))">Accept</button>
+        <button class="friend-action-btn decline" onclick="declineFriendRequest('${r.id}')">Decline</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderFriendsList() {
+  const list = document.getElementById('friends-list');
+  if (!list) return;
+  if (window.myFriendships.length === 0) {
+    list.innerHTML = `<div class="profile-empty-hint">No friends yet — add one above!</div>`;
+    return;
+  }
+  list.innerHTML = window.myFriendships.map(f => {
+    const otherUid = f.users.find(u => u !== window.currentUser.uid);
+    const otherName = (f.usernames && f.usernames[otherUid]) || 'Player';
+    return `
+      <div class="friend-item">
+        <div style="cursor:pointer; flex:1;" onclick="toggleFriendProfile('${f.id}','${otherUid}')">
+          <div class="friend-name">${otherName}</div>
+          <div class="friend-sub">Tap to view profile</div>
+        </div>
+        <button class="friend-action-btn remove" onclick="removeFriend('${f.id}')">Remove</button>
+      </div>
+      <div id="friend-profile-${f.id}" style="display:none; margin:-2px 0 10px 0;"></div>
+    `;
+  }).join('');
+}
+
+async function toggleFriendProfile(friendshipId, otherUid) {
+  const panel = document.getElementById(`friend-profile-${friendshipId}`);
+  if (!panel) return;
+  if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+
+  panel.style.display = 'block';
+  panel.innerHTML = `<div class="profile-empty-hint">Loading...</div>`;
+  try {
+    const otherDoc = await window.fs.getDoc(window.fs.doc(window.db, "users", otherUid));
+    if (!otherDoc.exists()) { panel.innerHTML = `<div class="profile-empty-hint">Profile unavailable.</div>`; return; }
+    const otherData = otherDoc.data();
+    const showcase = otherData.showcaseCards || [];
+    const s = otherData.stats || {};
+
+    let cardsHTML = '<div class="profile-empty-hint">No showcase cards yet.</div>';
+    if (showcase.length > 0) {
+      cardsHTML = `<div style="display:flex; gap:8px;">` + showcase.map(c => {
+        const p = playersDB.find(pl => pl.cardCode === c.cardCode);
+        if (!p) return '';
+        return `<img src="${p.img}" style="width:56px; border-radius:6px;" alt="${p.name}">`;
+      }).join('') + `</div>`;
+    }
+
+    panel.innerHTML = `
+      <div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 12px;">
+        ${cardsHTML}
+        <div class="friend-sub" style="margin-top:8px;">📦 ${s.totalPacksOpened || 0} packs · 🏆 ${s.matchesWon || 0} wins · 🎰 ${s.rouletteWinnings || 0}💎 roulette</div>
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = `<div class="profile-empty-hint">Couldn't load profile.</div>`;
+  }
+}
+
+async function sendFriendRequest() {
+  const input = document.getElementById('friend-username-input');
+  const targetUsername = (input?.value || '').trim();
+  if (!targetUsername) return;
+
+  if (targetUsername === window.myUsername) {
+    showToast("You can't add yourself!", "error");
+    return;
+  }
+
+  try {
+    const usernameDoc = await window.fs.getDoc(window.fs.doc(window.db, "usernames", targetUsername));
+    if (!usernameDoc.exists()) {
+      showToast("Username not found.", "error");
+      return;
+    }
+    const targetUid = usernameDoc.data().uid;
+
+    if (targetUid === window.currentUser.uid) {
+      showToast("You can't add yourself!", "error");
+      return;
+    }
+    if (window.myFriendships.some(f => f.users.includes(targetUid))) {
+      showToast("You're already friends.", "info");
+      return;
+    }
+
+    await window.fs.addDoc(window.fs.collection(window.db, "friendRequests"), {
+      fromUid: window.currentUser.uid,
+      fromUsername: window.myUsername || 'Player',
+      toUid: targetUid,
+      toUsername: targetUsername,
+      status: 'pending',
+      createdAt: window.fs.serverTimestamp()
+    });
+
+    input.value = '';
+    showToast(`Friend request sent to ${targetUsername}!`, 'success');
+  } catch (e) {
+    console.error(e);
+    showToast("Couldn't send request. Have Firestore rules for friends been added?", "error");
+  }
+}
+
+async function acceptFriendRequest(requestId, fromUid, fromUsername) {
+  try {
+    const pairId = [window.currentUser.uid, fromUid].sort().join('_');
+    await window.fs.setDoc(window.fs.doc(window.db, "friendships", pairId), {
+      users: [window.currentUser.uid, fromUid],
+      usernames: {
+        [window.currentUser.uid]: window.myUsername || 'Player',
+        [fromUid]: fromUsername
+      },
+      createdAt: window.fs.serverTimestamp()
+    });
+    await window.fs.deleteDoc(window.fs.doc(window.db, "friendRequests", requestId));
+    showToast(`You're now friends with ${fromUsername}!`, 'success');
+  } catch (e) {
+    console.error(e);
+    showToast("Couldn't accept request.", "error");
+  }
+}
+
+async function declineFriendRequest(requestId) {
+  try {
+    await window.fs.deleteDoc(window.fs.doc(window.db, "friendRequests", requestId));
+  } catch (e) { console.error(e); }
+}
+
+async function removeFriend(friendshipId) {
+  try {
+    await window.fs.deleteDoc(window.fs.doc(window.db, "friendships", friendshipId));
+    showToast("Friend removed.", "info");
+  } catch (e) { console.error(e); }
+}
 
 // Ajusta una estadística (packs abiertos, ganancias de ruleta, partidos
 // jugados...) de forma ATÓMICA en Firestore, igual que adjustPackCount.
@@ -9509,6 +9928,7 @@ async function purchasePacks(packId, quantity) {
           
           // 4. Entregar Packs (incremento atómico, sin condición de carrera)
           await adjustPackCount(packId, quantity);
+          bumpStat('gemsSpentOnPacks', totalCost);
 
           // 5. Feedback
           renderPacksView();
@@ -9760,6 +10180,7 @@ function sellCard(cardCode, variantKey, quantity, pricePerCard) {
   earnGemsOnline(totalEarnings);
   saveCurrency();
   updateCurrencyDisplay();
+  bumpStat('quickSells', quantity);
 
 // 2. Actualizar la colección
   cardStack.count -= quantity;
@@ -10831,6 +11252,7 @@ async function simulateMatch(homeLineup) {
     finalResultText.className = "win";
     reward = ECONOMY_CONFIG.matchRewards.win;
     result = `VICTORY! You earned ${reward} 💎`;
+    bumpStat('matchesWon', 1);
   } else if (homeScore < awayScore) {
     finalResultText.textContent = "DEFEAT";
     finalResultText.className = "loss";
@@ -12556,7 +12978,10 @@ class MarketBackend {
         }
 
         // 2. RESTAR AL COMPRADOR
-        transaction.update(buyerRef, { gems: window.fs.increment(-price) });
+        transaction.update(buyerRef, {
+          gems: window.fs.increment(-price),
+          'stats.marketPurchases': window.fs.increment(1)
+        });
 
         // 3. SUMAR AL VENDEDOR (CORREGIDO A PRUEBA DE FALLOS)
         // Usamos sellerId del listado
@@ -12565,7 +12990,10 @@ class MarketBackend {
         
         // Usamos set({ ... }, { merge: true }) en lugar de update.
         // Esto asegura que si el vendedor no tiene cuenta bancaria creada, se le crea una ahora.
-        transaction.set(sellerRef, { gems: window.fs.increment(price) }, { merge: true });
+        transaction.set(sellerRef, {
+          gems: window.fs.increment(price),
+          stats: { marketSales: window.fs.increment(1) }
+        }, { merge: true });
 
         // 4. Borrar el listado del mercado
         transaction.delete(listingRef);
