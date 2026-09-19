@@ -1790,6 +1790,7 @@ box-sizing: border-box;
   text-align: left;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
+#achievements-modal.profile-wide { width: min(900px, 95vw); }
 #achievements-modal h2 {
   text-align: center; margin: 0 0 18px 0; color: #fff;
   font-size: 22px; letter-spacing: 0.5px;
@@ -1800,30 +1801,46 @@ box-sizing: border-box;
 }
 .profile-section-title:first-of-type { margin-top: 4px; }
 
-.profile-tabs {
-  display: flex; gap: 6px; margin-bottom: 18px;
-  background: rgba(0,0,0,0.25); padding: 5px; border-radius: 12px;
-}
-.profile-tab-btn {
-  flex: 1; padding: 9px 6px; border: none; border-radius: 9px;
-  background: transparent; color: #999; font-size: 12.5px; font-weight: 600; cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-.profile-tab-btn.active { background: rgba(255,255,255,0.09); color: #fff; }
-.profile-tab-content {}
-.profile-tab-hint { color: #999; font-size: 12.5px; margin: 0 0 14px 0; }
-
-.profile-search-input {
+.profile-search-input, #friend-username-input, #showcase-search {
   width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
   color: #fff; font-size: 13px; margin-bottom: 12px;
 }
-.profile-search-input::placeholder { color: #777; }
+.profile-search-input::placeholder, #friend-username-input::placeholder, #showcase-search::placeholder { color: #777; }
 
-/* Showcase */
-#showcase-slots { display: flex; gap: 12px; margin-bottom: 18px; }
+/* ===== LAYOUT PRINCIPAL (según boceto) ===== */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 120px repeat(3, 1fr) 200px;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .profile-grid { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto auto; }
+  .profile-photo-box { grid-column: 1; grid-row: 1; }
+  .showcase-slot-crest { grid-column: 2; grid-row: 1; }
+  #showcase-slot-0 { grid-column: 3; grid-row: 1; }
+  #showcase-slot-1 { grid-column: 1; grid-row: 2; }
+  #showcase-slot-2 { grid-column: 2; grid-row: 2; }
+  .profile-achievements-panel { grid-column: 1 / -1; grid-row: 3; }
+  .profile-friends-panel { grid-column: 1 / -1; grid-row: 4; max-height: 260px; }
+}
+
+.profile-photo-box {
+  grid-column: 1; grid-row: 1;
+  aspect-ratio: 1/1; border-radius: 14px; overflow: hidden;
+  background: #111; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 30px; font-weight: 700;
+}
+.profile-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+#showcase-slot-0 { grid-column: 2; grid-row: 1; }
+#showcase-slot-1 { grid-column: 3; grid-row: 1; }
+#showcase-slot-2 { grid-column: 4; grid-row: 1; }
+#showcase-slot-crest { grid-column: 1; grid-row: 2; }
+
 .showcase-slot {
-  flex: 1; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 2/3; border-radius: 12px; overflow: hidden;
   background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.15);
   display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer;
 }
@@ -1833,13 +1850,40 @@ box-sizing: border-box;
   position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
   background: rgba(0,0,0,0.7); color: #fff; border: none; font-size: 12px; cursor: pointer; z-index: 5;
 }
-#showcase-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 220px; overflow-y: auto; }
+
+.profile-achievements-panel {
+  grid-column: 2 / 5; grid-row: 2;
+  background: rgba(0,0,0,0.15); border-radius: 12px; padding: 12px;
+  max-height: 360px; overflow-y: auto;
+}
+.profile-friends-panel {
+  grid-column: 5; grid-row: 1 / 3;
+  background: rgba(0,0,0,0.15); border-radius: 12px; padding: 12px;
+  max-height: 460px; overflow-y: auto; display: flex; flex-direction: column;
+}
+
+/* ===== SUB-MODAL DE SELECCIÓN DE CARTA ===== */
+#showcase-picker-overlay {
+  position: fixed; inset: 0; background: rgba(8,9,15,0.92);
+  z-index: 1600; display: none; place-items: center; opacity: 0; transition: opacity 0.2s;
+}
+#showcase-picker-overlay.visible { display: grid; opacity: 1; }
+#showcase-picker-modal {
+  position: relative; background: #1d1f24; border-radius: 16px; padding: 24px;
+  width: min(460px, 92vw); max-height: 82vh; overflow-y: auto;
+}
+#showcase-picker-modal h3 { color: #fff; margin: 0 0 14px 0; text-align: center; }
+#close-showcase-picker-btn {
+  position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.08); border: none;
+  color: #ccc; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+}
+#showcase-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .showcase-picker-item { aspect-ratio: 2/3; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.85; transition: opacity 0.15s, transform 0.15s; }
 .showcase-picker-item:hover { opacity: 1; transform: translateY(-2px); }
 
 /* Friends */
-.friend-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
-.friend-add-row .profile-search-input { margin-bottom: 0; }
+.friend-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.friend-add-row input { margin-bottom: 0; }
 #friend-send-btn {
   padding: 0 16px; border-radius: 10px; border: none; background: linear-gradient(90deg,#f1c40f,#ffb347);
   color: #1d1f24; font-weight: 700; cursor: pointer; white-space: nowrap;
@@ -1849,7 +1893,9 @@ box-sizing: border-box;
   background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
 }
-.friend-name { color: #fff; font-size: 13.5px; font-weight: 600; }
+.friend-name { color: #fff; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.friend-online-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; display: inline-block; }
+.friend-offline-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; display: inline-block; }
 .friend-sub { color: #888; font-size: 11.5px; }
 .friend-action-btn {
   padding: 7px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 700; cursor: pointer;
@@ -6809,37 +6855,42 @@ button,
 
 <!-- ============= OVERLAY DE MY PROFILE =============== -->
 <div id="achievements-overlay">
-  <div id="achievements-modal">
+  <div id="achievements-modal" class="profile-wide">
     <button id="close-achievements-btn" onclick="closeAchievementsView()">X</button>
     <h2>My Profile</h2>
 
-    <div class="profile-tabs">
-      <button class="profile-tab-btn active" data-tab="achievements" onclick="switchProfileTab('achievements')">🏆 Achievements</button>
-      <button class="profile-tab-btn" data-tab="showcase" onclick="switchProfileTab('showcase')">⭐ Showcase</button>
-      <button class="profile-tab-btn" data-tab="friends" onclick="switchProfileTab('friends')">👥 Friends</button>
-    </div>
+    <div class="profile-grid">
+      <div class="profile-photo-box" id="profile-photo-box"></div>
 
-    <div id="profile-tab-achievements" class="profile-tab-content">
-      <div id="achievements-list"></div>
-    </div>
+      <div class="showcase-slot" id="showcase-slot-0" onclick="openShowcasePicker('card',0)"></div>
+      <div class="showcase-slot" id="showcase-slot-1" onclick="openShowcasePicker('card',1)"></div>
+      <div class="showcase-slot" id="showcase-slot-2" onclick="openShowcasePicker('card',2)"></div>
 
-    <div id="profile-tab-showcase" class="profile-tab-content" style="display:none;">
-      <p class="profile-tab-hint">Pick up to 3 cards to show off on your profile.</p>
-      <div id="showcase-slots"></div>
-      <h3 class="profile-section-title">Your collection</h3>
-      <input type="text" id="showcase-search" placeholder="Search a card to add..." class="profile-search-input" oninput="renderShowcasePicker()">
-      <div id="showcase-picker"></div>
-    </div>
+      <div class="showcase-slot crest-slot" id="showcase-slot-crest" onclick="openShowcasePicker('crest',0)"></div>
 
-    <div id="profile-tab-friends" class="profile-tab-content" style="display:none;">
-      <div class="friend-add-row">
-        <input type="text" id="friend-username-input" placeholder="Add a friend by username..." class="profile-search-input">
-        <button id="friend-send-btn" onclick="sendFriendRequest()">Add</button>
+      <div class="profile-achievements-panel">
+        <div id="achievements-list"></div>
       </div>
-      <div id="friend-requests-section"></div>
-      <h3 class="profile-section-title">👥 My Friends</h3>
-      <div id="friends-list"></div>
+
+      <div class="profile-friends-panel">
+        <div class="friend-add-row">
+          <input type="text" id="friend-username-input" placeholder="Add friend...">
+          <button id="friend-send-btn" onclick="sendFriendRequest()">Add</button>
+        </div>
+        <div id="friend-requests-section"></div>
+        <div id="friends-list"></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ============= SUB-OVERLAY: ELEGIR CARTA PARA EL SHOWCASE =============== -->
+<div id="showcase-picker-overlay">
+  <div id="showcase-picker-modal">
+    <button id="close-showcase-picker-btn" onclick="closeShowcasePicker()">X</button>
+    <h3 id="showcase-picker-title">Choose a card</h3>
+    <input type="text" id="showcase-search" placeholder="Search..." oninput="renderShowcasePicker()">
+    <div id="showcase-picker"></div>
   </div>
 </div>
 
@@ -7247,7 +7298,9 @@ button,
 
           // 8. SHOWCASE (cartas favoritas del perfil)
           window.showcaseCards = data.showcaseCards || [];
+          window.showcaseCrest = data.showcaseCrest || null;
           localStorage.setItem('myShowcaseCards', JSON.stringify(window.showcaseCards));
+          localStorage.setItem('myShowcaseCrest', JSON.stringify(window.showcaseCrest));
 
           window.isCloudDataLoaded = true;
 
@@ -9326,15 +9379,27 @@ function showInspectView(originalCard, cardStackData, showControls = true) {
 // ========= FUNCIONES TIENDA ========= //
       // --- GUARDAR PACKS EN NUBE ---
 // ============= SISTEMA DE HITOS / LOGROS =============
-// ============= NAVEGACIÓN DE PESTAÑAS DE MY PROFILE =============
-function switchProfileTab(tab) {
-  document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.querySelectorAll('.profile-tab-content').forEach(c => c.style.display = 'none');
-  document.getElementById(`profile-tab-${tab}`).style.display = 'block';
+// ============= RENDER COMPLETO DE MY PROFILE (sin pestañas) =============
+function renderProfileScreen() {
+  renderProfilePhoto();
+  renderShowcaseSlots();
+  renderAchievements();
+  startFriendsListeners();
+  renderFriendRequests();
+  renderFriendsList();
+  startPresenceHeartbeat();
+}
 
-  if (tab === 'achievements') renderAchievements();
-  if (tab === 'showcase') { renderShowcaseSlots(); renderShowcasePicker(); }
-  if (tab === 'friends') renderFriendsTab();
+function renderProfilePhoto() {
+  const box = document.getElementById('profile-photo-box');
+  if (!box) return;
+  const photoURL = window.currentUser && window.currentUser.photoURL;
+  if (photoURL) {
+    box.innerHTML = `<img src="${photoURL}" alt="Profile photo">`;
+  } else {
+    const initial = (window.myUsername || '?').trim().charAt(0).toUpperCase();
+    box.innerHTML = initial;
+  }
 }
 
 // ============= SISTEMA DE HITOS / LOGROS =============
@@ -9413,40 +9478,46 @@ function renderAchievements() {
   const list = document.getElementById('achievements-list');
   if (!list) return;
 
-  const categories = [...new Set(ACHIEVEMENTS.map(a => a.category))];
+  // Calculamos progreso real de cada logro y lo ordenamos: los más cerca de
+  // completarse arriba, los ya reclamados al final (vitrina de trofeos).
+  const withProgress = ACHIEVEMENTS.map(a => {
+    const current = getAchievementCurrent(a);
+    const claimed = !!window.claimedAchievements[a.id];
+    const pct = Math.min(100, (current / a.threshold) * 100);
+    return { a, current, claimed, pct };
+  });
 
-  list.innerHTML = categories.map(cat => {
-    const itemsHTML = ACHIEVEMENTS.filter(a => a.category === cat).map(a => {
-      const current = getAchievementCurrent(a);
-      const claimed = !!window.claimedAchievements[a.id];
-      const ready = !claimed && current >= a.threshold;
-      const pct = Math.min(100, Math.floor((current / a.threshold) * 100));
+  withProgress.sort((x, y) => {
+    if (x.claimed !== y.claimed) return x.claimed ? 1 : -1; // reclamados al final
+    return y.pct - x.pct; // más cerca de completarse primero
+  });
 
-      let btnHTML;
-      if (claimed) {
-        btnHTML = `<button class="achievement-claim-btn is-claimed" disabled>✓ Claimed</button>`;
-      } else if (ready) {
-        btnHTML = `<button class="achievement-claim-btn is-ready" onclick="claimAchievement('${a.id}')">Claim</button>`;
-      } else {
-        btnHTML = `<button class="achievement-claim-btn" disabled>Locked</button>`;
-      }
+  list.innerHTML = withProgress.map(({ a, current, claimed, pct }) => {
+    const ready = !claimed && current >= a.threshold;
+    const pctFloor = Math.floor(pct);
 
-      return `
-        <div class="achievement-item ${ready ? 'ready' : ''} ${claimed ? 'claimed' : ''}">
-          <div class="achievement-icon">${a.icon}</div>
-          <div class="achievement-info">
-            <h4>${a.name}</h4>
-            <p>${a.desc} · Reward: ${a.reward.qty}x ${a.reward.packId.replace('-pack','')} pack</p>
-            <div class="achievement-progress-bar">
-              <div class="achievement-progress-fill" style="width:${pct}%"></div>
-              <div class="achievement-progress-label">${current}/${a.threshold} (${pct}%)</div>
-            </div>
+    let btnHTML;
+    if (claimed) {
+      btnHTML = `<button class="achievement-claim-btn is-claimed" disabled>✓ Claimed</button>`;
+    } else if (ready) {
+      btnHTML = `<button class="achievement-claim-btn is-ready" onclick="claimAchievement('${a.id}')">Claim</button>`;
+    } else {
+      btnHTML = `<button class="achievement-claim-btn" disabled>Locked</button>`;
+    }
+
+    return `
+      <div class="achievement-item ${ready ? 'ready' : ''} ${claimed ? 'claimed' : ''}">
+        <div class="achievement-icon">${a.icon}</div>
+        <div class="achievement-info">
+          <h4>${a.name}</h4>
+          <p>${a.desc} · Reward: ${a.reward.qty}x ${a.reward.packId.replace('-pack','')} pack</p>
+          <div class="achievement-progress-bar">
+            <div class="achievement-progress-fill" style="width:${pctFloor}%"></div>
+            <div class="achievement-progress-label">${current}/${a.threshold} (${pctFloor}%)</div>
           </div>
-          ${btnHTML}
-        </div>`;
-    }).join('');
-
-    return `<h3 class="profile-section-title">${cat}</h3>${itemsHTML}`;
+        </div>
+        ${btnHTML}
+      </div>`;
   }).join('');
 
   updateAchievementsBadge();
@@ -9478,7 +9549,7 @@ async function claimAchievement(id) {
 }
 
 function openAchievementsView() {
-  renderAchievements();
+  renderProfileScreen();
   document.getElementById('achievements-overlay').classList.add('visible');
 }
 function closeAchievementsView() {
@@ -9486,49 +9557,73 @@ function closeAchievementsView() {
 }
 document.getElementById('profileBtn')?.addEventListener('click', openAchievementsView);
 
-// ============= SHOWCASE (3 CARTAS FAVORITAS DEL PERFIL) =============
-window.showcaseCards = window.showcaseCards || []; // [{cardCode, variantKey}, ...] máx 3
+// ============= SHOWCASE (3 CARTAS FAVORITAS + 1 ESCUDO) =============
+window.showcaseCards = window.showcaseCards || []; // [{cardCode, variantKey}, ...] máx 3 (sin escudos)
+window.showcaseCrest = window.showcaseCrest || null; // {cardCode, variantKey} | null
+
+let showcasePickerTarget = null; // { type: 'card'|'crest', index: number }
 
 function renderShowcaseSlots() {
-  const container = document.getElementById('showcase-slots');
-  if (!container) return;
-
-  const slots = [0, 1, 2].map(i => window.showcaseCards[i] || null);
-
-  container.innerHTML = '';
-  slots.forEach((entry, i) => {
-    const slotDiv = document.createElement('div');
-    slotDiv.className = `showcase-slot ${entry ? 'filled' : ''}`;
-
-    if (entry) {
-      const cardEl = createCardElement(entry.cardCode, entry.variantKey);
-      cardEl.style.width = '100%';
-      cardEl.style.height = '100%';
-      slotDiv.appendChild(cardEl);
-
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'showcase-slot-remove';
-      removeBtn.textContent = '✕';
-      removeBtn.onclick = (ev) => { ev.stopPropagation(); removeFromShowcase(i); };
-      slotDiv.appendChild(removeBtn);
-    } else {
-      slotDiv.innerHTML = `<div class="showcase-slot-empty">+</div>`;
-    }
-    container.appendChild(slotDiv);
+  // 3 huecos de cartas normales
+  [0, 1, 2].forEach(i => {
+    const slotDiv = document.getElementById(`showcase-slot-${i}`);
+    if (!slotDiv) return;
+    const entry = window.showcaseCards[i] || null;
+    renderOneShowcaseSlot(slotDiv, entry, () => removeFromShowcase(i));
   });
+
+  // Hueco dedicado al escudo
+  const crestSlot = document.getElementById('showcase-slot-crest');
+  if (crestSlot) {
+    renderOneShowcaseSlot(crestSlot, window.showcaseCrest, () => removeShowcaseCrest());
+  }
+}
+
+function renderOneShowcaseSlot(slotDiv, entry, onRemove) {
+  slotDiv.classList.toggle('filled', !!entry);
+  slotDiv.innerHTML = '';
+
+  if (entry) {
+    const cardEl = createCardElement(entry.cardCode, entry.variantKey);
+    cardEl.style.width = '100%';
+    cardEl.style.height = '100%';
+    slotDiv.appendChild(cardEl);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'showcase-slot-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.onclick = (ev) => { ev.stopPropagation(); onRemove(); };
+    slotDiv.appendChild(removeBtn);
+  } else {
+    slotDiv.innerHTML = `<div class="showcase-slot-empty">+</div>`;
+  }
+}
+
+function openShowcasePicker(type, index) {
+  showcasePickerTarget = { type, index };
+  document.getElementById('showcase-picker-title').textContent = type === 'crest' ? 'Choose a crest' : 'Choose a card';
+  document.getElementById('showcase-search').value = '';
+  renderShowcasePicker();
+  document.getElementById('showcase-picker-overlay').classList.add('visible');
+}
+function closeShowcasePicker() {
+  document.getElementById('showcase-picker-overlay').classList.remove('visible');
+  showcasePickerTarget = null;
 }
 
 function renderShowcasePicker() {
   const picker = document.getElementById('showcase-picker');
-  if (!picker) return;
+  if (!picker || !showcasePickerTarget) return;
 
+  const wantCrest = showcasePickerTarget.type === 'crest';
   const searchTerm = (document.getElementById('showcase-search')?.value || '').toLowerCase().trim();
   const ownedCodes = Object.keys(window.collection || {});
 
   const filtered = ownedCodes.filter(code => {
     const p = playersDB.find(pl => pl.cardCode === code);
     if (!p) return false;
-    if (p.rarity === 'crest') return false; // los escudos no son "cartas favoritas"
+    if (wantCrest && p.rarity !== 'crest') return false;
+    if (!wantCrest && p.rarity === 'crest') return false;
     if (!searchTerm) return true;
     return p.name.toLowerCase().includes(searchTerm) || (p.teams || []).some(t => t.toLowerCase().includes(searchTerm));
   }).slice(0, 40); // límite razonable para no saturar el DOM
@@ -9543,7 +9638,7 @@ function renderShowcasePicker() {
     cardEl.style.width = '100%';
     cardEl.style.height = '100%';
     item.appendChild(cardEl);
-    item.onclick = () => addToShowcase(code, variantKey);
+    item.onclick = () => selectShowcaseCard(code, variantKey);
     picker.appendChild(item);
   });
 
@@ -9552,32 +9647,50 @@ function renderShowcasePicker() {
   }
 }
 
-async function addToShowcase(cardCode, variantKey) {
-  if (window.showcaseCards.some(c => c.cardCode === cardCode && c.variantKey === variantKey)) {
-    showToast("That card is already in your showcase.", "info");
-    return;
+async function selectShowcaseCard(cardCode, variantKey) {
+  if (!showcasePickerTarget) return;
+
+  if (showcasePickerTarget.type === 'crest') {
+    window.showcaseCrest = { cardCode, variantKey };
+  } else {
+    const i = showcasePickerTarget.index;
+    // Evitar duplicar la misma carta en dos huecos
+    if (window.showcaseCards.some((c, idx) => idx !== i && c.cardCode === cardCode && c.variantKey === variantKey)) {
+      showToast("That card is already in your showcase.", "info");
+      return;
+    }
+    window.showcaseCards[i] = { cardCode, variantKey };
   }
-  if (window.showcaseCards.length >= 3) {
-    showToast("Remove a card from your showcase first.", "info");
-    return;
-  }
-  window.showcaseCards.push({ cardCode, variantKey });
+
+  await saveShowcase();
+  renderShowcaseSlots();
+  closeShowcasePicker();
+}
+
+async function removeFromShowcase(index) {
+  window.showcaseCards[index] = null;
   await saveShowcase();
   renderShowcaseSlots();
 }
 
-async function removeFromShowcase(index) {
-  window.showcaseCards.splice(index, 1);
+async function removeShowcaseCrest() {
+  window.showcaseCrest = null;
   await saveShowcase();
   renderShowcaseSlots();
 }
 
 async function saveShowcase() {
-  localStorage.setItem('myShowcaseCards', JSON.stringify(window.showcaseCards));
+  // Guardamos siempre 3 huecos (con null donde esté vacío) para no desordenar posiciones
+  const cardsToSave = [0, 1, 2].map(i => window.showcaseCards[i] || null);
+  localStorage.setItem('myShowcaseCards', JSON.stringify(cardsToSave));
+  localStorage.setItem('myShowcaseCrest', JSON.stringify(window.showcaseCrest));
   if (window.currentUser && window.fs && window.db) {
     try {
       const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
-      await window.fs.setDoc(userRef, { showcaseCards: window.showcaseCards }, { merge: true });
+      await window.fs.setDoc(userRef, {
+        showcaseCards: cardsToSave,
+        showcaseCrest: window.showcaseCrest
+      }, { merge: true });
     } catch (e) { console.error("Error guardando showcase:", e); }
   }
 }
@@ -9615,10 +9728,20 @@ function startFriendsListeners() {
   });
 }
 
-function renderFriendsTab() {
-  startFriendsListeners();
-  renderFriendRequests();
-  renderFriendsList();
+const ONLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutos sin heartbeat = offline
+
+function startPresenceHeartbeat() {
+  if (window.presenceHeartbeatStarted || !window.currentUser || !window.fs || !window.db) return;
+  window.presenceHeartbeatStarted = true;
+
+  const updatePresence = async () => {
+    try {
+      const userRef = window.fs.doc(window.db, "users", window.currentUser.uid);
+      await window.fs.setDoc(userRef, { lastActive: Date.now() }, { merge: true });
+    } catch (e) { /* silencioso, no es crítico */ }
+  };
+  updatePresence();
+  setInterval(updatePresence, 45000);
 }
 
 function renderFriendRequests() {
@@ -9636,21 +9759,36 @@ function renderFriendRequests() {
     </div>`).join('');
 }
 
-function renderFriendsList() {
+async function renderFriendsList() {
   const list = document.getElementById('friends-list');
   if (!list) return;
   if (window.myFriendships.length === 0) {
     list.innerHTML = `<div class="profile-empty-hint">No friends yet — add one above!</div>`;
     return;
   }
-  list.innerHTML = window.myFriendships.map(f => {
+
+  const now = Date.now();
+  const withPresence = await Promise.all(window.myFriendships.map(async f => {
     const otherUid = f.users.find(u => u !== window.currentUser.uid);
+    let lastActive = 0;
+    try {
+      const snap = await window.fs.getDoc(window.fs.doc(window.db, "users", otherUid));
+      if (snap.exists()) lastActive = snap.data().lastActive || 0;
+    } catch (e) { /* si falla, se trata como offline */ }
+    const online = (now - lastActive) < ONLINE_THRESHOLD_MS;
+    return { f, otherUid, online };
+  }));
+
+  withPresence.sort((a, b) => (b.online === a.online) ? 0 : (b.online ? 1 : -1));
+
+  list.innerHTML = withPresence.map(({ f, otherUid, online }) => {
     const otherName = (f.usernames && f.usernames[otherUid]) || 'Player';
+    const dot = online ? '<span class="friend-online-dot"></span>' : '<span class="friend-offline-dot"></span>';
     return `
       <div class="friend-item">
         <div style="cursor:pointer; flex:1;" onclick="toggleFriendProfile('${f.id}','${otherUid}')">
-          <div class="friend-name">${otherName}</div>
-          <div class="friend-sub">Tap to view profile</div>
+          <div class="friend-name">${dot}${otherName}</div>
+          <div class="friend-sub">${online ? 'Online' : 'Offline'} · Tap to view profile</div>
         </div>
         <button class="friend-action-btn remove" onclick="removeFriend('${f.id}')">Remove</button>
       </div>
